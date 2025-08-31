@@ -1,0 +1,46 @@
+import type { House } from "@/types"
+
+export const HOUSES_DATA: House[] = [
+  {
+    id: "1",
+    title: "Modern Family Home",
+    price: 2500000,
+    bedrooms: 4,
+    bathrooms: 3,
+    size: 250,
+    location: "Bole, Addis Ababa",
+    type: "sale",
+    propertyType: "House",
+    image: "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=400&h=300&fit=crop&crop=center",
+    images: [
+      "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=400&fit=crop&crop=center",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=600&h=400&fit=crop&crop=center",
+      "https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=600&h=400&fit=crop&crop=center",
+    ],
+    status: "available",
+    rating: 4.8,
+    agent: "Tigist Alemayehu Real Estate",
+    description: "Beautiful modern family home with spacious rooms, modern kitchen, and private garden.",
+  },
+  {
+    id: "2",
+    title: "Downtown Luxury Apartment",
+    price: 1800000,
+    bedrooms: 2,
+    bathrooms: 2,
+    size: 120,
+    location: "Piazza, Addis Ababa",
+    type: "sale",
+    propertyType: "Apartment",
+    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=300&fit=crop&crop=center",
+    images: [
+      "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=400&fit=crop&crop=center",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&h=400&fit=crop&crop=center",
+      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=600&h=400&fit=crop&crop=center",
+    ],
+    status: "available",
+    rating: 4.9,
+    agent: "Selamawit Desta Properties",
+    description: "Luxury apartment in the heart of downtown with premium finishes and city views.",
+  },
+]
