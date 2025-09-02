@@ -6,23 +6,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, Heart } from "lucide-react"
+import { Trash2, ShoppingBag, ArrowLeft, Heart } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { useState } from "react"
 
 export function Cart() {
-  const { cart = [], dispatch, removeFromCart, updateCartQuantity, user, createDeal } = useApp()
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  const { cart = [], dispatch, removeFromCart, user, createDeal, cars, houses, lands, machines } = useApp()
+  const [isCreatingDeals, setIsCreatingDeals] = useState(false)
 
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeFromCart(id)
-    } else {
-      updateCartQuantity(id, newQuantity)
-    }
-  }
-
-  const subtotal = cart.reduce((total, item) => total + (item.item?.price || 0) * item.quantity, 0)
+  const subtotal = cart.reduce((total, item) => total + (item.item?.price || 0), 0) // Removed quantity multiplication since each item quantity is always 1
   const tax = subtotal * 0.08 // 8% tax
   const total = subtotal + tax
 
@@ -31,6 +23,71 @@ export function Cart() {
       return `$${price.toLocaleString()}/month`
     }
     return `$${price.toLocaleString()}`
+  }
+
+  const handleGoToDeals = async () => {
+    if (!user) {
+      return
+    }
+
+    setIsCreatingDeals(true)
+    console.log("[v0] Starting to create deals for", cart.length, "cart items")
+
+    try {
+      for (let i = 0; i < cart.length; i++) {
+        const cartItem = cart[i]
+        console.log("[v0] Processing cart item:", cartItem.id, "type:", cartItem.type)
+
+        // Get complete product details from the appropriate data source
+        let completeProduct = cartItem.item
+
+        // Ensure we have complete product data by fetching from the main data arrays if needed
+        if (cartItem.type === "car") {
+          const foundCar = cars?.find((car) => car.id === cartItem.item.id)
+          if (foundCar) {
+            completeProduct = foundCar
+            console.log("[v0] Found complete car details:", foundCar.title)
+          }
+        } else if (cartItem.type === "house") {
+          const foundHouse = houses?.find((house) => house.id === cartItem.item.id)
+          if (foundHouse) {
+            completeProduct = foundHouse
+            console.log("[v0] Found complete house details:", foundHouse.title)
+          }
+        } else if (cartItem.type === "land") {
+          const foundLand = lands?.find((land) => land.id === cartItem.item.id)
+          if (foundLand) {
+            completeProduct = foundLand
+            console.log("[v0] Found complete land details:", foundLand.title)
+          }
+        } else if (cartItem.type === "machine") {
+          const foundMachine = machines?.find((machine) => machine.id === cartItem.item.id)
+          if (foundMachine) {
+            completeProduct = foundMachine
+            console.log("[v0] Found complete machine details:", foundMachine.title)
+          }
+        }
+
+        console.log("[v0] Creating deal for item:", completeProduct.id, "type:", cartItem.type)
+        const message = `ሰላም፣ በ${completeProduct.title} ላይ ፍላጎት አለኝ። እባክዎ ተጨማሪ መረጃ ይስጡኝ?`
+
+        await createDeal(cartItem.type, completeProduct, message)
+        console.log("[v0] Successfully created deal for:", completeProduct.title)
+      }
+
+      console.log("[v0] Finished creating deals, clearing cart")
+      // Clear the cart after creating deals
+      dispatch({ type: "SET_CART", payload: [] })
+
+      // Redirect to deals page
+      window.location.href = "/deals"
+    } catch (error) {
+      console.error("[v0] Error creating deals from cart:", error)
+      // Still redirect even if there's an error
+      window.location.href = "/deals"
+    } finally {
+      setIsCreatingDeals(false)
+    }
   }
 
   if (!cart || cart.length === 0) {
@@ -177,27 +234,8 @@ export function Cart() {
                           {formatPrice(cartItem.item?.price || 0, cartItem.type, cartItem.item)}
                         </div>
 
-                        {/* Quantity Controls */}
-                        <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-1">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateQuantity(cartItem.id, cartItem.quantity - 1)}
-                            className="hover:bg-white transition-colors duration-200"
-                          >
-                            <Minus className="w-4 h-4" />
-                          </Button>
-                          <span className="w-12 text-center font-medium bg-white rounded px-2 py-1">
-                            {cartItem.quantity}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateQuantity(cartItem.id, cartItem.quantity + 1)}
-                            className="hover:bg-white transition-colors duration-200"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
+                        <div className="flex items-center space-x-2 bg-gray-50 rounded-lg p-2">
+                          <span className="text-sm font-medium text-gray-600">Quantity: 1</span>
                         </div>
                       </div>
                     </div>
@@ -233,11 +271,10 @@ export function Cart() {
                 <Button
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 transform hover:scale-105 transition-all duration-200"
                   size="lg"
-                  onClick={() => {
-                    window.location.href = "/deals"
-                  }}
+                  onClick={handleGoToDeals}
+                  disabled={isCreatingDeals || !user}
                 >
-                  Go to Deals
+                  {isCreatingDeals ? "Creating Deals..." : "Go to Deals"}
                 </Button>
 
                 <div className="text-center">

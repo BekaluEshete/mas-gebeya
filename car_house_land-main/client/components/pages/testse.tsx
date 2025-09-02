@@ -1,8 +1,7 @@
 "use client"
 
 import React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useApp } from "@/context/app-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -105,19 +104,12 @@ export function AdminDashboard() {
   const [deletingItem, setDeletingItem] = useState<any>(null)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
-
-  // const [carsData, setCarsData] = React.useState(CARS_DATA)
-  // const [housesData, setHousesData] = React.useState(HOUSES_DATA)
-  // const [landsData, setHousesData] = React.useState(LANDS_DATA)
-  // const [machinesData, setMachinesData] = React.useState(MACHINES_DATA)
-
-  const [users, setUsers] = React.useState([])
-  const [isLoadingUsers, setIsLoadingUsers] = React.useState(true)
+  const [users, setUsers] = useState([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(true)
   const [editingUser, setEditingUser] = useState<any>(null)
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
-
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
 
@@ -161,7 +153,7 @@ export function AdminDashboard() {
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     const fetchUsers = async () => {
       try {
         setIsLoadingUsers(true)
@@ -188,7 +180,6 @@ export function AdminDashboard() {
         const data = await response.json()
 
         if (data.status === "success" && data.data?.users) {
-          // Transform API data to match component structure
           const transformedUsers = data.data.users.map((user: any) => ({
             id: user._id,
             name: user.fullName,
@@ -197,7 +188,7 @@ export function AdminDashboard() {
             status: user.isActive ? "active" : "inactive",
             joinedDate: user.createdAt,
             lastActive: user.lastLogin || user.updatedAt,
-            totalDeals: 0, // This would need to come from a separate API call
+            totalDeals: 0,
             avatar: user.avatar || "/placeholder.svg?height=40&width=40",
             phone: user.phone,
             isVerified: user.isVerified,
@@ -216,7 +207,7 @@ export function AdminDashboard() {
     fetchUsers()
   }, [])
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeTab === "listings") {
       fetchOwners()
     }
@@ -360,13 +351,9 @@ export function AdminDashboard() {
     if (selectedCategory === "cars") {
       try {
         if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
-          // Update existing car via API
           const formData = new FormData()
-
-          // Add all car fields to FormData
           Object.entries(itemWithDefaults).forEach(([key, value]) => {
             if (key === "images" && Array.isArray(value)) {
-              // Handle images separately if needed
               value.forEach((image, index) => {
                 if (image instanceof File) {
                   formData.append("images", image)
@@ -385,7 +372,6 @@ export function AdminDashboard() {
               console.log("[v0] Car updated successfully via API")
             } else {
               console.error("[v0] Failed to update car via API")
-              // Fallback to local state update
               updateCar(itemData.id, itemWithDefaults)
             }
           } else {
@@ -393,13 +379,9 @@ export function AdminDashboard() {
             updateCar(itemData.id, itemWithDefaults)
           }
         } else {
-          // Create new car via API
           const formData = new FormData()
-
-          // Add all car fields to FormData
           Object.entries(itemWithDefaults).forEach(([key, value]) => {
             if (key === "images" && Array.isArray(value)) {
-              // Handle images separately if needed
               value.forEach((image, index) => {
                 if (image instanceof File) {
                   formData.append("images", image)
@@ -418,7 +400,6 @@ export function AdminDashboard() {
               console.log("[v0] Car created successfully via API")
             } else {
               console.error("[v0] Failed to create car via API")
-              // Fallback to local state addition
               addCar(itemWithDefaults)
             }
           } else {
@@ -428,7 +409,6 @@ export function AdminDashboard() {
         }
       } catch (error) {
         console.error("[v0] Error with car API operation:", error)
-        // Fallback to local state operations
         if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
           updateCar(itemData.id, itemWithDefaults)
         } else {
@@ -436,9 +416,7 @@ export function AdminDashboard() {
         }
       }
     } else {
-      // Keep existing logic for other categories (houses, lands, machines)
       if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
-        // Update existing item
         switch (selectedCategory) {
           case "houses":
             updateHouse(itemData.id, itemWithDefaults)
@@ -451,7 +429,6 @@ export function AdminDashboard() {
             break
         }
       } else {
-        // Add new item
         switch (selectedCategory) {
           case "houses":
             addHouse(itemWithDefaults)
@@ -536,7 +513,6 @@ export function AdminDashboard() {
         const responseData = await response.json()
         console.log("[v0] User saved successfully:", responseData)
 
-        // Refresh the users list
         const fetchUsers = async () => {
           try {
             setIsLoadingUsers(true)
@@ -563,7 +539,6 @@ export function AdminDashboard() {
             const data = await response.json()
 
             if (data.status === "success" && data.data?.users) {
-              // Transform API data to match component structure
               const transformedUsers = data.data.users.map((user: any) => ({
                 id: user._id,
                 name: user.fullName,
@@ -572,7 +547,7 @@ export function AdminDashboard() {
                 status: user.isActive ? "active" : "inactive",
                 joinedDate: user.createdAt,
                 lastActive: user.lastLogin || user.updatedAt,
-                totalDeals: 0, // This would need to come from a separate API call
+                totalDeals: 0,
                 avatar: user.avatar || "/placeholder.svg?height=40&width=40",
                 phone: user.phone,
                 isVerified: user.isVerified,
@@ -651,7 +626,6 @@ export function AdminDashboard() {
     )
 
     if (files.length > 0) {
-      // Store the actual File objects for FormData
       setUploadedImages((prev) => [...prev, ...files])
     }
   }
@@ -721,7 +695,6 @@ export function AdminDashboard() {
       const formData = new FormData()
 
       if (selectedCategory === "cars") {
-        // Car-specific fields
         formData.append("title", editingItem.title || "")
         formData.append("make", editingItem.make || "")
         formData.append("model", editingItem.model || "")
@@ -742,12 +715,10 @@ export function AdminDashboard() {
         formData.append("owner", editingItem.owner || "")
         formData.append("status", editingItem.status || "available")
 
-        // Add features as JSON string
         if (editingItem.features && editingItem.features.length > 0) {
           formData.append("features", JSON.stringify(editingItem.features))
         }
       } else if (selectedCategory === "houses") {
-        // House-specific fields
         formData.append("title", editingItem.title || "")
         formData.append("propertyType", editingItem.propertyType || "")
         formData.append("price", editingItem.price?.toString() || "0")
@@ -767,12 +738,10 @@ export function AdminDashboard() {
         formData.append("owner", editingItem.owner || "")
         formData.append("status", editingItem.status || "available")
 
-        // Add amenities as JSON string
         if (editingItem.amenities && editingItem.amenities.length > 0) {
           formData.append("amenities", JSON.stringify(editingItem.amenities))
         }
       } else if (selectedCategory === "lands") {
-        // Land-specific fields
         formData.append("title", editingItem.title || "")
         const sizeData = {
           value: editingItem.sizeValue?.toString() || "0",
@@ -797,7 +766,6 @@ export function AdminDashboard() {
         formData.append("owner", editingItem.owner || "")
         formData.append("status", editingItem.status || "available")
       } else if (selectedCategory === "machines") {
-        // Machine-specific fields
         formData.append("title", editingItem.title || "")
         formData.append("category", editingItem.category || "")
         formData.append("brand", editingItem.brand || "")
@@ -815,13 +783,11 @@ export function AdminDashboard() {
         formData.append("owner", editingItem.owner || "")
         formData.append("status", editingItem.status || "available")
 
-        // Add specifications as JSON string
         if (editingItem.specifications && editingItem.specifications.length > 0) {
           formData.append("specifications", JSON.stringify(editingItem.specifications))
         }
       }
 
-      // Add image files for all categories
       if (uploadedImages && uploadedImages.length > 0) {
         uploadedImages.forEach((imageFile, index) => {
           if (imageFile instanceof File) {
@@ -843,7 +809,7 @@ export function AdminDashboard() {
           apiEndpoint = "cars"
           break
         case "houses":
-          apiEndpoint = "properties" // Assuming houses use properties endpoint
+          apiEndpoint = "properties"
           break
         case "lands":
           apiEndpoint = "lands"
@@ -865,7 +831,6 @@ export function AdminDashboard() {
         method,
         headers: {
           Authorization: `Bearer ${token}`,
-          // Don't set Content-Type for FormData, let browser set it with boundary
         },
         body: formData,
       })
@@ -876,13 +841,9 @@ export function AdminDashboard() {
         const result = await response.json()
         console.log(`[v0] ${selectedCategory} saved successfully:`, result)
 
-        // Close dialog and reset form
         setIsDialogOpen(false)
         setEditingItem(null)
         setUploadedImages([])
-
-        // Refresh listings if needed
-        // fetchListings(); // Implement this if you have a listings fetch function
       } else {
         const errorData = await response.json().catch(() => null)
         const errorText = await response.text().catch(() => "Unknown error")
@@ -894,7 +855,6 @@ export function AdminDashboard() {
           errorText,
         })
 
-        // Show user-friendly error message
         alert(`Failed to save ${selectedCategory}: ${errorData?.message || errorText || "Unknown error"}`)
       }
     } catch (error) {
@@ -911,7 +871,6 @@ export function AdminDashboard() {
   const handleAcceptDeal = async (dealId: string) => {
     try {
       await updateDealStatus(dealId, "approved")
-      // Refresh deals to get updated data
       await refreshDeals()
     } catch (error) {
       console.error("Error accepting deal:", error)
@@ -1508,7 +1467,6 @@ export function AdminDashboard() {
             </div>
           </TabsContent>
 
-          {/* ... existing code for other tabs ... */}
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
@@ -1532,7 +1490,6 @@ export function AdminDashboard() {
                         Add New
                       </Button>
                     </DialogTrigger>
-                    {/* Made dialog responsive */}
                     <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
                       <DialogHeader>
                         <DialogTitle className="text-sm sm:text-base">
@@ -1589,8 +1546,6 @@ export function AdminDashboard() {
                                   value={editingItem?.owner || ""}
                                   onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
                                 >
-
-
                                   <SelectTrigger className="text-xs sm:text-sm">
                                     <SelectValue placeholder="Select owner" />
                                   </SelectTrigger>
@@ -1780,7 +1735,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Type *</Label>
                                   <Select
                                     value={editingItem?.type || "sale"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, type: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, type: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -1800,41 +1755,34 @@ export function AdminDashboard() {
                                     onChange={(e) => setEditingItem({ ...editingItem, year: Number(e.target.value) })}
                                     className="text-sm"
                                     placeholder="2020"
-                                    min="1900"
-                                    max={new Date().getFullYear() + 1}
+                                    min="1990"
+                                    max={new Date().getFullYear()}
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
-                                  <Input
-                                    type="number"
-                                    value={editingItem?.mileage || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, mileage: Number(e.target.value) })
-                                    }
-                                    className="text-sm"
-                                    placeholder="50000"
-                                    min="0"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Color *</Label>
-                                  <Input
-                                    value={editingItem?.color || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Red, Blue, Black"
-                                    required
-                                  />
+                                  <Label className="text-xs sm:text-sm font-medium">Condition *</Label>
+                                  <Select
+                                    value={editingItem?.condition || "used"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new">New</SelectItem>
+                                      <SelectItem value="used">Used</SelectItem>
+                                      <SelectItem value="refurbished">Refurbished</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Fuel Type *</Label>
+                                  <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
                                   <Select
                                     value={editingItem?.fuelType || "gasoline"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -1842,65 +1790,87 @@ export function AdminDashboard() {
                                     <SelectContent>
                                       <SelectItem value="gasoline">Gasoline</SelectItem>
                                       <SelectItem value="diesel">Diesel</SelectItem>
-                                      <SelectItem value="hybrid">Hybrid</SelectItem>
                                       <SelectItem value="electric">Electric</SelectItem>
+                                      <SelectItem value="hybrid">Hybrid</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
-                                {/* Adding Condition field for new/used selection */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                  <div className="space-y-2">
-                                    <Label className="text-xs sm:text-sm font-medium">Condition *</Label>
-                                    <Select
-                                      value={editingItem?.condition || "used"}
-                                      onChange={(value) => setEditingItem({ ...editingItem, condition: value })}
-                                    >
-                                      <SelectTrigger className="text-xs sm:text-sm">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="new">New</SelectItem>
-                                        <SelectItem value="used">Used</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label className="text-xs sm:text-sm font-medium">Transmission *</Label>
-                                    <Select
-                                      value={editingItem?.transmission || "manual"}
-                                      onChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
-                                    >
-                                      <SelectTrigger className="text-xs sm:text-sm">
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="manual">Manual</SelectItem>
-                                        <SelectItem value="automatic">Automatic</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
+                                  <Select
+                                    value={editingItem?.transmission || "manual"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="manual">Manual</SelectItem>
+                                      <SelectItem value="automatic">Automatic</SelectItem>
+                                    </SelectContent>
+                                  </Select>
                                 </div>
                               </div>
 
-                              <div className="space-y-2">
-                                <Label className="text-xs sm:text-sm font-medium">Body Type *</Label>
-                                <Select
-                                  value={editingItem?.bodyType || "sedan"}
-                                  onChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
-                                >
-                                  <SelectTrigger className="text-xs sm:text-sm">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="sedan">Sedan</SelectItem>
-                                    <SelectItem value="suv">SUV</SelectItem>
-                                    <SelectItem value="hatchback">Hatchback</SelectItem>
-                                    <SelectItem value="coupe">Coupe</SelectItem>
-                                    <SelectItem value="pickup">Pickup</SelectItem>
-                                    <SelectItem value="van">Van</SelectItem>
-                                    <SelectItem value="convertible">Convertible</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.mileage || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, mileage: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="50000"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Body Type</Label>
+                                  <Select
+                                    value={editingItem?.bodyType || "sedan"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="sedan">Sedan</SelectItem>
+                                      <SelectItem value="suv">SUV</SelectItem>
+                                      <SelectItem value="hatchback">Hatchback</SelectItem>
+                                      <SelectItem value="coupe">Coupe</SelectItem>
+                                      <SelectItem value="truck">Truck</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Color</Label>
+                                  <Input
+                                    value={editingItem?.color || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Black"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
+                                  <Select
+                                    value={editingItem?.owner || ""}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue placeholder="Select owner" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {owners.map((owner) => (
+                                        <SelectItem key={owner._id} value={owner._id}>
+                                          {owner.fullName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -1946,198 +1916,12 @@ export function AdminDashboard() {
                                     placeholder="01"
                                   />
                                 </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
-                                  <Select
-                                    value={editingItem?.owner || ""}
-                                   onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })} // Use onValueChange
-                                  >
-                                    <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue
-                                        placeholder={isLoadingOwners ? "Loading owners..." : "Select owner"}
-                                      />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {isLoadingOwners ? (
-                                        <SelectItem value="" disabled>
-                                          Loading owners...
-                                        </SelectItem>
-                                      ) : owners.length === 0 ? (
-                                        <SelectItem value="" disabled>
-                                          No owners available
-                                        </SelectItem>
-                                      ) : (
-                                        owners.map((owner) => (
-                                          <SelectItem key={owner._id} value={owner._id}>
-                                            {owner.fullName}
-                                          </SelectItem>
-                                        ))
-                                      )}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Status</Label>
-                                  <Select
-                                    value={editingItem?.status || "available"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, status: value })}
-                                  >
-                                    <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="available">Available</SelectItem>
-                                      <SelectItem value="sold">Sold</SelectItem>
-                                      <SelectItem value="rented">Rented</SelectItem>
-                                      <SelectItem value="pending">Pending</SelectItem>
-                                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs sm:text-sm font-medium">Features</Label>
-                                <Input
-                                  value={editingItem?.features?.join(", ") || ""}
-                                  onChange={(e) =>
-                                    setEditingItem({
-                                      ...editingItem,
-                                      features: e.target.value
-                                        .split(",")
-                                        .map((f) => f.trim())
-                                        .filter((f) => f),
-                                    })
-                                  }
-                                  className="text-sm"
-                                  placeholder="Air Conditioning, GPS, Leather Seats (comma separated)"
-                                />
                               </div>
                             </>
                           )}
 
                           {selectedCategory === "houses" && (
                             <>
-                              <div className="space-y-2">
-                                <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
-                                <Select
-                                  value={editingItem?.owner || ""}
-                                  onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
-                                >
-                                  <SelectTrigger className="text-xs sm:text-sm">
-                                    <SelectValue placeholder="Select owner" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {owners.map((owner) => (
-                                      <SelectItem key={owner._id} value={owner._id}>
-                                        {owner.fullName}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">City *</Label>
-                                  <Input
-                                    value={editingItem?.city || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, city: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Addis Ababa"
-                                    required
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Region *</Label>
-                                  <Input
-                                    value={editingItem?.region || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, region: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Addis Ababa"
-                                    required
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Address *</Label>
-                                  <Input
-                                    value={editingItem?.address || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, address: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Bole, Megenagna"
-                                    required
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Kebele</Label>
-                                  <Input
-                                    value={editingItem?.kebele || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, kebele: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="01"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-xs sm:text-sm font-medium">Type *</Label>
-                                <Select
-                                  value={editingItem?.type || ""}
-                                  onValueChange={(value) => setEditingItem({ ...editingItem, type: value })}
-                                >
-                                  <SelectTrigger className="text-xs sm:text-sm">
-                                    <SelectValue placeholder="Select type" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="sale">Sale</SelectItem>
-                                    <SelectItem value="rent">Rent</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Bedrooms *</Label>
-                                  <Input
-                                    type="number"
-                                    value={editingItem?.bedrooms || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, bedrooms: Number(e.target.value) })
-                                    }
-                                    className="text-sm"
-                                    placeholder="3"
-                                    min="0"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Bathrooms *</Label>
-                                  <Input
-                                    type="number"
-                                    value={editingItem?.bathrooms || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, bathrooms: Number(e.target.value) })
-                                    }
-                                    className="text-sm"
-                                    placeholder="2"
-                                    min="0"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Size *</Label>
-                                  <Input
-                                    value={editingItem?.size || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, size: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="150 sqm"
-                                  />
-                                </div>
-                              </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Property Type *</Label>
@@ -2146,35 +1930,80 @@ export function AdminDashboard() {
                                     onValueChange={(value) => setEditingItem({ ...editingItem, propertyType: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue placeholder="Select property type" />
+                                      <SelectValue placeholder="Select type" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="house">House</SelectItem>
                                       <SelectItem value="apartment">Apartment</SelectItem>
-                                      <SelectItem value="condo">Condo</SelectItem>
                                       <SelectItem value="villa">Villa</SelectItem>
-                                      <SelectItem value="commercial">Commercial</SelectItem>
-                                      <SelectItem value="office">Office</SelectItem>
-                                      <SelectItem value="warehouse">Warehouse</SelectItem>
+                                      <SelectItem value="condo">Condo</SelectItem>
+                                      <SelectItem value="townhouse">Townhouse</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Condition *</Label>
+                                  <Select
+                                    value={editingItem?.condition || "used"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="new">New</SelectItem>
+                                      <SelectItem value="used">Used</SelectItem>
+                                      <SelectItem value="renovated">Renovated</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bedrooms || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, bedrooms: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="3"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bathrooms || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, bathrooms: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Size (sqm)</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.size || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, size: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="120"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
                                   <Input
                                     type="number"
                                     value={editingItem?.yearBuilt || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, yearBuilt: Number(e.target.value) })
-                                    }
+                                    onChange={(e) => setEditingItem({ ...editingItem, yearBuilt: Number(e.target.value) })}
                                     className="text-sm"
                                     placeholder="2015"
                                     min="1900"
                                     max={new Date().getFullYear()}
                                   />
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Floors</Label>
                                   <Input
@@ -2183,28 +2012,10 @@ export function AdminDashboard() {
                                     onChange={(e) => setEditingItem({ ...editingItem, floors: Number(e.target.value) })}
                                     className="text-sm"
                                     placeholder="2"
-                                    min="1"
-                                  />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Parking Spaces</Label>
-                                  <Input
-                                    type="number"
-                                    value={editingItem?.parkingSpaces || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, parkingSpaces: Number(e.target.value) })
-                                    }
-                                    className="text-sm"
-                                    placeholder="1"
-                                    min="0"
                                   />
                                 </div>
                               </div>
-                            </>
-                          )}
 
-                          {selectedCategory === "lands" && (
-                            <>
                               <div className="space-y-2">
                                 <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
                                 <Select
@@ -2226,17 +2037,63 @@ export function AdminDashboard() {
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Size Value *</Label>
+                                  <Label className="text-xs sm:text-sm font-medium">City *</Label>
+                                  <Input
+                                    value={editingItem?.city || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, city: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Addis Ababa"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Region *</Label>
+                                  <Input
+                                    value={editingItem?.region || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, region: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Addis Ababa"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Address *</Label>
+                                  <Input
+                                    value={editingItem?.address || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, address: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Bole, Megenagna"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Kebele</Label>
+                                  <Input
+                                    value={editingItem?.kebele || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, kebele: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="01"
+                                  />
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "lands" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Size (Value) *</Label>
                                   <Input
                                     type="number"
                                     value={editingItem?.sizeValue || ""}
-                                    onChange={(e) =>
-                                      setEditingItem({ ...editingItem, sizeValue: Number(e.target.value) })
-                                    }
+                                    onChange={(e) => setEditingItem({ ...editingItem, sizeValue: Number(e.target.value) })}
                                     className="text-sm"
-                                    placeholder="5.5"
-                                    min="0.1"
-                                    step="0.1"
+                                    placeholder="1000"
+                                    required
                                   />
                                 </div>
                                 <div className="space-y-2">
@@ -2250,73 +2107,46 @@ export function AdminDashboard() {
                                     </SelectTrigger>
                                     <SelectContent>
                                       <SelectItem value="hectare">Hectare</SelectItem>
+                                      <SelectItem value="sqm">Square Meter</SelectItem>
                                       <SelectItem value="acre">Acre</SelectItem>
-                                      <SelectItem value="sqm">Square Meters</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
                               </div>
+
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Zoning *</Label>
-                                  <Select
+                                  <Input
                                     value={editingItem?.zoning || ""}
-                                    onValueChange={(value) => setEditingItem({ ...editingItem, zoning: value })}
-                                  >
-                                    <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue placeholder="Select zoning" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="residential">Residential</SelectItem>
-                                      <SelectItem value="commercial">Commercial</SelectItem>
-                                      <SelectItem value="industrial">Industrial</SelectItem>
-                                      <SelectItem value="agricultural">Agricultural</SelectItem>
-                                      <SelectItem value="recreational">Recreational</SelectItem>
-                                      <SelectItem value="mixed">Mixed</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    onChange={(e) => setEditingItem({ ...editingItem, zoning: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Residential, Commercial"
+                                    required
+                                  />
                                 </div>
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Land Use *</Label>
-                                  <Select
+                                  <Input
                                     value={editingItem?.landUse || ""}
-                                    onValueChange={(value) => setEditingItem({ ...editingItem, landUse: value })}
-                                  >
-                                    <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue placeholder="Select land use" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="development">Development</SelectItem>
-                                      <SelectItem value="farming">Farming</SelectItem>
-                                      <SelectItem value="commercial">Commercial</SelectItem>
-                                      <SelectItem value="recreation">Recreation</SelectItem>
-                                      <SelectItem value="vineyard">Vineyard</SelectItem>
-                                      <SelectItem value="mining">Mining</SelectItem>
-                                      <SelectItem value="tourism">Tourism</SelectItem>
-                                      <SelectItem value="technology">Technology</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    onChange={(e) => setEditingItem({ ...editingItem, landUse: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Agricultural, Industrial"
+                                    required
+                                  />
                                 </div>
                               </div>
+
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Topography *</Label>
-                                  <Select
+                                  <Input
                                     value={editingItem?.topography || ""}
-                                    onValueChange={(value) => setEditingItem({ ...editingItem, topography: value })}
-                                  >
-                                    <SelectTrigger className="text-xs sm:text-sm">
-                                      <SelectValue placeholder="Select topography" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="flat">Flat</SelectItem>
-                                      <SelectItem value="hilly">Hilly</SelectItem>
-                                      <SelectItem value="mountainous">Mountainous</SelectItem>
-                                      <SelectItem value="rolling">Rolling</SelectItem>
-                                      <SelectItem value="desert">Desert</SelectItem>
-                                      <SelectItem value="sloped">Sloped</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                    onChange={(e) => setEditingItem({ ...editingItem, topography: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Flat, Hilly"
+                                    required
+                                  />
                                 </div>
                                 <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
@@ -2330,12 +2160,40 @@ export function AdminDashboard() {
                                     <SelectContent>
                                       <SelectItem value="none">None</SelectItem>
                                       <SelectItem value="well">Well</SelectItem>
-                                      <SelectItem value="river">River</SelectItem>
-                                      <SelectItem value="lake">Lake</SelectItem>
                                       <SelectItem value="municipal">Municipal</SelectItem>
-                                      <SelectItem value="borehole">Borehole</SelectItem>
                                     </SelectContent>
                                   </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
+                                  <Select
+                                    value={editingItem?.owner || ""}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue placeholder="Select owner" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {owners.map((owner) => (
+                                        <SelectItem key={owner._id} value={owner._id}>
+                                          {owner.fullName}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Price per Sqm</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.pricePerSqm || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, pricePerSqm: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="1000"
+                                  />
                                 </div>
                               </div>
 
@@ -2374,55 +2232,34 @@ export function AdminDashboard() {
                                   />
                                 </div>
                                 <div className="space-y-2">
-                                  <Label className="text-xs sm:text-sm font-medium">Zone</Label>
-                                  <Input
-                                    value={editingItem?.zone || ""}
-                                    onChange={(e) => setEditingItem({ ...editingItem, zone: e.target.value })}
-                                    className="text-sm"
-                                    placeholder="Zone name"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                                <div className="space-y-2">
                                   <Label className="text-xs sm:text-sm font-medium">Kebele</Label>
                                   <Input
                                     value={editingItem?.kebele || ""}
                                     onChange={(e) => setEditingItem({ ...editingItem, kebele: e.target.value })}
                                     className="text-sm"
-                                    placeholder="Kebele name"
+                                    placeholder="01"
                                   />
                                 </div>
                               </div>
                             </>
                           )}
-
-                          {/* Adding Description field with character count */}
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Description * (20-1000 characters)</Label>
-                            <Textarea
-                              value={editingItem?.description || ""}
-                              onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                              rows={4}
-                              className="text-sm"
-                              placeholder="Enter a detailed description (minimum 20 characters)"
-                              minLength={20}
-                              maxLength={1000}
-                            />
-                            <div className="text-xs text-gray-500">
-                              {(editingItem?.description || "").length}/1000 characters
-                              {(editingItem?.description || "").length < 20 && (
-                                <span className="text-red-500 ml-2">Minimum 20 characters required</span>
-                              )}
-                            </div>
-                          </div>
                         </div>
 
                         <div className="space-y-3 sm:space-y-4">
                           <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Description *</Label>
+                            <Textarea
+                              value={editingItem?.description || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                              className="text-sm min-h-[100px] sm:min-h-[150px]"
+                              placeholder="Describe the listing in detail..."
+                              required
+                            />
+                          </div>
+
+                          <div className="space-y-2">
                             <Label className="text-xs sm:text-sm font-medium">Images</Label>
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-5 md:p-6 text-center hover:border-gray-400 transition-colors">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-6 text-center">
                               <input
                                 type="file"
                                 multiple
@@ -2431,153 +2268,323 @@ export function AdminDashboard() {
                                 className="hidden"
                                 id="image-upload"
                               />
-                              <label htmlFor="image-upload" className="cursor-pointer">
-                                <div className="space-y-2">
-                                  <Upload className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400 mx-auto" />
-                                  <div className="text-xs sm:text-sm text-gray-600">
-                                    <span className="font-medium text-brand-blue hover:text-brand-blue/80">
-                                      Click to upload
-                                    </span>{" "}
-                                    or drag and drop
-                                  </div>
-                                  <div className="text-xxs sm:text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</div>
-                                </div>
+                              <label
+                                htmlFor="image-upload"
+                                className="flex flex-col items-center justify-center cursor-pointer"
+                              >
+                                <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 text-gray-400 mb-2" />
+                                <span className="text-xs sm:text-sm text-gray-600">
+                                  Drag and drop images or click to upload
+                                </span>
                               </label>
                             </div>
-                          </div>
-
-                          {uploadedImages.length > 0 && (
-                            <div className="space-y-2">
-                              <Label className="text-xs sm:text-sm font-medium">
-                                Uploaded Images ({uploadedImages.length})
-                              </Label>
-                              <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+                            {uploadedImages.length > 0 && (
+                              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
                                 {uploadedImages.map((image, index) => (
-                                  <div key={index} className="relative group">
-                                    <div className="aspect-square relative overflow-hidden rounded-lg border">
-                                      <img
-                                        src={
-                                          image instanceof File
-                                            ? URL.createObjectURL(image)
-                                            : image || "/placeholder.svg"
-                                        }
-                                        alt={`Upload ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                        onLoad={(e) => {
-                                          if (image instanceof File) {
-                                            const img = e.target as HTMLImageElement
-                                            setTimeout(() => URL.revokeObjectURL(img.src), 1000)
-                                          }
-                                        }}
-                                      />
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        className="absolute top-1 right-1 h-5 w-5 sm:h-6 sm:w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={() => removeImage(index)}
-                                      >
-                                        <X className="w-2 h-2 sm:w-3 sm:h-3" />
-                                      </Button>
-                                    </div>
-                                    {index === 0 && (
-                                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                                        <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
-                                      </div>
-                                    )}
+                                  <div key={index} className="relative">
+                                    <img
+                                      src={image instanceof File ? URL.createObjectURL(image) : image}
+                                      alt={`Uploaded ${index + 1}`}
+                                      className="w-full h-24 sm:h-32 object-cover rounded-lg"
+                                    />
+                                    <button
+                                      onClick={() => removeImage(index)}
+                                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 sm:p-1.5 hover:bg-red-600"
+                                    >
+                                      <X className="w-3 h-3 sm:w-4 sm:h-4" />
+                                    </button>
                                   </div>
                                 ))}
                               </div>
-                              {uploadedImages.length === 0 && (
-                                <div className="text-center py-4 sm:py-6 text-gray-500">
-                                  <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-2 text-gray-300" />
-                                  <p className="text-xs sm:text-sm">No images uploaded yet</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       </div>
-                      <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+
+                      <div className="flex justify-end gap-2 sm:gap-4 mt-4 sm:mt-6">
                         <Button
                           variant="outline"
-                          className="text-xs sm:text-sm bg-transparent"
                           onClick={() => {
                             setIsDialogOpen(false)
+                            setEditingItem(null)
                             setUploadedImages([])
                           }}
+                          className="text-xs sm:text-sm"
+                        >
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSave} className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
+                          Save
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+                      <DialogHeader>
+                        <DialogTitle className="text-sm sm:text-base">
+                          {viewingItem?.title || `${selectedCategory.slice(0, -1)} Details`}
+                        </DialogTitle>
+                      </DialogHeader>
+                      {viewingItem && (
+                        <div className="space-y-3 sm:space-y-4">
+                          {viewingItem.images && viewingItem.images.length > 0 && (
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-4">
+                              {viewingItem.images.map((image, index) => (
+                                <img
+                                  key={index}
+                                  src={image}
+                                  alt={`${viewingItem.title} ${index + 1}`}
+                                  className="w-full h-24 sm:h-32 object-cover rounded-lg"
+                                />
+                              ))}
+                            </div>
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Title</p>
+                              <p className="text-sm sm:text-base">{viewingItem.title}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Price</p>
+                              <p className="text-sm sm:text-base">ETB {(viewingItem.price || 0).toLocaleString()}</p>
+                            </div>
+                            {selectedCategory === "cars" && (
+                              <>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Make</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.make}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Model</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.model}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Year</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.year}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Mileage</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.mileage?.toLocaleString()} km</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Fuel Type</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.fuelType}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Transmission</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.transmission}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Body Type</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.bodyType}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Color</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.color}</p>
+                                </div>
+                              </>
+                            )}
+                            {selectedCategory === "houses" && (
+                              <>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Property Type</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.propertyType}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Bedrooms</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.bedrooms}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Bathrooms</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.bathrooms}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Size</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.size} sqm</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Year Built</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.yearBuilt}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Floors</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.floors}</p>
+                                </div>
+                              </>
+                            )}
+                            {selectedCategory === "lands" && (
+                              <>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Size</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.sizeValue} {viewingItem.sizeUnit}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Zoning</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.zoning}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Land Use</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.landUse}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Topography</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.topography}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Water Access</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.waterAccess}</p>
+                                </div>
+                              </>
+                            )}
+                            {selectedCategory === "machines" && (
+                              <>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Category</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.category}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Brand</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.brand}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Model</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.model}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Year Manufactured</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.yearManufactured}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Hours Used</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.hoursUsed}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs sm:text-sm font-medium">Condition</p>
+                                  <p className="text-sm sm:text-base">{viewingItem.condition}</p>
+                                </div>
+                              </>
+                            )}
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">City</p>
+                              <p className="text-sm sm:text-base">{viewingItem.city}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Region</p>
+                              <p className="text-sm sm:text-base">{viewingItem.region}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Address</p>
+                              <p className="text-sm sm:text-base">{viewingItem.address}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Kebele</p>
+                              <p className="text-sm sm:text-base">{viewingItem.kebele}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Owner</p>
+                              <p className="text-sm sm:text-base">{viewingItem.owner}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs sm:text-sm font-medium">Status</p>
+                              <p className="text-sm sm:text-base">{viewingItem.status}</p>
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-xs sm:text-sm font-medium">Description</p>
+                            <p className="text-sm sm:text-base">{viewingItem.description}</p>
+                          </div>
+                        </div>
+                      )}
+                    </DialogContent>
+                  </Dialog>
+
+                  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <DialogContent className="max-w-xs sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
+                      </DialogHeader>
+                      <p className="text-sm sm:text-base">
+                        Are you sure you want to delete this {selectedCategory.slice(0, -1)}?
+                      </p>
+                      <div className="flex justify-end gap-2 sm:gap-4 mt-4 sm:mt-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => setIsDeleteDialogOpen(false)}
+                          className="text-xs sm:text-sm"
                         >
                           Cancel
                         </Button>
                         <Button
-                          onClick={handleSave}
-                          className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm"
+                          variant="destructive"
+                          onClick={confirmDelete}
+                          className="text-xs sm:text-sm"
                         >
-                          Save
+                          Delete
                         </Button>
                       </div>
                     </DialogContent>
                   </Dialog>
                 </div>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead className="text-xs sm:text-sm">Title</TableHead>
                       <TableHead className="text-xs sm:text-sm">Price</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Location</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Type</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Created</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {getCurrentData()
-                      .slice(0, 10)
-                      .map((item) => (
-                        <TableRow key={item.id}>
-                          <TableCell className="font-medium text-xs sm:text-sm">{item.title}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">{item.location}</TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
-                              {item.listingType === "sale" ? "For Sale" : "For Rent"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex space-x-2">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
-                                onClick={() => handleView(item)}
-                              >
-                                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
-                                onClick={() => handleEdit(item)}
-                              >
-                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
-                                onClick={() => handleDelete(item)}
-                              >
-                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                    {getCurrentData().map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="text-xs sm:text-sm font-medium">{item.title}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <Badge
+                            className={getStatusColor(item.status)}
+                            variant="outline"
+                          >
+                            {item.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleView(item)}
+                              className="p-1 sm:p-2"
+                            >
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(item)}
+                              className="p-1 sm:p-2"
+                            >
+                              <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(item)}
+                              className="p-1 sm:p-2 text-red-600 hover:text-red-800"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                   </TableBody>
                 </Table>
               </CardContent>
@@ -2587,80 +2594,66 @@ export function AdminDashboard() {
           <TabsContent value="users" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                  User Management
-                </CardTitle>
+                <CardTitle className="text-sm sm:text-base">Manage Users</CardTitle>
                 <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button
-                      className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
-                      onClick={() => setEditingUser(null)}
-                    >
+                    <Button className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
                       <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      Add User
+                      Add New User
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-xs sm:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-xs sm:max-w-md md:max-w-lg max-h-[90vh] overflow-y-auto mx-4">
                     <DialogHeader>
                       <DialogTitle className="text-sm sm:text-base">
                         {editingUser ? "Edit User" : "Add New User"}
                       </DialogTitle>
                     </DialogHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3 sm:space-y-4">
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Full Name *</label>
+                        <Label className="text-xs sm:text-sm font-medium">Full Name *</Label>
                         <Input
                           value={editingUser?.fullName || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
                           className="text-sm"
-                          placeholder="Enter full name"
-                          maxLength={80}
+                          placeholder="John Doe"
+                          required
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Email *</label>
+                        <Label className="text-xs sm:text-sm font-medium">Email *</Label>
                         <Input
                           type="email"
                           value={editingUser?.email || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
                           className="text-sm"
-                          placeholder="Enter email address"
+                          placeholder="john.doe@example.com"
+                          required
                         />
                       </div>
-
-                      {!editingUser?._id && (
-                        <div className="space-y-2">
-                          <label className="text-xs sm:text-sm font-medium">Password *</label>
-                          <Input
-                            type="password"
-                            value={editingUser?.password || ""}
-                            onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                            className="text-sm"
-                            placeholder="Enter password (min 6 characters)"
-                            minLength={6}
-                          />
-                        </div>
-                      )}
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Phone *</label>
+                        <Label className="text-xs sm:text-sm font-medium">Password</Label>
                         <Input
-                          type="tel"
+                          type="password"
+                          value={editingUser?.password || ""}
+                          onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+                          className="text-sm"
+                          placeholder="********"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Phone</Label>
+                        <Input
                           value={editingUser?.phone || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
                           className="text-sm"
-                          placeholder="+251xxxxxxxxx"
-                          pattern="^\+251\d{9}$"
+                          placeholder="+251 911 000 000"
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Role</label>
+                        <Label className="text-xs sm:text-sm font-medium">Role</Label>
                         <Select
                           value={editingUser?.role || "user"}
-                          onChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />
@@ -2668,73 +2661,58 @@ export function AdminDashboard() {
                           <SelectContent>
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="owner">Owner</SelectItem>
+                            <SelectItem value="moderator">Moderator</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Avatar URL</label>
-                        <Input
-                          type="url"
-                          value={editingUser?.avatar || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, avatar: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter avatar image URL"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Street Address</label>
+                        <Label className="text-xs sm:text-sm font-medium">Street</Label>
                         <Input
                           value={editingUser?.street || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, street: e.target.value })}
                           className="text-sm"
-                          placeholder="Enter street address"
+                          placeholder="123 Main St"
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">City</label>
+                        <Label className="text-xs sm:text-sm font-medium">City</Label>
                         <Input
                           value={editingUser?.city || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, city: e.target.value })}
                           className="text-sm"
-                          placeholder="Enter city"
+                          placeholder="Addis Ababa"
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Region</label>
+                        <Label className="text-xs sm:text-sm font-medium">Region</Label>
                         <Input
                           value={editingUser?.region || ""}
                           onChange={(e) => setEditingUser({ ...editingUser, region: e.target.value })}
                           className="text-sm"
-                          placeholder="Enter region"
+                          placeholder="Addis Ababa"
                         />
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Country</label>
-                        <Input
-                          value={editingUser?.country || "ETHIOPIA"}
-                          onChange={(e) => setEditingUser({ ...editingUser, country: e.target.value.toUpperCase() })}
-                          className="text-sm"
-                          placeholder="Enter country"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Status</label>
+                        <Label className="text-xs sm:text-sm font-medium">Country</Label>
                         <Select
-                          value={
-                            editingUser?.isActive !== undefined
-                              ? editingUser.isActive
-                                ? "active"
-                                : "inactive"
-                              : "active"
-                          }
-                          onChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
+                          value={editingUser?.country || "ETHIOPIA"}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, country: value })}
+                        >
+                          <SelectTrigger className="text-xs sm:text-sm">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ETHIOPIA">Ethiopia</SelectItem>
+                            <SelectItem value="USA">United States</SelectItem>
+                            <SelectItem value="UK">United Kingdom</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Status</Label>
+                        <Select
+                          value={editingUser?.isActive ? "active" : "inactive"}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />
@@ -2745,18 +2723,11 @@ export function AdminDashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-
                       <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Verification Status</label>
+                        <Label className="text-xs sm:text-sm font-medium">Verified</Label>
                         <Select
-                          value={
-                            editingUser?.isVerified !== undefined
-                              ? editingUser.isVerified
-                                ? "verified"
-                                : "unverified"
-                              : "unverified"
-                          }
-                          onChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
+                          value={editingUser?.isVerified ? "verified" : "unverified"}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />
@@ -2768,29 +2739,62 @@ export function AdminDashboard() {
                         </Select>
                       </div>
                     </div>
-                    <div className="flex justify-end space-x-2 mt-6">
+                    <div className="flex justify-end gap-2 sm:gap-4 mt-4 sm:mt-6">
                       <Button
                         variant="outline"
-                        className="text-xs sm:text-sm bg-transparent"
-                        onClick={() => setIsUserDialogOpen(false)}
+                        onClick={() => {
+                          setIsUserDialogOpen(false)
+                          setEditingUser(null)
+                        }}
+                        className="text-xs sm:text-sm"
                       >
                         Cancel
                       </Button>
                       <Button
                         onClick={handleSaveUser}
-                        className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
+                        className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm"
                       >
                         Save
                       </Button>
                     </div>
                   </DialogContent>
                 </Dialog>
+                <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+                  <DialogContent className="max-w-xs sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle className="text-sm sm:text-base">Confirm User Deletion</DialogTitle>
+                    </DialogHeader>
+                    <p className="text-sm sm:text-base">
+                      Are you sure you want to delete the user {deletingUser?.name}?
+                    </p>
+                    <div className="flex justify-end gap-2 sm:gap-4 mt-4 sm:mt-6">
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsDeleteUserDialogOpen(false)}
+                        className="text-xs sm:text-sm"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          if (deletingUser) {
+                            // Implement user deletion logic here
+                            setIsDeleteUserDialogOpen(false)
+                            setDeletingUser(null)
+                          }
+                        }}
+                        className="text-xs sm:text-sm"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent>
                 {isLoadingUsers ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="text-sm text-gray-500">Loading users...</div>
-                  </div>
+                  <div className="text-center py-4">Loading users...</div>
                 ) : (
                   <Table>
                     <TableHeader>
@@ -2799,43 +2803,43 @@ export function AdminDashboard() {
                         <TableHead className="text-xs sm:text-sm">Email</TableHead>
                         <TableHead className="text-xs sm:text-sm">Role</TableHead>
                         <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                        <TableHead className="text-xs sm:text-sm">Verified</TableHead>
                         <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {users.slice(0, 10).map((user) => (
+                      {users.map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell className="font-medium text-xs sm:text-sm">{user.name}</TableCell>
+                          <TableCell className="text-xs sm:text-sm font-medium">{user.name}</TableCell>
                           <TableCell className="text-xs sm:text-sm">{user.email}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">{user.role}</TableCell>
                           <TableCell className="text-xs sm:text-sm">
-                            <Badge variant={user.role === "admin" ? "default" : "secondary"}>{user.role}</Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            <Badge variant={user.status === "active" ? "default" : "secondary"}>{user.status}</Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            <Badge variant={user.isVerified ? "default" : "secondary"}>
-                              {user.isVerified ? "Verified" : "Unverified"}
+                            <Badge
+                              className={user.status === "active" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                              variant="outline"
+                            >
+                              {user.status}
                             </Badge>
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-xs sm:text-sm">
                             <div className="flex space-x-2">
                               <Button
+                                variant="ghost"
                                 size="sm"
-                                variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
                                 onClick={() => handleEditUser(user)}
+                                className="p-1 sm:p-2"
                               >
                                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                               <Button
+                                variant="ghost"
                                 size="sm"
-                                variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
-                                onClick={() => toggleUserStatus(user.id)}
+                                onClick={() => {
+                                  setDeletingUser(user)
+                                  setIsDeleteUserDialogOpen(true)
+                                }}
+                                className="p-1 sm:p-2 text-red-600 hover:text-red-800"
                               >
-                                {user.status === "active" ? "Deactivate" : "Activate"}
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -2851,13 +2855,10 @@ export function AdminDashboard() {
           <TabsContent value="deals" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-                  Deal Management
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">Review and manage all platform deals</CardDescription>
+                <CardTitle className="text-sm sm:text-base">Manage Deals</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Review and manage all deals</CardDescription>
               </CardHeader>
-              <CardContent className="p-0">
+              <CardContent>
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -2866,91 +2867,76 @@ export function AdminDashboard() {
                       <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
                       <TableHead className="text-xs sm:text-sm">Amount</TableHead>
                       <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {deals.slice(0, 10).map((deal) => (
+                    {deals.map((deal) => (
                       <TableRow key={deal.id}>
-                        <TableCell className="text-xs sm:text-sm font-mono">
-                          {deal.dealId || deal.id.slice(-8)}
-                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm font-medium">{deal.id}</TableCell>
                         <TableCell className="text-xs sm:text-sm">
                           <div className="flex items-center space-x-2">
                             {getItemIcon(deal.itemType)}
-                            <span className="font-medium">{deal.item.title}</span>
+                            <span>{deal.itemTitle}</span>
                           </div>
                         </TableCell>
+                        <TableCell className="text-xs sm:text-sm">{deal.buyerName}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">ETB {(deal.amount || 0).toLocaleString()}</TableCell>
                         <TableCell className="text-xs sm:text-sm">
-  <div>
-    <p className="font-medium">
-      {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
-    </p>
-    <p className="text-gray-500">
-      {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
-    </p>
-  </div>
-</TableCell>
-                        <TableCell className="text-xs sm:text-sm font-medium">
-                          ETB {(deal.originalPrice || 0).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
+                          <Badge className={getStatusColor(deal.status)}>
                             {getStatusIcon(deal.status)}
-                            <span>{deal.status}</span>
+                            <span className="ml-1">{deal.status}</span>
                           </Badge>
                         </TableCell>
                         <TableCell className="text-xs sm:text-sm">
-                          {new Date(deal.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1">
+                          <div className="flex space-x-2">
                             <Button
+                              variant="ghost"
                               size="sm"
-                              variant="outline"
-                              className="text-xs bg-transparent"
                               onClick={() => handleViewDeal(deal)}
+                              className="p-1 sm:p-2"
                             >
-                              <Eye className="w-3 h-3" />
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
                             </Button>
                             {deal.status === "pending" && (
                               <>
                                 <Button
+                                  variant="ghost"
                                   size="sm"
-                                  className="text-xs bg-green-600 hover:bg-green-700"
                                   onClick={() => handleAcceptDeal(deal.id)}
+                                  className="p-1 sm:p-2 text-green-600 hover:text-green-800"
                                 >
-                                  Accept
+                                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </Button>
                                 <Button
+                                  variant="ghost"
                                   size="sm"
-                                  variant="destructive"
-                                  className="text-xs"
                                   onClick={() => handleRejectDeal(deal.id)}
+                                  className="p-1 sm:p-2 text-red-600 hover:text-red-800"
                                 >
-                                  Reject
+                                  <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                                 </Button>
                               </>
                             )}
-                            {deal.status === "approved" && (
-                              <Button
-                                size="sm"
-                                className="text-xs bg-blue-600 hover:bg-blue-700"
-                                onClick={() => handleCompleteDeal(deal.id)}
-                              >
-                                Complete
-                              </Button>
-                            )}
-                            {(deal.status === "pending" || deal.status === "approved") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs text-red-600 hover:text-red-700 bg-transparent"
-                                onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
-                              >
-                                Cancel
-                              </Button>
+                            {deal.status === "accepted" && (
+                              <>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCompleteDeal(deal.id)}
+                                  className="p-1 sm:p-2 text-green-600 hover:text-green-800"
+                                >
+                                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleIncompleteDeal(deal.id)}
+                                  className="p-1 sm:p-2 text-red-600 hover:text-red-800"
+                                >
+                                  <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         </TableCell>
@@ -2960,6 +2946,83 @@ export function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+
+            <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
+              <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl max-h-[90vh] overflow-y-auto mx-4">
+                <DialogHeader>
+                  <DialogTitle className="text-sm sm:text-base">Deal Details</DialogTitle>
+                </DialogHeader>
+                {selectedDeal && (
+                  <div className="space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Deal ID</p>
+                        <p className="text-sm sm:text-base">{selectedDeal.id}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Item</p>
+                        <p className="text-sm sm:text-base">{selectedDeal.itemTitle}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Buyer</p>
+                        <p className="text-sm sm:text-base">{selectedDeal.buyerName}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Amount</p>
+                        <p className="text-sm sm:text-base">ETB {(selectedDeal.amount || 0).toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Status</p>
+                        <Badge className={getStatusColor(selectedDeal.status)}>
+                          {getStatusIcon(selectedDeal.status)}
+                          <span className="ml-1">{selectedDeal.status}</span>
+                        </Badge>
+                      </div>
+                      <div>
+                        <p className="text-xs sm:text-sm font-medium">Created At</p>
+                        <p className="text-sm sm:text-base">{new Date(selectedDeal.createdAt).toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs sm:text-sm font-medium">Description</p>
+                      <p className="text-sm sm:text-base">{selectedDeal.description || "No description provided"}</p>
+                    </div>
+                    {selectedDeal.status === "pending" && (
+                      <div className="flex justify-end gap-2 sm:gap-4">
+                        <Button
+                          onClick={() => handleAcceptDeal(selectedDeal.id)}
+                          className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          onClick={() => handleRejectDeal(selectedDeal.id)}
+                          className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                    {selectedDeal.status === "accepted" && (
+                      <div className="flex justify-end gap-2 sm:gap-4">
+                        <Button
+                          onClick={() => handleCompleteDeal(selectedDeal.id)}
+                          className="bg-green-600 hover:bg-green-700 text-xs sm:text-sm"
+                        >
+                          Complete
+                        </Button>
+                        <Button
+                          onClick={() => handleIncompleteDeal(selectedDeal.id)}
+                          className="bg-red-600 hover:bg-red-700 text-xs sm:text-sm"
+                        >
+                          Mark Incomplete
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </DialogContent>
+            </Dialog>
           </TabsContent>
         </Tabs>
       </div>

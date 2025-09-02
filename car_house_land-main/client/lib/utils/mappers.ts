@@ -37,57 +37,61 @@ export function mapApiCarToLocal(apiCar: any): Car {
 }
 
 export function mapApiDealToLocal(apiDeal: any): Deal {
+  if (!apiDeal) {
+    throw new Error("apiDeal is null or undefined")
+  }
+
   return {
-    _id: apiDeal._id,
-    id: apiDeal._id, // For compatibility
-    dealId: apiDeal.dealId,
+    _id: apiDeal._id || `deal-${Date.now()}`,
+    id: apiDeal._id || `deal-${Date.now()}`, // For compatibility
+    dealId: apiDeal.dealId || `DEAL-${Date.now()}`,
 
     // Map buyer and seller info
     buyer: {
-      _id: apiDeal.buyer._id || apiDeal.buyer,
-      fullName: apiDeal.buyer.fullName || "Unknown Buyer",
-      email: apiDeal.buyer.email || "",
-      phone: apiDeal.buyer.phone,
+      _id: apiDeal.buyer?._id || apiDeal.buyer || "unknown-buyer",
+      fullName: apiDeal.buyer?.fullName || "Unknown Buyer",
+      email: apiDeal.buyer?.email || "",
+      phone: apiDeal.buyer?.phone || "",
     },
     seller: {
-      _id: apiDeal.seller._id || apiDeal.seller,
-      fullName: apiDeal.seller.fullName || "Unknown Seller",
-      email: apiDeal.seller.email || "",
-      phone: apiDeal.seller.phone,
+      _id: apiDeal.seller?._id || apiDeal.seller || "unknown-seller",
+      fullName: apiDeal.seller?.fullName || "Unknown Seller",
+      email: apiDeal.seller?.email || "",
+      phone: apiDeal.seller?.phone || "",
     },
 
     // Map item info
     item: {
-      _id: apiDeal.item._id || apiDeal.item,
-      title: apiDeal.item.title || "Unknown Item",
-      price: apiDeal.item.price || 0,
-      images: apiDeal.item.images || [],
-      description: apiDeal.item.description,
-      location: apiDeal.item.location || apiDeal.item.city,
+      _id: apiDeal.item?._id || apiDeal.item || "unknown-item",
+      title: apiDeal.item?.title || "Unknown Item",
+      price: apiDeal.item?.price || 0,
+      images: apiDeal.item?.images || [],
+      description: apiDeal.item?.description || "",
+      location: apiDeal.item?.location || apiDeal.item?.city || "Unknown Location",
     },
-    itemType: apiDeal.itemType,
+    itemType: apiDeal.itemType || "car",
 
     // Deal details
-    dealType: apiDeal.dealType,
-    message: apiDeal.message,
-    userMessage: apiDeal.message, // For compatibility
+    dealType: apiDeal.dealType || "inquiry",
+    message: apiDeal.message || "",
+    userMessage: apiDeal.message || "", // For compatibility
     originalPrice: apiDeal.item?.price || 0,
-    userOfferPrice: apiDeal.userOfferPrice,
+    userOfferPrice: apiDeal.userOfferPrice || 0,
 
     // Status and timestamps
-    status: apiDeal.status,
-    createdAt: apiDeal.createdAt,
-    updatedAt: apiDeal.updatedAt,
+    status: apiDeal.status || "pending",
+    createdAt: apiDeal.createdAt || new Date().toISOString(),
+    updatedAt: apiDeal.updatedAt || new Date().toISOString(),
     completedAt: apiDeal.completedAt,
     cancelledAt: apiDeal.cancelledAt,
     cancellationReason: apiDeal.cancellationReason,
 
     // Legacy compatibility fields
-    itemId: apiDeal.item._id || apiDeal.item,
-    userId: apiDeal.buyer._id || apiDeal.buyer,
-    userName: apiDeal.buyer.fullName || "Unknown User",
-    userEmail: apiDeal.buyer.email || "",
-    userPhone: apiDeal.buyer.phone,
+    itemId: apiDeal.item?._id || apiDeal.item || "unknown-item",
+    userId: apiDeal.buyer?._id || apiDeal.buyer || "unknown-user",
+    userName: apiDeal.buyer?.fullName || "Unknown User",
+    userEmail: apiDeal.buyer?.email || "",
+    userPhone: apiDeal.buyer?.phone || "",
     chatHistory: [],
     adminInfo: {
       name: "Alemayehu Bekele",

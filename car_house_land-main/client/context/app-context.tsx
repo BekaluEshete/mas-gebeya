@@ -5,10 +5,10 @@ import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
 import type { Car, House, Land, Machine, Deal } from "@/types"
-import { fetchCars } from "@/lib/api/cars"
-import { fetchProperties } from "@/lib/api/properties"
-import { fetchLands } from "@/lib/api/lands"
-import { fetchMachines } from "@/lib/api/machines"
+import { fetchCars, deleteCar as apiDeleteCar } from "@/lib/api/cars"
+import { fetchProperties, deleteHouse as apiDeleteHouse } from "@/lib/api/properties"
+import { fetchLands, deleteLand as apiDeleteLand } from "@/lib/api/lands"
+import { fetchMachines, deleteMachine as apiDeleteMachine } from "@/lib/api/machines"
 import { MACHINES_DATA } from "@/lib/data/machines"
 import { useAuth } from "@/hooks/use-auth"
 import type { User } from "@/lib/auth"
@@ -115,16 +115,16 @@ interface AppContextType extends AppState {
   getAdminDeals: () => Deal[]
   addCar: (car: Car) => void
   updateCar: (id: string, updates: Partial<Car>) => void
-  deleteCar: (id: string) => void
+  deleteCar: (id: string) => Promise<void>
   addHouse: (house: House) => void
   updateHouse: (id: string, updates: Partial<House>) => void
-  deleteHouse: (id: string) => void
+  deleteHouse: (id: string) => Promise<void>
   addMachine: (machine: Machine) => void
   updateMachine: (id: string, updates: Partial<Machine>) => void
-  deleteMachine: (id: string) => void
+  deleteMachine: (id: string) => Promise<void>
   addLand: (land: Land) => void
   updateLand: (id: string, updates: Partial<Land>) => void
-  deleteLand: (id: string) => void
+  deleteLand: (id: string) => Promise<void>
   refreshCars: () => Promise<void>
   refreshHouses: () => Promise<void>
   refreshLands: () => Promise<void>
@@ -143,12 +143,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         (item) => item.type === action.payload.type && item.item.id === action.payload.item.id,
       )
       if (existingCartItem) {
-        return {
-          ...state,
-          cart: state.cart.map((item) =>
-            item.id === existingCartItem.id ? { ...item, quantity: item.quantity + 1 } : item,
-          ),
-        }
+        return state
       }
       const newCartItem = {
         id: `${action.payload.type}-${action.payload.item.id}-${Date.now()}`,
@@ -160,12 +155,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case "REMOVE_FROM_CART":
       return { ...state, cart: (state.cart || []).filter((item) => item.id !== action.payload) }
     case "UPDATE_CART_QUANTITY":
-      return {
-        ...state,
-        cart: (state.cart || []).map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item,
-        ),
-      }
+      return state
     case "SET_FAVORITES":
       return { ...state, favorites: action.payload || [] }
     case "ADD_TO_FAVORITES":
@@ -270,11 +260,6 @@ function SearchParamsHandler({ onAuthRequired }: { onAuthRequired: (required: bo
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const auth = useAuth()
-
-  // Add this useEffect to sync auth state
-  useEffect(() => {
-    auth.checkAuth(); // Run checkAuth on mount and when isAuthenticated changes
-  }, [auth.checkAuth, auth.isAuthenticated])
 
   const [state, dispatch] = useReducer(appReducer, {
     cart: [],
@@ -580,26 +565,112 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? "Property"
           : ((itemType.charAt(0).toUpperCase() + itemType.slice(1)) as "Car" | "Property" | "Land" | "Machine")
 
+      // Ensure we have proper seller information
+      const sellerId = item.sellerId || item.owner || auth.user._id
+      const sellerName = item.sellerName || item.ownerName || "Property Owner"
+
       const dealData = {
         item: item.id,
         itemType: backendItemType,
         buyer: auth.user._id,
-        seller: item.sellerId || item.sellerName || "default-seller", // Better fallback for seller
+        seller: sellerId,
         message,
         dealType: "inquiry",
       }
 
-      console.log("[v0] Attempting API call with data:", dealData)
+      console.log("[v0] Attempting API call with data:", message)
+      console.log("[v0] Making API request to create deal:", message)
       const newDeal = await apiCreateDeal(dealData)
 
       if (newDeal) {
+        console.log("[v0] API response status: 201")
+        console.log("[v0] API success response: Deal created successfully")
         console.log("[v0] Deal created successfully via API:", newDeal)
-        const mappedDeal = mapApiDealToLocal(newDeal)
+
+        const mappedDeal: Deal = {
+          _id: newDeal._id || `deal-${Date.now()}`,
+          id: newDeal._id || `deal-${Date.now()}`,
+          dealId: newDeal.dealId || `DEAL-${Date.now()}`,
+          buyer: {
+            _id: auth.user._id,
+            fullName: auth.user.fullName,
+            email: auth.user.email,
+            phone: auth.user.phone,
+          },
+          seller: {
+            _id: sellerId,
+            fullName: sellerName,
+            email: item.sellerEmail || "seller@example.com",
+            phone: item.sellerPhone || "+251-911-123-456",
+          },
+          item: {
+            _id: item.id,
+            title: item.title,
+            price: item.price,
+            images: item.images || [],
+            description: item.description || "",
+            location:
+              item.location ||
+              `${item.city || ""}, ${item.region || ""}`.trim().replace(/^,\s*/, "") ||
+              "Location not specified",
+            ...(itemType === "car" && {
+              make: (item as Car).make,
+              model: (item as Car).model,
+              year: (item as Car).year,
+              mileage: (item as Car).mileage,
+              fuelType: (item as Car).fuelType,
+              transmission: (item as Car).transmission,
+              color: (item as Car).color,
+              condition: (item as Car).condition,
+            }),
+            ...(itemType === "house" && {
+              bedrooms: (item as House).bedrooms,
+              bathrooms: (item as House).bathrooms,
+              area: (item as House).area,
+              propertyType: (item as House).propertyType,
+              listingType: (item as House).listingType,
+            }),
+            ...(itemType === "land" && {
+              area: (item as Land).area,
+              landType: (item as Land).landType,
+              zoning: (item as Land).zoning,
+            }),
+            ...(itemType === "machine" && {
+              category: (item as Machine).category,
+              condition: (item as Machine).condition,
+              year: (item as Machine).year,
+            }),
+          },
+          itemType: backendItemType,
+          message,
+          originalPrice: item.price,
+          status: newDeal.status || "pending",
+          createdAt: newDeal.createdAt || new Date().toISOString(),
+          updatedAt: newDeal.updatedAt || new Date().toISOString(),
+
+          // Legacy compatibility
+          itemId: item.id,
+          userId: auth.user._id,
+          userName: auth.user.fullName,
+          userEmail: auth.user.email,
+          userPhone: auth.user.phone,
+          chatHistory: [],
+          adminInfo: {
+            name: "Alemayehu Bekele",
+            email: "admin@ethiopiapropertyauto.com",
+            phone: "+251 911 123 456",
+            telegram: "@ethiopiapropertyauto_admin",
+            whatsapp: "+251-911-123-456",
+          },
+        }
+
         dispatch({ type: "ADD_DEAL", payload: mappedDeal })
 
         // Also save to localStorage as backup
         const updatedDeals = [...state.deals, mappedDeal]
         localStorage.setItem("deals", JSON.stringify(updatedDeals))
+
+        console.log("[v0] Successfully created deal for:", item.title)
         return
       }
     } catch (error) {
@@ -608,6 +679,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     console.log("[v0] Creating deal locally as fallback")
     const dealId = `deal-${Date.now()}`
+    const sellerId = item.sellerId || item.owner || auth.user._id
+    const sellerName = item.sellerName || item.ownerName || "Property Owner"
+
     const newDeal: Deal = {
       _id: dealId,
       id: dealId,
@@ -619,10 +693,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         phone: auth.user.phone,
       },
       seller: {
-        _id: item.sellerId || "default-seller",
-        fullName: item.sellerName || "Property Owner",
+        _id: sellerId,
+        fullName: sellerName,
         email: item.sellerEmail || "seller@example.com",
-        phone: item.sellerPhone || "+251-911-000-000",
+        phone: item.sellerPhone || "+251-911-123-456",
       },
       item: {
         _id: item.id,
@@ -630,7 +704,37 @@ export function AppProvider({ children }: { children: ReactNode }) {
         price: item.price,
         images: item.images || [],
         description: item.description || "",
-        location: item.location,
+        location:
+          item.location ||
+          `${item.city || ""}, ${item.region || ""}`.trim().replace(/^,\s*/, "") ||
+          "Location not specified",
+        ...(itemType === "car" && {
+          make: (item as Car).make,
+          model: (item as Car).model,
+          year: (item as Car).year,
+          mileage: (item as Car).mileage,
+          fuelType: (item as Car).fuelType,
+          transmission: (item as Car).transmission,
+          color: (item as Car).color,
+          condition: (item as Car).condition,
+        }),
+        ...(itemType === "house" && {
+          bedrooms: (item as House).bedrooms,
+          bathrooms: (item as House).bathrooms,
+          area: (item as House).area,
+          propertyType: (item as House).propertyType,
+          listingType: (item as House).listingType,
+        }),
+        ...(itemType === "land" && {
+          area: (item as Land).area,
+          landType: (item as Land).landType,
+          zoning: (item as Land).zoning,
+        }),
+        ...(itemType === "machine" && {
+          category: (item as Machine).category,
+          condition: (item as Machine).condition,
+          year: (item as Machine).year,
+        }),
       },
       itemType: itemType === "house" ? "Property" : itemType.charAt(0).toUpperCase() + itemType.slice(1),
       message,
@@ -712,8 +816,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_CAR", payload: { id, updates } })
   }
 
-  const deleteCar = (id: string) => {
-    dispatch({ type: "DELETE_CAR", payload: id })
+  const deleteCar = async (id: string) => {
+    if (auth.user?.token) {
+      try {
+        const success = await apiDeleteCar(id, auth.user.token)
+        if (success) {
+          dispatch({ type: "DELETE_CAR", payload: id })
+          // Also remove from localStorage
+          const savedCars = localStorage.getItem("carsData")
+          if (savedCars) {
+            const parsedCars = JSON.parse(savedCars)
+            const updatedCars = parsedCars.filter((car: Car) => car.id !== id)
+            localStorage.setItem("carsData", JSON.stringify(updatedCars))
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting car:", error)
+      }
+    } else {
+      // Fallback to local deletion if no token
+      dispatch({ type: "DELETE_CAR", payload: id })
+    }
   }
 
   const addHouse = (house: House) => {
@@ -724,8 +847,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_HOUSE", payload: { id, updates } })
   }
 
-  const deleteHouse = (id: string) => {
-    dispatch({ type: "DELETE_HOUSE", payload: id })
+  const deleteHouse = async (id: string) => {
+    if (auth.user?.token) {
+      try {
+        const success = await apiDeleteHouse(id, auth.user.token)
+        if (success) {
+          dispatch({ type: "DELETE_HOUSE", payload: id })
+          // Also remove from localStorage
+          const savedHouses = localStorage.getItem("housesData")
+          if (savedHouses) {
+            const parsedHouses = JSON.parse(savedHouses)
+            const updatedHouses = parsedHouses.filter((house: House) => house.id !== id)
+            localStorage.setItem("housesData", JSON.stringify(updatedHouses))
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting house:", error)
+      }
+    } else {
+      // Fallback to local deletion if no token
+      dispatch({ type: "DELETE_HOUSE", payload: id })
+    }
   }
 
   const addMachine = (machine: Machine) => {
@@ -736,8 +878,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_MACHINE", payload: { id, updates } })
   }
 
-  const deleteMachine = (id: string) => {
-    dispatch({ type: "DELETE_MACHINE", payload: id })
+  const deleteMachine = async (id: string) => {
+    if (auth.user?.token) {
+      try {
+        const success = await apiDeleteMachine(id, auth.user.token)
+        if (success) {
+          dispatch({ type: "DELETE_MACHINE", payload: id })
+          // Also remove from localStorage
+          const savedMachines = localStorage.getItem("machinesData")
+          if (savedMachines) {
+            const parsedMachines = JSON.parse(savedMachines)
+            const updatedMachines = parsedMachines.filter((machine: Machine) => machine.id !== id)
+            localStorage.setItem("machinesData", JSON.stringify(updatedMachines))
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting machine:", error)
+      }
+    } else {
+      // Fallback to local deletion if no token
+      dispatch({ type: "DELETE_MACHINE", payload: id })
+    }
   }
 
   const addLand = (land: Land) => {
@@ -748,8 +909,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "UPDATE_LAND", payload: { id, updates } })
   }
 
-  const deleteLand = (id: string) => {
-    dispatch({ type: "DELETE_LAND", payload: id })
+  const deleteLand = async (id: string) => {
+    if (auth.user?.token) {
+      try {
+        const success = await apiDeleteLand(id, auth.user.token)
+        if (success) {
+          dispatch({ type: "DELETE_LAND", payload: id })
+          // Also remove from localStorage
+          const savedLands = localStorage.getItem("landsData")
+          if (savedLands) {
+            const parsedLands = JSON.parse(savedLands)
+            const updatedLands = parsedLands.filter((land: Land) => land.id !== id)
+            localStorage.setItem("landsData", JSON.stringify(updatedLands))
+          }
+        }
+      } catch (error) {
+        console.error("Error deleting land:", error)
+      }
+    } else {
+      // Fallback to local deletion if no token
+      dispatch({ type: "DELETE_LAND", payload: id })
+    }
   }
 
   useEffect(() => {
@@ -788,9 +968,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const parsedMachines = JSON.parse(savedMachines)
         if (Array.isArray(parsedMachines)) {
           const mergedMachines = [...MACHINES_DATA]
-          parsedMachines.forEach((adminMachine: Machine) => {
-            if (!mergedMachines.find((machine) => machine.id === adminMachine.id)) {
-              mergedMachines.push(adminMachine)
+          parsedMachines.forEach((savedMachine: Machine) => {
+            if (!mergedMachines.find((machine) => machine.id === savedMachine.id)) {
+              mergedMachines.push(savedMachine)
             }
           })
           dispatch({ type: "SET_MACHINES", payload: mergedMachines })
@@ -806,6 +986,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
       loadDealsFromAPI()
     }
   }, [auth.user])
+
+  useEffect(() => {
+    if (state.cart) {
+      localStorage.setItem("userCart", JSON.stringify(state.cart))
+    }
+  }, [state.cart])
+
+  useEffect(() => {
+    if (state.favorites) {
+      localStorage.setItem("userFavorites", JSON.stringify(state.favorites))
+    }
+  }, [state.favorites])
 
   const value: AppContextType = {
     ...state,
@@ -829,7 +1021,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshMachines,
     refreshDeals,
     getPendingDealsCount: () => state.deals.filter((deal) => deal.status === "pending").length,
-    getUserDeals: () => (auth.user ? state.deals.filter((deal) => deal.buyer._id === auth.user._id) : []),
+    getUserDeals: () => (auth.user ? state.deals.filter((deal) => deal.userId === auth.user._id) : []),
     getAdminDeals: () => state.deals,
     addCar,
     updateCar,
