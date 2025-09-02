@@ -1834,7 +1834,7 @@ export function AdminDashboard() {
                                   <Label className="text-xs sm:text-sm font-medium">Fuel Type *</Label>
                                   <Select
                                     value={editingItem?.fuelType || "gasoline"}
-                                    onChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
                                   >
                                     <SelectTrigger className="text-xs sm:text-sm">
                                       <SelectValue />
@@ -1853,7 +1853,7 @@ export function AdminDashboard() {
                                     <Label className="text-xs sm:text-sm font-medium">Condition *</Label>
                                     <Select
                                       value={editingItem?.condition || "used"}
-                                      onChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                                      onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
                                     >
                                       <SelectTrigger className="text-xs sm:text-sm">
                                         <SelectValue />
@@ -1868,7 +1868,7 @@ export function AdminDashboard() {
                                     <Label className="text-xs sm:text-sm font-medium">Transmission *</Label>
                                     <Select
                                       value={editingItem?.transmission || "manual"}
-                                      onChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
+                                      onValueChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
                                     >
                                       <SelectTrigger className="text-xs sm:text-sm">
                                         <SelectValue />
@@ -1886,7 +1886,7 @@ export function AdminDashboard() {
                                 <Label className="text-xs sm:text-sm font-medium">Body Type *</Label>
                                 <Select
                                   value={editingItem?.bodyType || "sedan"}
-                                  onChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
+                                  onValueChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
                                 >
                                   <SelectTrigger className="text-xs sm:text-sm">
                                     <SelectValue />
@@ -2003,7 +2003,7 @@ export function AdminDashboard() {
                                 <Label className="text-xs sm:text-sm font-medium">Features</Label>
                                 <Input
                                   value={editingItem?.features?.join(", ") || ""}
-                                  onChange={(e) =>
+                                  onValueChange={(e) =>
                                     setEditingItem({
                                       ...editingItem,
                                       features: e.target.value
