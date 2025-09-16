@@ -227,8 +227,8 @@ export function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-responsive-2xl font-bold text-gray-900">Access Denied</h1>
-          <p className="text-responsive-base text-gray-600 mt-2">You need admin privileges to access this page</p>
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Authenticating...</h1>
+          <p className="text-responsive-base text-gray-600 mt-2">Make sure You have admin privileges to access this page</p>
         </div>
       </div>
     )
