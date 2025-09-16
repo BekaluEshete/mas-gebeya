@@ -3115,7 +3115,7 @@ const handleViewDeal = async (deal: Deal) => {
                       Complete
                     </Button>
                   )}
-                  {(deal.status === "pending" || deal.status === "approved") && (
+                  {( deal.status === "approved") && (
                     <Button
                       size="sm"
                       variant="outline"
