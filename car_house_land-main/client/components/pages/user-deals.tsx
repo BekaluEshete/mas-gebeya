@@ -115,8 +115,7 @@ export function UserDeals() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-red-50 to-orange-50 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-responsive-2xl font-bold text-gray-900">Please Sign In</h1>
-          <p className="text-responsive-base text-gray-600 mt-2">You need to be signed in to view your deals</p>
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Loading Deals....</h1>
         </div>
       </div>
     )
