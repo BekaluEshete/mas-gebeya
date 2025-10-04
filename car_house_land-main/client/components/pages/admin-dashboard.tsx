@@ -2,7 +2,7 @@
 
 import React from "react"
 
-import { useState } from "react"
+
 import { useApp } from "@/context/app-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -69,6 +69,8 @@ import { Label } from "@/components/ui/label"
 import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
 
+import { useState, useEffect } from "react"
+
 export function AdminDashboard() {
   const {
     user,
@@ -106,6 +108,7 @@ export function AdminDashboard() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
+
   // const [carsData, setCarsData] = React.useState(CARS_DATA)
   // const [housesData, setHousesData] = React.useState(HOUSES_DATA)
   // const [landsData, setHousesData] = React.useState(LANDS_DATA)
@@ -117,21 +120,22 @@ export function AdminDashboard() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
-     
+
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
+
 
   const fetchOwners = async () => {
     setIsLoadingOwners(true)
     try {
       const token = authService.getStoredToken()
       if (!token) {
-        console.error("[v0] No authentication token found")
+        console.error(" No authentication token found")
         return
       }
 
-      console.log("[v0] Fetching owners from API...")
+      console.log("Fetching owners from API...")
       const response = await fetch("https://car-house-land.onrender.com/api/users/owner/list", {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -139,24 +143,24 @@ export function AdminDashboard() {
         },
       })
 
-      console.log("[v0] Owners API response status:", response.status)
+      console.log(" Owners API response status:", response.status)
 
       if (response.ok) {
         const data = await response.json()
-        console.log("[v0] Owners API response:", data)
+        console.log("Owners API response:", data)
 
         if (data.success && data.data) {
           setOwners(data.data)
-          console.log("[v0] Successfully loaded owners:", data.data.length)
+          console.log(" Successfully loaded owners:", data.data.length)
         } else {
-          console.error("[v0] Invalid owners response format:", data)
+          console.error("Invalid owners response format:", data)
         }
       } else {
         const errorText = await response.text()
-        console.error("[v0] Failed to fetch owners:", response.status, errorText)
+        console.error("Failed to fetch owners:", response.status, errorText)
       }
     } catch (error) {
-      console.error("[v0] Error fetching owners:", error)
+      console.error(" Error fetching owners:", error)
     } finally {
       setIsLoadingOwners(false)
     }
@@ -227,8 +231,8 @@ export function AdminDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-responsive-2xl font-bold text-gray-900">Access Denied</h1>
-          <p className="text-responsive-base text-gray-600 mt-2">You need admin privileges to access this page</p>
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Authenticating...</h1>
+          <p className="text-responsive-base text-gray-600 mt-2">make sure You have  admin privileges to access this page</p>
         </div>
       </div>
     )
@@ -323,7 +327,7 @@ export function AdminDashboard() {
       return dateB - dateA
     })
   }
- 
+
 
   const handleSaveItem = async (itemData: any) => {
     const itemWithDefaults = {
@@ -453,7 +457,7 @@ export function AdminDashboard() {
   }
 
   const getCurrentDataSetter = () => {
-    return () => {}
+    return () => { }
   }
 
   const handleEditUser = (user: any) => {
@@ -476,7 +480,7 @@ export function AdminDashboard() {
     try {
       const token = authService.getStoredToken()
       if (!token) {
-        console.error("[v0] No authentication token found")
+        console.error(" No authentication token found")
         return
       }
 
@@ -497,8 +501,8 @@ export function AdminDashboard() {
         isVerified: editingUser.isVerified !== undefined ? editingUser.isVerified : false,
       }
 
-      console.log("[v0] Saving user with data:", userData)
-      console.log("[v0] Is editing existing user:", !!editingUser._id)
+      console.log("Saving user with data:", userData)
+      console.log("Is editing existing user:", !!editingUser._id)
 
       const url = editingUser._id
         ? `https://car-house-land.onrender.com/api/users/${editingUser._id}`
@@ -506,7 +510,7 @@ export function AdminDashboard() {
 
       const method = editingUser._id ? "PUT" : "POST"
 
-      console.log("[v0] Making request to:", url, "with method:", method)
+      console.log("Making request to:", url, "with method:", method)
 
       const response = await fetch(url, {
         method,
@@ -519,7 +523,7 @@ export function AdminDashboard() {
 
       if (response.ok) {
         const responseData = await response.json()
-        console.log("[v0] User saved successfully:", responseData)
+        console.log(" User saved successfully:", responseData)
 
         // Refresh the users list
         const fetchUsers = async () => {
@@ -577,22 +581,22 @@ export function AdminDashboard() {
         setEditingUser(null)
       } else {
         const errorData = await response.json().catch(() => null)
-        console.error("[v0] Failed to save user. Status:", response.status)
-        console.error("[v0] Error response:", errorData)
-        console.error("[v0] Response headers:", Object.fromEntries(response.headers.entries()))
+        console.error(" Failed to save user. Status:", response.status)
+        console.error(" Error response:", errorData)
+        console.error(" Response headers:", Object.fromEntries(response.headers.entries()))
 
         if (errorData?.message) {
-          console.error("[v0] Server error message:", errorData.message)
+          console.error(" Server error message:", errorData.message)
         }
         if (errorData?.errors) {
-          console.error("[v0] Validation errors:", errorData.errors)
+          console.error(" Validation errors:", errorData.errors)
         }
       }
     } catch (error) {
-      console.error("[v0] Network or other error saving user:", error)
+      console.error(" Network or other error saving user:", error)
       if (error instanceof Error) {
-        console.error("[v0] Error message:", error.message)
-        console.error("[v0] Error stack:", error.stack)
+        console.error(" Error message:", error.message)
+        console.error(" Error stack:", error.stack)
       }
     }
   }
@@ -602,110 +606,110 @@ export function AdminDashboard() {
       prevUsers.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u)),
     )
   }
- 
+
 
   const handleEdit = (item: any) => {
     setEditingItem(item)
     setUploadedImages(item.images || [])
     setIsDialogOpen(true)
   }
-   
+
   const handleDeleteItem = async (item: any) => {
+    const baseUrl = "https://car-house-land.onrender.com"
+    try {
+      let endpoint = '';
+
+      switch (selectedCategory) {
+        case 'cars':
+          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          break;
+        case 'machines':
+          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          break;
+        case 'lands':
+          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          break;
+        case 'houses':
+          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          break;
+        default:
+          console.error('Invalid category');
+          return;
+      }
+
+      const token = authService.getStoredToken()
+      if (!token) {
+        console.error("No authentication token found")
+        alert("Please log in again")
+        return
+      }
+
+      console.log("Making DELETE request to:", endpoint);
+
+      const response = await fetch(endpoint, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      console.log("Response status:", response.status);
+
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+          console.error("Error details:", errorData);
+        } catch (e) {
+          console.error("Could not parse error response");
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Update the UI state to remove the deleted item
+      // Use the appropriate delete function from your context based on category
+      switch (selectedCategory) {
+        case 'cars':
+          deleteCar(item.id);
+          break;
+        case 'machines':
+          deleteMachine(item.id);
+          break;
+        case 'lands':
+          deleteLand(item.id);
+          break;
+        case 'houses':
+          deleteHouse(item.id);
+          break;
+      }
+
+      alert('Item deleted successfully!');
+
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      alert(`Delete failed: ${error.message}`);
+    }
+  }
+
+  const handleDelete = (item: any) => {
+    setDeletingItem(item)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDelete = () => {
+    if (!deletingItem) return
+    handleDeleteItem(deletingItem)
+    setIsDeleteDialogOpen(false)
+    setDeletingItem(null)
+  }
+
+const handleView = async (item: any) => {
   const baseUrl = "https://car-house-land.onrender.com"
   try {
     let endpoint = '';
-    
-    switch (selectedCategory) {
-      case 'cars':
-        endpoint = `${baseUrl}/api/cars/${item.id}`;
-        break;
-      case 'machines':
-        endpoint = `${baseUrl}/api/machines/${item.id}`;
-        break;
-      case 'lands':
-        endpoint = `${baseUrl}/api/lands/${item.id}`;
-        break;
-      case 'houses':
-        endpoint = `${baseUrl}/api/properties/${item.id}`;
-        break;
-      default:
-        console.error('Invalid category');
-        return;
-    }
 
-    const token = authService.getStoredToken()
-    if (!token) {
-      console.error("No authentication token found")
-      alert("Please log in again")
-      return
-    }
-
-    console.log("Making DELETE request to:", endpoint);
-    
-    const response = await fetch(endpoint, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    console.log("Response status:", response.status);
-    
-    if (!response.ok) {
-      let errorMessage = `Server error: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-        console.error("Error details:", errorData);
-      } catch (e) {
-        console.error("Could not parse error response");
-      }
-      throw new Error(errorMessage);
-    }
-
-    // Update the UI state to remove the deleted item
-    // Use the appropriate delete function from your context based on category
-    switch (selectedCategory) {
-      case 'cars':
-        deleteCar(item.id);
-        break;
-      case 'machines':
-        deleteMachine(item.id);
-        break;
-      case 'lands':
-        deleteLand(item.id);
-        break;
-      case 'houses':
-        deleteHouse(item.id);
-        break;
-    }
-    
-    alert('Item deleted successfully!');
-    
-  } catch (error) {
-    console.error('Error deleting item:', error);
-    alert(`Delete failed: ${error.message}`);
-  }
-}
-
-const handleDelete = (item: any) => {
-  setDeletingItem(item)
-  setIsDeleteDialogOpen(true)
-}
-
-const confirmDelete = () => {
-  if (!deletingItem) return
-  handleDeleteItem(deletingItem)
-  setIsDeleteDialogOpen(false)
-  setDeletingItem(null)
-}
-
-const handleView = async (item: any) => {
-   const baseUrl = "https://car-house-land.onrender.com"
-  try {
-    let endpoint = '';
-    
     switch (selectedCategory) {
       case 'cars':
         endpoint = `${baseUrl}/api/cars/${item.id}`;
@@ -728,8 +732,6 @@ const handleView = async (item: any) => {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        // Add authorization headers if needed
-        // 'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -738,11 +740,47 @@ const handleView = async (item: any) => {
     }
 
     const itemDetails = await response.json();
-    setViewingItem(itemDetails);
+    
+    // Process images to ensure they have proper URLs - FIXED VERSION
+    let processedImages: string[] = [];
+    
+    if (itemDetails.data && itemDetails.data.images) {
+      processedImages = itemDetails.data.images.map((img: string) => {
+        if (img.startsWith('http')) return img;
+        // Handle both absolute and relative paths
+        if (img.startsWith('/')) {
+          return `${baseUrl}${img}`;
+        } else {
+          return `${baseUrl}/${img}`;
+        }
+      });
+    }
+    
+    // Create the viewing item with processed images
+    const viewingItemData = {
+      ...(itemDetails.data || itemDetails),
+      images: processedImages.length > 0 ? processedImages : (item.images || [])
+    };
+    
+    setViewingItem(viewingItemData);
     setIsViewDialogOpen(true);
   } catch (error) {
     console.error('Error fetching item details:', error);
-    // Handle error (show toast, etc.)
+    // Fallback to local item data with processed images
+    const processedImages = (item.images || []).map((img: string) => {
+      if (img.startsWith('http')) return img;
+      if (img.startsWith('/')) {
+        return `https://car-house-land.onrender.com${img}`;
+      } else {
+        return `https://car-house-land.onrender.com/${img}`;
+      }
+    });
+    
+    setViewingItem({
+      ...item,
+      images: processedImages
+    });
+    setIsViewDialogOpen(true);
   }
 }
 
@@ -750,7 +788,7 @@ const handleView = async (item: any) => {
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files)
     console.log(
-      "[v0] Selected files:",
+      " Selected files:",
       files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
     )
 
@@ -809,16 +847,16 @@ const handleView = async (item: any) => {
       return
     }
 
-    console.log(`[v0] Saving ${selectedCategory} with data:`, editingItem)
+    console.log(` Saving ${selectedCategory} with data:`, editingItem)
     console.log(
-      "[v0] Uploaded images:",
+      " Uploaded images:",
       uploadedImages.map((img) => (img instanceof File ? { name: img.name, size: img.size } : img)),
     )
 
     try {
       const token = authService.getStoredToken()
       if (!token) {
-        console.error("[v0] No authentication token found")
+        console.error(" No authentication token found")
         return
       }
 
@@ -934,7 +972,7 @@ const handleView = async (item: any) => {
         })
       }
 
-      console.log("[v0] FormData entries:")
+      console.log(" FormData entries:")
       for (const [key, value] of formData.entries()) {
         console.log(`[v0] ${key}:`, value)
       }
@@ -963,7 +1001,7 @@ const handleView = async (item: any) => {
 
       const method = editingItem.id ? "PUT" : "POST"
 
-      console.log(`[v0] Making API request:`, method, url)
+      console.log(` Making API request:`, method, url)
 
       const response = await fetch(url, {
         method,
@@ -978,7 +1016,7 @@ const handleView = async (item: any) => {
 
       if (response.ok) {
         const result = await response.json()
-        console.log(`[v0] ${selectedCategory} saved successfully:`, result)
+        console.log(` ${selectedCategory} saved successfully:`, result)
 
         // Close dialog and reset form
         setIsDialogOpen(false)
@@ -1006,17 +1044,16 @@ const handleView = async (item: any) => {
       alert(`Failed to save ${selectedCategory}. Please try again.`)
     }
   }
-const handleViewDeal = async (deal: Deal) => {
+ const handleViewDeal = async (deal: Deal) => {
   try {
-    // First set the basic deal data for immediate UI response
+    // Set the deal immediately for UI response
     setSelectedDeal(deal);
     setIsDealDetailOpen(true);
-    
+
     // Fetch complete deal details from API
     const token = authService.getStoredToken();
     if (!token) {
       console.error("No authentication token found");
-      // We'll still show the dialog with basic info
       return;
     }
 
@@ -1033,51 +1070,70 @@ const handleViewDeal = async (deal: Deal) => {
     }
 
     const result = await response.json();
-    
+
     if (result.status === 'success') {
-      // Update with detailed information from the API response
-      setSelectedDeal(result.data.deal);
-    } else {
-      throw new Error(result.message || 'Failed to fetch deal details');
+      // Merge API data with existing deal data to preserve all properties
+      setSelectedDeal(prevDeal => ({
+        ...prevDeal,
+        ...result.data.deal,
+        // Preserve critical properties that might be missing in API response
+        id: prevDeal.id,
+        item: { ...prevDeal.item, ...(result.data.deal?.item || {}) },
+        buyer: { ...prevDeal.buyer, ...(result.data.deal?.buyer || {}) },
+        seller: { ...prevDeal.seller, ...(result.data.deal?.seller || {}) },
+        // Ensure we have the dealId
+        dealId: result.data.deal?.dealId || prevDeal.dealId
+      }));
     }
   } catch (error) {
     console.error('Error fetching deal details:', error);
-    // We don't need to show an error to the user since we already have basic deal data
+    // Keep the basic deal data even if detailed fetch fails
   }
 };
-
   const handleAcceptDeal = async (dealId: string) => {
+     setIsDealDetailOpen(false);
     try {
       await updateDealStatus(dealId, "approved")
       // Refresh deals to get updated data
       await refreshDeals()
+      // Close the deal detail dialog
+  
     } catch (error) {
       console.error("Error accepting deal:", error)
     }
   }
 
   const handleRejectDeal = async (dealId: string) => {
+    setIsDealDetailOpen(false);
+
     try {
       await updateDealStatus(dealId, "rejected")
       await refreshDeals()
+        // Close the deal detail dialog
+
     } catch (error) {
       console.error("Error rejecting deal:", error)
     }
   }
-
   const handleCompleteDeal = async (dealId: string) => {
+    setIsDealDetailOpen(false);
+
     try {
       await updateDealStatus(dealId, "completed")
       await refreshDeals()
+        // Close the deal detail dialog
     } catch (error) {
       console.error("Error completing deal:", error)
     }
   }
 
   const handleCancelDeal = async (dealId: string, reason?: string) => {
+    setIsDealDetailOpen(false);
+
     try {
       await updateDealStatus(dealId, "cancelled", reason)
       await refreshDeals()
+        // Close the deal detail dialog
     } catch (error) {
       console.error("Error cancelling deal:", error)
     }
@@ -1646,1117 +1702,1129 @@ const handleViewDeal = async (deal: Deal) => {
             </div>
           </TabsContent>
 
-           
-    
-    <TabsContent value="listings" className="space-y-4 sm:space-y-6">
-     <Card>
-      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
-       <CardTitle className="text-sm sm:text-base">Manage Listings</CardTitle>
-        <div className="flex items-stretch justify-start flex-wrap gap-2">
-         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-          <SelectTrigger className="w-32 sm:w-40 text-xs sm:text-sm">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="cars">Cars</SelectItem>
-            <SelectItem value="houses">Houses</SelectItem>
-            <SelectItem value="lands">Lands</SelectItem>
-            <SelectItem value="machines">Machines</SelectItem>
-          </SelectContent>
-        </Select>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
-              <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-              Add New
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-            <DialogHeader>
-              <DialogTitle className="text-sm sm:text-base">
-                {editingItem ? "Edit" : "Add New"} {selectedCategory.slice(0, -1)}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <div className="space-y-3 sm:space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Title *</Label>
-                    <Input
-                      value={editingItem?.title || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
-                      className="text-sm"
-                      placeholder="Enter title"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Price *</Label>
-                    <Input
-                      type="number"
-                      value={editingItem?.price || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, price: Number(e.target.value) })}
-                      className="text-sm"
-                      placeholder="Enter price"
-                      min="0"
-                      required
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Listing Type *</Label>
-                    <Select
-                      value={editingItem?.type || "sale"}
-                      onValueChange={(value) => setEditingItem({ ...editingItem, type: value })}
-                    >
-                      <SelectTrigger className="text-xs sm:text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="sale">For Sale</SelectItem>
-                        <SelectItem value="rent">For Rent</SelectItem>
-                        {(selectedCategory === "lands" || selectedCategory === "machines") && (
-                          <SelectItem value="lease">For Lease</SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Condition</Label>
-                    <Select
-                      value={editingItem?.condition || "used"}
-                      onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
-                    >
-                      <SelectTrigger className="text-xs sm:text-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="used">Used</SelectItem>
-                        <SelectItem value="refurbished">Refurbished</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
 
-                {/* Owner selection for all categories */}
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
-                  <Select
-                    value={editingItem?.owner || ""}
-                    onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
-                  >
-                    <SelectTrigger className="text-xs sm:text-sm">
-                      <SelectValue placeholder={isLoadingOwners ? "Loading owners..." : "Select owner"} />
+          <TabsContent value="listings" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-2 sm:pb-4">
+                <CardTitle className="text-sm sm:text-base">Manage Listings</CardTitle>
+                <div className="flex items-stretch justify-start flex-wrap gap-2">
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-32 sm:w-40 text-xs sm:text-sm">
+                      <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      {isLoadingOwners ? (
-                        <SelectItem value="" disabled>Loading owners...</SelectItem>
-                      ) : owners.length === 0 ? (
-                        <SelectItem value="" disabled>No owners available</SelectItem>
-                      ) : (
-                        owners.map((owner) => (
-                          <SelectItem key={owner._id} value={owner._id}>
-                            {owner.fullName}
-                          </SelectItem>
-                        ))
-                      )}
+                      <SelectItem value="cars">Cars</SelectItem>
+                      <SelectItem value="houses">Houses</SelectItem>
+                      <SelectItem value="lands">Lands</SelectItem>
+                      <SelectItem value="machines">Machines</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-
-                {/* Location fields for all categories */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">City *</Label>
-                    <Input
-                      value={editingItem?.city || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, city: e.target.value })}
-                      className="text-sm"
-                      placeholder="Addis Ababa"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Region *</Label>
-                    <Input
-                      value={editingItem?.region || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, region: e.target.value })}
-                      className="text-sm"
-                      placeholder="Addis Ababa"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Address *</Label>
-                    <Input
-                      value={editingItem?.address || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, address: e.target.value })}
-                      className="text-sm"
-                      placeholder="Bole, Megenagna"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">Kebele</Label>
-                    <Input
-                      value={editingItem?.kebele || ""}
-                      onChange={(e) => setEditingItem({ ...editingItem, kebele: e.target.value })}
-                      className="text-sm"
-                      placeholder="01"
-                    />
-                  </div>
-                </div>
-
-                {/* Category-specific fields */}
-                {selectedCategory === "cars" && (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Make *</Label>
-                        <Input
-                          value={editingItem?.make || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, make: e.target.value })}
-                          className="text-sm"
-                          placeholder="Toyota, BMW, Mercedes"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Model *</Label>
-                        <Input
-                          value={editingItem?.model || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
-                          className="text-sm"
-                          placeholder="Camry, X5, C-Class"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Year</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.year || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, year: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="2020"
-                          min="1900"
-                          max={new Date().getFullYear() + 1}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.mileage || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, mileage: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="50000"
-                          min="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Color *</Label>
-                        <Input
-                          value={editingItem?.color || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
-                          className="text-sm"
-                          placeholder="Red, Blue, Black"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Fuel Type *</Label>
-                        <Select
-                          value={editingItem?.fuelType || "gasoline"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="gasoline">Gasoline</SelectItem>
-                            <SelectItem value="diesel">Diesel</SelectItem>
-                            <SelectItem value="hybrid">Hybrid</SelectItem>
-                            <SelectItem value="electric">Electric</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Transmission *</Label>
-                        <Select
-                          value={editingItem?.transmission || "manual"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="manual">Manual</SelectItem>
-                            <SelectItem value="automatic">Automatic</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Body Type *</Label>
-                      <Select
-                        value={editingItem?.bodyType || "sedan"}
-                        onValueChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
-                      >
-                        <SelectTrigger className="text-xs sm:text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="sedan">Sedan</SelectItem>
-                          <SelectItem value="suv">SUV</SelectItem>
-                          <SelectItem value="hatchback">Hatchback</SelectItem>
-                          <SelectItem value="coupe">Coupe</SelectItem>
-                          <SelectItem value="pickup">Pickup</SelectItem>
-                          <SelectItem value="van">Van</SelectItem>
-                          <SelectItem value="convertible">Convertible</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Features</Label>
-                      <Input
-                        value={editingItem?.features?.join(", ") || ""}
-                        onChange={(e) =>
-                          setEditingItem({
-                            ...editingItem,
-                            features: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
-                          })
-                        }
-                        className="text-sm"
-                        placeholder="Air Conditioning, GPS, Leather Seats (comma separated)"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {selectedCategory === "houses" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Property Type *</Label>
-                      <Select
-                        value={editingItem?.propertyType || ""}
-                        onValueChange={(value) => setEditingItem({ ...editingItem, propertyType: value })}
-                      >
-                        <SelectTrigger className="text-xs sm:text-sm">
-                          <SelectValue placeholder="Select property type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="house">House</SelectItem>
-                          <SelectItem value="apartment">Apartment</SelectItem>
-                          <SelectItem value="condo">Condo</SelectItem>
-                          <SelectItem value="villa">Villa</SelectItem>
-                          <SelectItem value="commercial">Commercial</SelectItem>
-                          <SelectItem value="office">Office</SelectItem>
-                          <SelectItem value="warehouse">Warehouse</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Bedrooms *</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.bedrooms || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, bedrooms: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="3"
-                          min="0"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Bathrooms *</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.bathrooms || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, bathrooms: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="2"
-                          min="0"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Size *</Label>
-                        <Input
-                          value={editingItem?.size || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, size: e.target.value })}
-                          className="text-sm"
-                          placeholder="150 sqm"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.yearBuilt || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, yearBuilt: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="2015"
-                          min="1900"
-                          max={new Date().getFullYear()}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Floors</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.floors || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, floors: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="2"
-                          min="1"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Parking Spaces</Label>
-                      <Input
-                        type="number"
-                        value={editingItem?.parkingSpaces || ""}
-                        onChange={(e) => setEditingItem({ ...editingItem, parkingSpaces: Number(e.target.value) })}
-                        className="text-sm"
-                        placeholder="1"
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
-                      <Input
-                        value={editingItem?.amenities?.join(", ") || ""}
-                        onChange={(e) =>
-                          setEditingItem({
-                            ...editingItem,
-                            amenities: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
-                          })
-                        }
-                        className="text-sm"
-                        placeholder="Swimming Pool, Gym, Garden (comma separated)"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {selectedCategory === "lands" && (
-                  <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Size Value *</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.sizeValue || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, sizeValue: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="5.5"
-                          min="0.1"
-                          step="0.1"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Size Unit</Label>
-                        <Select
-                          value={editingItem?.sizeUnit || "hectare"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, sizeUnit: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hectare">Hectare</SelectItem>
-                            <SelectItem value="acre">Acre</SelectItem>
-                            <SelectItem value="sqm">Square Meters</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Zoning *</Label>
-                        <Select
-                          value={editingItem?.zoning || ""}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, zoning: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue placeholder="Select zoning" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="residential">Residential</SelectItem>
-                            <SelectItem value="commercial">Commercial</SelectItem>
-                            <SelectItem value="industrial">Industrial</SelectItem>
-                            <SelectItem value="agricultural">Agricultural</SelectItem>
-                            <SelectItem value="recreational">Recreational</SelectItem>
-                            <SelectItem value="mixed">Mixed</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Land Use *</Label>
-                        <Select
-                          value={editingItem?.landUse || ""}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, landUse: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue placeholder="Select land use" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="development">Development</SelectItem>
-                            <SelectItem value="farming">Farming</SelectItem>
-                            <SelectItem value="commercial">Commercial</SelectItem>
-                            <SelectItem value="recreation">Recreation</SelectItem>
-                            <SelectItem value="vineyard">Vineyard</SelectItem>
-                            <SelectItem value="mining">Mining</SelectItem>
-                            <SelectItem value="tourism">Tourism</SelectItem>
-                            <SelectItem value="technology">Technology</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Topography *</Label>
-                        <Select
-                          value={editingItem?.topography || ""}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, topography: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue placeholder="Select topography" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="flat">Flat</SelectItem>
-                            <SelectItem value="hilly">Hilly</SelectItem>
-                            <SelectItem value="mountainous">Mountainous</SelectItem>
-                            <SelectItem value="rolling">Rolling</SelectItem>
-                            <SelectItem value="desert">Desert</SelectItem>
-                            <SelectItem value="sloped">Sloped</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
-                        <Select
-                          value={editingItem?.waterAccess || "none"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, waterAccess: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">None</SelectItem>
-                            <SelectItem value="well">Well</SelectItem>
-                            <SelectItem value="river">River</SelectItem>
-                            <SelectItem value="lake">Lake</SelectItem>
-                            <SelectItem value="municipal">Municipal</SelectItem>
-                            <SelectItem value="borehole">Borehole</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
-                        <Select
-                          value={editingItem?.electricityAccess ? "true" : "false"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, electricityAccess: value === "true" })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Yes</SelectItem>
-                            <SelectItem value="false">No</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
-                        <Select
-                          value={editingItem?.roadAccess ? "true" : "false"}
-                          onValueChange={(value) => setEditingItem({ ...editingItem, roadAccess: value === "true" })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="true">Yes</SelectItem>
-                            <SelectItem value="false">No</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {selectedCategory === "machines" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Category *</Label>
-                      <Select
-                        value={editingItem?.category || ""}
-                        onValueChange={(value) => setEditingItem({ ...editingItem, category: value })}
-                      >
-                        <SelectTrigger className="text-xs sm:text-sm">
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="electronics">Electronics</SelectItem>
-                          <SelectItem value="appliances">Appliances</SelectItem>
-                          <SelectItem value="industrial">Industrial</SelectItem>
-                          <SelectItem value="agricultural">Agricultural</SelectItem>
-                          <SelectItem value="construction">Construction</SelectItem>
-                          <SelectItem value="medical">Medical</SelectItem>
-                          <SelectItem value="automotive">Automotive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Brand *</Label>
-                        <Input
-                          value={editingItem?.brand || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, brand: e.target.value })}
-                          className="text-sm"
-                          placeholder="e.g., Caterpillar, John Deere"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Model</Label>
-                        <Input
-                          value={editingItem?.model || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
-                          className="text-sm"
-                          placeholder="e.g., 320D, 850K"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.yearManufactured || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, yearManufactured: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="2020"
-                          min="1990"
-                          max={new Date().getFullYear()}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
-                        <Input
-                          type="number"
-                          value={editingItem?.hoursUsed || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, hoursUsed: Number(e.target.value) })}
-                          className="text-sm"
-                          placeholder="500"
-                          min="0"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Subcategory</Label>
-                        <Input
-                          value={editingItem?.subcategory || ""}
-                          onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
-                          className="text-sm"
-                          placeholder="e.g., Excavator, Tractor"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
-                      <Input
-                        value={editingItem?.specifications?.join(", ") || ""}
-                        onChange={(e) =>
-                          setEditingItem({
-                            ...editingItem,
-                            specifications: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
-                          })
-                        }
-                        className="text-sm"
-                        placeholder="Engine power, Weight, Capacity (comma separated)"
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Description * (20-1000 characters)</Label>
-                  <Textarea
-                    value={editingItem?.description || ""}
-                    onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                    rows={4}
-                    className="text-sm"
-                    placeholder="Enter a detailed description (minimum 20 characters)"
-                    minLength={20}
-                    maxLength={1000}
-                    required
-                  />
-                  <div className="text-xs text-gray-500">
-                    {(editingItem?.description || "").length}/1000 characters
-                    {(editingItem?.description || "").length < 20 && (
-                      <span className="text-red-500 ml-2">Minimum 20 characters required</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-3 sm:space-y-4">
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Images</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-5 md:p-6 text-center hover:border-gray-400 transition-colors">
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
-                    />
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <div className="space-y-2">
-                        <Upload className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400 mx-auto" />
-                        <div className="text-xs sm:text-sm text-gray-600">
-                          <span className="font-medium text-brand-blue hover:text-brand-blue/80">
-                            Click to upload
-                          </span>{" "}
-                          or drag and drop
-                        </div>
-                        <div className="text-xxs sm:text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-
-                {uploadedImages.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-xs sm:text-sm font-medium">
-                      Uploaded Images ({uploadedImages.length})
-                    </Label>
-                    <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
-                      {uploadedImages.map((image: any, index: number) => (
-                        <div key={index} className="relative group">
-                          <div className="aspect-square relative overflow-hidden rounded-lg border">
-                            <img
-                              src={
-                                image instanceof File
-                                  ? URL.createObjectURL(image)
-                                  : image || "/placeholder.svg"
-                              }
-                              alt={`Upload ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              onLoad={(e) => {
-                                if (image instanceof File) {
-                                  const img = e.target as HTMLImageElement;
-                                  setTimeout(() => URL.revokeObjectURL(img.src), 1000);
-                                }
-                              }}
-                            />
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="absolute top-1 right-1 h-5 w-5 sm:h-6 sm:w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                              onClick={() => removeImage(index)}
-                            >
-                              <X className="w-2 h-2 sm:w-3 sm:h-3" />
-                            </Button>
+                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                        Add New
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+                      <DialogHeader>
+                        <DialogTitle className="text-sm sm:text-base">
+                          {editingItem ? "Edit" : "Add New"} {selectedCategory.slice(0, -1)}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Title *</Label>
+                              <Input
+                                value={editingItem?.title || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
+                                className="text-sm"
+                                placeholder="Enter title"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Price *</Label>
+                              <Input
+                                type="number"
+                                value={editingItem?.price || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, price: Number(e.target.value) })}
+                                className="text-sm"
+                                placeholder="Enter price"
+                                min="0"
+                                required
+                              />
+                            </div>
                           </div>
-                          {index === 0 && (
-                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                              <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Listing Type *</Label>
+                              <Select
+                                value={editingItem?.type || "sale"}
+                                onValueChange={(value) => setEditingItem({ ...editingItem, type: value })}
+                              >
+                                <SelectTrigger className="text-xs sm:text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="sale">For Sale</SelectItem>
+                                  <SelectItem value="rent">For Rent</SelectItem>
+                                  {(selectedCategory === "lands" || selectedCategory === "machines") && (
+                                    <SelectItem value="lease">For Lease</SelectItem>
+                                  )}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Condition</Label>
+                              <Select
+                                value={editingItem?.condition || "used"}
+                                onValueChange={(value) => setEditingItem({ ...editingItem, condition: value })}
+                              >
+                                <SelectTrigger className="text-xs sm:text-sm">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="new">New</SelectItem>
+                                  <SelectItem value="used">Used</SelectItem>
+                                  <SelectItem value="refurbished">Refurbished</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+
+                          {/* Owner selection for all categories */}
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Owner *</Label>
+                            <Select
+                              value={editingItem?.owner || ""}
+                              onValueChange={(value) => setEditingItem({ ...editingItem, owner: value })}
+                            >
+                              <SelectTrigger className="text-xs sm:text-sm">
+                                <SelectValue placeholder={isLoadingOwners ? "Loading owners..." : "Select owner"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {isLoadingOwners ? (
+                                  <SelectItem value="" disabled>Loading owners...</SelectItem>
+                                ) : owners.length === 0 ? (
+                                  <SelectItem value="" disabled>No owners available</SelectItem>
+                                ) : (
+                                  owners.map((owner) => (
+                                    <SelectItem key={owner._id} value={owner._id}>
+                                      {owner.fullName}
+                                    </SelectItem>
+                                  ))
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* Location fields for all categories */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">City *</Label>
+                              <Input
+                                value={editingItem?.city || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, city: e.target.value })}
+                                className="text-sm"
+                                placeholder="Addis Ababa"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Region *</Label>
+                              <Input
+                                value={editingItem?.region || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, region: e.target.value })}
+                                className="text-sm"
+                                placeholder="Addis Ababa"
+                                required
+                              />
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Address *</Label>
+                              <Input
+                                value={editingItem?.address || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, address: e.target.value })}
+                                className="text-sm"
+                                placeholder="Bole, Megenagna"
+                                required
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">Kebele</Label>
+                              <Input
+                                value={editingItem?.kebele || ""}
+                                onChange={(e) => setEditingItem({ ...editingItem, kebele: e.target.value })}
+                                className="text-sm"
+                                placeholder="01"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Category-specific fields */}
+                          {selectedCategory === "cars" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Make *</Label>
+                                  <Input
+                                    value={editingItem?.make || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, make: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Toyota, BMW, Mercedes"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Model *</Label>
+                                  <Input
+                                    value={editingItem?.model || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Camry, X5, C-Class"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Year</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.year || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, year: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2020"
+                                    min="1900"
+                                    max={new Date().getFullYear() + 1}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.mileage || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, mileage: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="50000"
+                                    min="0"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Color *</Label>
+                                  <Input
+                                    value={editingItem?.color || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="Red, Blue, Black"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Fuel Type *</Label>
+                                  <Select
+                                    value={editingItem?.fuelType || "gasoline"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, fuelType: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="gasoline">Gasoline</SelectItem>
+                                      <SelectItem value="diesel">Diesel</SelectItem>
+                                      <SelectItem value="hybrid">Hybrid</SelectItem>
+                                      <SelectItem value="electric">Electric</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Transmission *</Label>
+                                  <Select
+                                    value={editingItem?.transmission || "manual"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, transmission: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="manual">Manual</SelectItem>
+                                      <SelectItem value="automatic">Automatic</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Body Type *</Label>
+                                <Select
+                                  value={editingItem?.bodyType || "sedan"}
+                                  onValueChange={(value) => setEditingItem({ ...editingItem, bodyType: value })}
+                                >
+                                  <SelectTrigger className="text-xs sm:text-sm">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="sedan">Sedan</SelectItem>
+                                    <SelectItem value="suv">SUV</SelectItem>
+                                    <SelectItem value="hatchback">Hatchback</SelectItem>
+                                    <SelectItem value="coupe">Coupe</SelectItem>
+                                    <SelectItem value="pickup">Pickup</SelectItem>
+                                    <SelectItem value="van">Van</SelectItem>
+                                    <SelectItem value="convertible">Convertible</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Features</Label>
+                                <Input
+                                  value={editingItem?.features?.join(", ") || ""}
+                                  onChange={(e) =>
+                                    setEditingItem({
+                                      ...editingItem,
+                                      features: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
+                                    })
+                                  }
+                                  className="text-sm"
+                                  placeholder="Air Conditioning, GPS, Leather Seats (comma separated)"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "houses" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Property Type *</Label>
+                                <Select
+                                  value={editingItem?.propertyType || ""}
+                                  onValueChange={(value) => setEditingItem({ ...editingItem, propertyType: value })}
+                                >
+                                  <SelectTrigger className="text-xs sm:text-sm">
+                                    <SelectValue placeholder="Select property type" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="house">House</SelectItem>
+                                    <SelectItem value="apartment">Apartment</SelectItem>
+                                    <SelectItem value="condo">Condo</SelectItem>
+                                    <SelectItem value="villa">Villa</SelectItem>
+                                    <SelectItem value="commercial">Commercial</SelectItem>
+                                    <SelectItem value="office">Office</SelectItem>
+                                    <SelectItem value="warehouse">Warehouse</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Bedrooms *</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bedrooms || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, bedrooms: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="3"
+                                    min="0"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Bathrooms *</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.bathrooms || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, bathrooms: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2"
+                                    min="0"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Size *</Label>
+                                  <Input
+                                    value={editingItem?.size || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, size: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="150 sqm"
+                                    required
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.yearBuilt || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, yearBuilt: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2015"
+                                    min="1900"
+                                    max={new Date().getFullYear()}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Floors</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.floors || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, floors: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2"
+                                    min="1"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Parking Spaces</Label>
+                                <Input
+                                  type="number"
+                                  value={editingItem?.parkingSpaces || ""}
+                                  onChange={(e) => setEditingItem({ ...editingItem, parkingSpaces: Number(e.target.value) })}
+                                  className="text-sm"
+                                  placeholder="1"
+                                  min="0"
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
+                                <Input
+                                  value={editingItem?.amenities?.join(", ") || ""}
+                                  onChange={(e) =>
+                                    setEditingItem({
+                                      ...editingItem,
+                                      amenities: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
+                                    })
+                                  }
+                                  className="text-sm"
+                                  placeholder="Swimming Pool, Gym, Garden (comma separated)"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "lands" && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Size Value *</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.sizeValue || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, sizeValue: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="5.5"
+                                    min="0.1"
+                                    step="0.1"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Size Unit</Label>
+                                  <Select
+                                    value={editingItem?.sizeUnit || "hectare"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, sizeUnit: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="hectare">Hectare</SelectItem>
+                                      <SelectItem value="acre">Acre</SelectItem>
+                                      <SelectItem value="sqm">Square Meters</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Zoning *</Label>
+                                  <Select
+                                    value={editingItem?.zoning || ""}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, zoning: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue placeholder="Select zoning" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="residential">Residential</SelectItem>
+                                      <SelectItem value="commercial">Commercial</SelectItem>
+                                      <SelectItem value="industrial">Industrial</SelectItem>
+                                      <SelectItem value="agricultural">Agricultural</SelectItem>
+                                      <SelectItem value="recreational">Recreational</SelectItem>
+                                      <SelectItem value="mixed">Mixed</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Land Use *</Label>
+                                  <Select
+                                    value={editingItem?.landUse || ""}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, landUse: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue placeholder="Select land use" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="development">Development</SelectItem>
+                                      <SelectItem value="farming">Farming</SelectItem>
+                                      <SelectItem value="commercial">Commercial</SelectItem>
+                                      <SelectItem value="recreation">Recreation</SelectItem>
+                                      <SelectItem value="vineyard">Vineyard</SelectItem>
+                                      <SelectItem value="mining">Mining</SelectItem>
+                                      <SelectItem value="tourism">Tourism</SelectItem>
+                                      <SelectItem value="technology">Technology</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Topography *</Label>
+                                  <Select
+                                    value={editingItem?.topography || ""}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, topography: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue placeholder="Select topography" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="flat">Flat</SelectItem>
+                                      <SelectItem value="hilly">Hilly</SelectItem>
+                                      <SelectItem value="mountainous">Mountainous</SelectItem>
+                                      <SelectItem value="rolling">Rolling</SelectItem>
+                                      <SelectItem value="desert">Desert</SelectItem>
+                                      <SelectItem value="sloped">Sloped</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
+                                  <Select
+                                    value={editingItem?.waterAccess || "none"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, waterAccess: value })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="none">None</SelectItem>
+                                      <SelectItem value="well">Well</SelectItem>
+                                      <SelectItem value="river">River</SelectItem>
+                                      <SelectItem value="lake">Lake</SelectItem>
+                                      <SelectItem value="municipal">Municipal</SelectItem>
+                                      <SelectItem value="borehole">Borehole</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
+                                  <Select
+                                    value={editingItem?.electricityAccess ? "true" : "false"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, electricityAccess: value === "true" })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="true">Yes</SelectItem>
+                                      <SelectItem value="false">No</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
+                                  <Select
+                                    value={editingItem?.roadAccess ? "true" : "false"}
+                                    onValueChange={(value) => setEditingItem({ ...editingItem, roadAccess: value === "true" })}
+                                  >
+                                    <SelectTrigger className="text-xs sm:text-sm">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="true">Yes</SelectItem>
+                                      <SelectItem value="false">No</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+                            </>
+                          )}
+
+                          {selectedCategory === "machines" && (
+                            <>
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Category *</Label>
+                                <Select
+                                  value={editingItem?.category || ""}
+                                  onValueChange={(value) => setEditingItem({ ...editingItem, category: value })}
+                                >
+                                  <SelectTrigger className="text-xs sm:text-sm">
+                                    <SelectValue placeholder="Select category" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="electronics">Electronics</SelectItem>
+                                    <SelectItem value="appliances">Appliances</SelectItem>
+                                    <SelectItem value="industrial">Industrial</SelectItem>
+                                    <SelectItem value="agricultural">Agricultural</SelectItem>
+                                    <SelectItem value="construction">Construction</SelectItem>
+                                    <SelectItem value="medical">Medical</SelectItem>
+                                    <SelectItem value="automotive">Automotive</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Brand *</Label>
+                                  <Input
+                                    value={editingItem?.brand || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, brand: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="e.g., Caterpillar, John Deere"
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                                  <Input
+                                    value={editingItem?.model || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, model: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="e.g., 320D, 850K"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.yearManufactured || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, yearManufactured: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="2020"
+                                    min="1990"
+                                    max={new Date().getFullYear()}
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
+                                  <Input
+                                    type="number"
+                                    value={editingItem?.hoursUsed || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, hoursUsed: Number(e.target.value) })}
+                                    className="text-sm"
+                                    placeholder="500"
+                                    min="0"
+                                  />
+                                </div>
+                                <div className="space-y-2">
+                                  <Label className="text-xs sm:text-sm font-medium">Subcategory</Label>
+                                  <Input
+                                    value={editingItem?.subcategory || ""}
+                                    onChange={(e) => setEditingItem({ ...editingItem, subcategory: e.target.value })}
+                                    className="text-sm"
+                                    placeholder="e.g., Excavator, Tractor"
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
+                                <Input
+                                  value={editingItem?.specifications?.join(", ") || ""}
+                                  onChange={(e) =>
+                                    setEditingItem({
+                                      ...editingItem,
+                                      specifications: e.target.value.split(",").map((f) => f.trim()).filter((f) => f),
+                                    })
+                                  }
+                                  className="text-sm"
+                                  placeholder="Engine power, Weight, Capacity (comma separated)"
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Description * (20-1000 characters)</Label>
+                            <Textarea
+                              value={editingItem?.description || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                              rows={4}
+                              className="text-sm"
+                              placeholder="Enter a detailed description (minimum 20 characters)"
+                              minLength={20}
+                              maxLength={1000}
+                              required
+                            />
+                            <div className="text-xs text-gray-500">
+                              {(editingItem?.description || "").length}/1000 characters
+                              {(editingItem?.description || "").length < 20 && (
+                                <span className="text-red-500 ml-2">Minimum 20 characters required</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Images</Label>
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-5 md:p-6 text-center hover:border-gray-400 transition-colors">
+                              <input
+                                type="file"
+                                multiple
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                                id="image-upload"
+                              />
+                              <label htmlFor="image-upload" className="cursor-pointer">
+                                <div className="space-y-2">
+                                  <Upload className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-gray-400 mx-auto" />
+                                  <div className="text-xs sm:text-sm text-gray-600">
+                                    <span className="font-medium text-brand-blue hover:text-brand-blue/80">
+                                      Click to upload
+                                    </span>{" "}
+                                    or drag and drop
+                                  </div>
+                                  <div className="text-xxs sm:text-xs text-gray-500">PNG, JPG, GIF up to 10MB each</div>
+                                </div>
+                              </label>
+                            </div>
+                          </div>
+
+                          {uploadedImages.length > 0 && (
+                            <div className="space-y-2">
+                              <Label className="text-xs sm:text-sm font-medium">
+                                Uploaded Images ({uploadedImages.length})
+                              </Label>
+                              <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+                                {uploadedImages.map((image: any, index: number) => (
+                                  <div key={index} className="relative group">
+                                    <div className="aspect-square relative overflow-hidden rounded-lg border">
+                                      <img
+                                        src={
+                                          image instanceof File
+                                            ? URL.createObjectURL(image)
+                                            : image || "/placeholder.svg"
+                                        }
+                                        alt={`Upload ${index + 1}`}
+                                        className="w-full h-full object-cover"
+                                        onLoad={(e) => {
+                                          if (image instanceof File) {
+                                            const img = e.target as HTMLImageElement;
+                                            setTimeout(() => URL.revokeObjectURL(img.src), 1000);
+                                          }
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                                      <Button
+                                        size="sm"
+                                        variant="destructive"
+                                        className="absolute top-1 right-1 h-5 w-5 sm:h-6 sm:w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => removeImage(index)}
+                                      >
+                                        <X className="w-2 h-2 sm:w-3 sm:h-3" />
+                                      </Button>
+                                    </div>
+                                    {index === 0 && (
+                                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                                        <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
+                      </div>
+                      <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+                        <Button
+                          variant="outline"
+                          className="text-xs sm:text-sm bg-transparent"
+                          onClick={() => {
+                            setIsDialogOpen(false);
+                            setUploadedImages([]);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleSave}
+                          className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm"
+                        >
+                          Save
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Title</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Price</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Location</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {getCurrentData()
+                      .slice(0, 10)
+                      .map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium text-xs sm:text-sm">{item.title}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">{item.location || `${item.city}, ${item.region}`}</TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
+                              {item.listingType === "sale" ? "For Sale" : "For Rent"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs sm:text-sm bg-transparent"
+                                onClick={() => handleView(item)}
+                              >
+                                <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs sm:text-sm bg-transparent"
+                                onClick={() => handleEdit(item)}
+                              >
+                                <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs sm:text-sm bg-transparent"
+                                onClick={() => handleDelete(item)}
+                              >
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
                       ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* View Detail Dialog */}
+            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+              <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+                <DialogHeader>
+                  <DialogTitle className="text-sm sm:text-base">
+                    {viewingItem ? `View ${selectedCategory.slice(0, -1)} Details` : "Loading..."}
+                  </DialogTitle>
+                </DialogHeader>
+                {viewingItem && (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Title</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.title || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Price</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          ETB {(viewingItem.price || 0).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Location</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.location || `${viewingItem.city}, ${viewingItem.region}` || "N/A"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Listing Type</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.listingType === "sale" ? "For Sale" : "For Rent"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Posted Date</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.createdAt ? new Date(viewingItem.createdAt).toLocaleDateString() : "N/A"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Status</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.status || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Description</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.description || "N/A"}</p>
+                      </div>
+
+                      {/* Category-specific fields */}
+                      {selectedCategory === "cars" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Make</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.make || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Year</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.year || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.mileage || "N/A"} km</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.fuelType || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.transmission || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Features</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.features?.join(", ") || "N/A"}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {selectedCategory === "houses" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Property Type</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.propertyType || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bedrooms || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bathrooms || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.size || "N/A"} sqm</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearBuilt || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.amenities?.join(", ") || "N/A"}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {selectedCategory === "lands" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.sizeValue ? `${viewingItem.sizeValue} ${viewingItem.sizeUnit || "hectare"}` : "N/A"}
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Zoning</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.zoning || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Land Use</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.landUse || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Topography</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.topography || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.waterAccess || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.electricityAccess ? "Yes" : "No"}
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.roadAccess ? "Yes" : "No"}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                      {selectedCategory === "machines" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Category</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.category || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Brand</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.brand || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearManufactured || "N/A"}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.hoursUsed || "N/A"} hours</p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
+                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                              {viewingItem.specifications?.join(", ") || "N/A"}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Images</Label>
+                        {viewingItem.images && viewingItem.images.length > 0 ? (
+  <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+    {viewingItem.images.map((image: string, index: number) => (
+      <div key={index} className="relative">
+        <div className="aspect-square relative overflow-hidden rounded-lg border">
+          <img
+            src={image || "/placeholder.svg"}
+            alt={`Image ${index + 1}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback if image fails to load
+              (e.target as HTMLImageElement).src = "/placeholder.svg";
+            }}
+          />
+        </div>
+        {index === 0 && (
+          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+            <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+) : (
+  <p className="text-sm text-gray-500">No images available</p>
+)}
+                      </div>
+                   <div className="space-y-2">
+  <Label className="text-xs sm:text-sm font-medium">Owner</Label>
+  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+    {viewingItem.owner 
+      ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner 
+      : "N/A"
+    }
+  </p>
+</div>
+
                     </div>
                   </div>
                 )}
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
-              <Button
-                variant="outline"
-                className="text-xs sm:text-sm bg-transparent"
-                onClick={() => {
-                  setIsDialogOpen(false);
-                  setUploadedImages([]);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSave}
-                className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm"
-              >
-                Save
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      </div>
-    </CardHeader>
-    <CardContent className="p-0">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-xs sm:text-sm">Title</TableHead>
-            <TableHead className="text-xs sm:text-sm">Price</TableHead>
-            <TableHead className="text-xs sm:text-sm">Location</TableHead>
-            <TableHead className="text-xs sm:text-sm">Type</TableHead>
-            <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
-            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {getCurrentData()
-            .slice(0, 10)
-            .map((item: any) => (
-              <TableRow key={item.id}>
-                <TableCell className="font-medium text-xs sm:text-sm">{item.title}</TableCell>
-                <TableCell className="text-xs sm:text-sm">ETB {(item.price || 0).toLocaleString()}</TableCell>
-                <TableCell className="text-xs sm:text-sm">{item.location || `${item.city}, ${item.region}`}</TableCell>
-                <TableCell className="text-xs sm:text-sm">
-                  <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
-                    {item.listingType === "sale" ? "For Sale" : "For Rent"}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-xs sm:text-sm">
-                  {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
+                <div className="flex justify-end mt-4 sm:mt-6">
+                  <Button
+                    variant="outline"
+                    className="text-xs sm:text-sm bg-transparent"
+                    onClick={() => {
+                      setIsViewDialogOpen(false);
+                      setViewingItem(null);
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Modal */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent className="max-w-xs sm:max-w-md mx-4">
+                <DialogHeader>
+                  <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Are you sure you want to delete the listing "
+                    <span className="font-medium">{deletingItem?.title}</span>"? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
                     <Button
-                      size="sm"
                       variant="outline"
                       className="text-xs sm:text-sm bg-transparent"
-                      onClick={() => handleView(item)}
+                      onClick={() => {
+                        setIsDeleteDialogOpen(false);
+                        setDeletingItem(null);
+                      }}
                     >
-                      <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Cancel
                     </Button>
+
+
+
                     <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs sm:text-sm bg-transparent"
-                      onClick={() => handleEdit(item)}
+                      variant="destructive"
+                      className="text-xs sm:text-sm"
+                      onClick={confirmDelete}
                     >
-                      <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs sm:text-sm bg-transparent"
-                      onClick={() => handleDelete(item)}
-                    >
-                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      Delete
                     </Button>
                   </div>
-                </TableCell>
-              </TableRow>
-            ))}
-        </TableBody>
-      </Table>
-    </CardContent>
-  </Card>
-
-  {/* View Detail Dialog */}
-  <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-      <DialogHeader>
-        <DialogTitle className="text-sm sm:text-base">
-          {viewingItem ? `View ${selectedCategory.slice(0, -1)} Details` : "Loading..."}
-        </DialogTitle>
-      </DialogHeader>
-      {viewingItem && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Title</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.title || "N/A"}</p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Price</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                ETB {(viewingItem.price || 0).toLocaleString()}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Location</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                {viewingItem.location || `${viewingItem.city}, ${viewingItem.region}` || "N/A"}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Listing Type</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                {viewingItem.listingType === "sale" ? "For Sale" : "For Rent"}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Posted Date</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                {viewingItem.createdAt ? new Date(viewingItem.createdAt).toLocaleDateString() : "N/A"}
-              </p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Status</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.status || "N/A"}</p>
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Description</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.description || "N/A"}</p>
-            </div>
-
-            {/* Category-specific fields */}
-            {selectedCategory === "cars" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Make</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.make || "N/A"}</p>
                 </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Model</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Year</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.year || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.mileage || "N/A"} km</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.fuelType || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.transmission || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Features</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.features?.join(", ") || "N/A"}
-                  </p>
-                </div>
-              </>
-            )}
-            {selectedCategory === "houses" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Property Type</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.propertyType || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bedrooms || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bathrooms || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Size</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.size || "N/A"} sqm</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearBuilt || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.amenities?.join(", ") || "N/A"}
-                  </p>
-                </div>
-              </>
-            )}
-            {selectedCategory === "lands" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Size</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.sizeValue ? `${viewingItem.sizeValue} ${viewingItem.sizeUnit || "hectare"}` : "N/A"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Zoning</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.zoning || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Land Use</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.landUse || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Topography</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.topography || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.waterAccess || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.electricityAccess ? "Yes" : "No"}
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.roadAccess ? "Yes" : "No"}
-                  </p>
-                </div>
-              </>
-            )}
-            {selectedCategory === "machines" && (
-              <>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Category</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.category || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Brand</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.brand || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Model</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearManufactured || "N/A"}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.hoursUsed || "N/A"} hours</p>
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
-                  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                    {viewingItem.specifications?.join(", ") || "N/A"}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-          <div className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Images</Label>
-              {viewingItem.images && viewingItem.images.length > 0 ? (
-                <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
-                  {viewingItem.images.map((image: string, index: number) => (
-                    <div key={index} className="relative">
-                      <div className="aspect-square relative overflow-hidden rounded-lg border">
-                        <img
-                          src={image || "/placeholder.svg"}
-                          alt={`Image ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      {index === 0 && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                          <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-gray-500">No images available</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Owner</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.owner || "N/A"}</p>
-            </div>
-             
-          </div>
-        </div>
-      )}
-      <div className="flex justify-end mt-4 sm:mt-6">
-        <Button
-          variant="outline"
-          className="text-xs sm:text-sm bg-transparent"
-          onClick={() => {
-            setIsViewDialogOpen(false);
-            setViewingItem(null);
-          }}
-        >
-          Close
-        </Button>
-      </div>
-    </DialogContent>
-  </Dialog>
-
-  {/* Delete Confirmation Modal */}
-  <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-    <DialogContent className="max-w-xs sm:max-w-md mx-4">
-      <DialogHeader>
-        <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4">
-        <p className="text-xs sm:text-sm text-gray-600">
-          Are you sure you want to delete the listing "
-          <span className="font-medium">{deletingItem?.title}</span>"? This action cannot be undone.
-        </p>
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            className="text-xs sm:text-sm bg-transparent"
-            onClick={() => {
-              setIsDeleteDialogOpen(false);
-              setDeletingItem(null);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            className="text-xs sm:text-sm"
-            onClick={confirmDelete}
-          >
-            Delete
-          </Button>
-        </div>
-      </div>
-    </DialogContent>
-  </Dialog>
-   </TabsContent>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
 
           <TabsContent value="users" className="space-y-4 sm:space-y-6">
             <Card>
@@ -3021,374 +3089,376 @@ const handleViewDeal = async (deal: Deal) => {
               </CardContent>
             </Card>
           </TabsContent>
-<TabsContent value="deals" className="space-y-4 sm:space-y-6">
-  <Card>
-    <CardHeader className="pb-2 sm:pb-4">
-      <CardTitle className="flex items-center text-sm sm:text-base">
-        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-        Deal Management
-      </CardTitle>
-      <CardDescription className="text-xs sm:text-sm">Review and manage all platform deals</CardDescription>
-    </CardHeader>
-    <CardContent className="p-0">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-xs sm:text-sm">Deal ID</TableHead>
-            <TableHead className="text-xs sm:text-sm">Item</TableHead>
-            <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
-            <TableHead className="text-xs sm:text-sm">Amount</TableHead>
-            <TableHead className="text-xs sm:text-sm">Status</TableHead>
-            <TableHead className="text-xs sm:text-sm">Date</TableHead>
-            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {deals.slice(0, 10).map((deal) => (
-            <TableRow key={deal.id}>
-              <TableCell className="text-xs sm:text-sm font-mono">
-                {deal.dealId || deal.id.slice(-8)}
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                <div className="flex items-center space-x-2">
-                  {getItemIcon(deal.itemType)}
-                  <span className="font-medium">{deal.item.title}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                <div>
-                  <p className="font-medium">
-                    {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
-                  </p>
-                  <p className="text-gray-500">
-                    {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
-                  </p>
-                </div>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm font-medium">
-                ETB {(deal.originalPrice || 0).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
-                  {getStatusIcon(deal.status)}
-                  <span>{deal.status}</span>
-                </Badge>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                {new Date(deal.createdAt).toLocaleDateString()}
-              </TableCell>
-              <TableCell>
-                <div className="flex space-x-1">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs bg-transparent"
-                    onClick={() => handleViewDeal(deal)}
-                  >
-                    <Eye className="w-3 h-3" />
-                  </Button>
-                  {deal.status === "pending" && (
-                    <>
-                      <Button
-                        size="sm"
-                        className="text-xs bg-green-600 hover:bg-green-700"
-                        onClick={() => handleAcceptDeal(deal.id)}
-                      >
-                        Accept
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        className="text-xs"
-                        onClick={() => handleRejectDeal(deal.id)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  {deal.status === "approved" && (
-                    <Button
-                      size="sm"
-                      className="text-xs bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleCompleteDeal(deal.id)}
-                    >
-                      Complete
-                    </Button>
-                  )}
-                  {(deal.status === "pending" || deal.status === "approved") && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs text-red-600 hover:text-red-700 bg-transparent"
-                      onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </CardContent>
-  </Card>
-  
-  {/* Deal Detail Dialog */}
-  <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
-    <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-      <DialogHeader>
-        <DialogTitle className="text-sm sm:text-base">
-          Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8)}
-        </DialogTitle>
-      </DialogHeader>
-      {selectedDeal && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          <div className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
-              <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
-              </p>
-            </div>
-            
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <div className="flex items-center space-x-2 mb-2">
-                  {getItemIcon(selectedDeal.itemType)}
-                  <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <span>Type:</span>
-                  <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
-                  
-                  <span>Price:</span>
-                  <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
-                  
-                  {selectedDeal.item?.make && (
-                    <>
-                      <span>Make:</span>
-                      <span className="font-medium">{selectedDeal.item.make}</span>
-                    </>
-                  )}
-                  
-                  {selectedDeal.item?.model && (
-                    <>
-                      <span>Model:</span>
-                      <span className="font-medium">{selectedDeal.item.model}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+          <TabsContent value="deals" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
+                  Deal Management
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Review and manage all platform deals</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Deal ID</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Item</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Amount</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {deals.slice(0, 10).map((deal) => (
+                      <TableRow key={deal.id}>
+                        <TableCell className="text-xs sm:text-sm font-mono">
+                          {deal.dealId || deal.id.slice(-8)}
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div className="flex items-center space-x-2">
+                            {getItemIcon(deal.itemType)}
+                            <span className="font-medium">{deal.item.title}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div>
+                            <p className="font-medium">
+                              {deal.buyer && deal.buyer.fullName ? deal.buyer.fullName : "N/A"}
+                            </p>
+                            <p className="text-gray-500">
+                              {deal.buyer && deal.buyer.email ? deal.buyer.email : "N/A"}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm font-medium">
+                          ETB {(deal.originalPrice || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1`}>
+                            {getStatusIcon(deal.status)}
+                            <span>{deal.status}</span>
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(deal.createdAt).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs bg-transparent"
+                              onClick={() => handleViewDeal(deal)}
+                            >
+                              <Eye className="w-3 h-3" />
+                            </Button>
+                            {deal.status === "pending" && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="text-xs bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleAcceptDeal(deal.id)}
+                                >
+                                  Accept
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="text-xs"
+                                  onClick={() => handleRejectDeal(deal.id)}
+                                >
+                                  Reject
+                                </Button>
+                              </>
+                            )}
+                            {deal.status === "approved" && (
+                              <Button
+                                size="sm"
+                                className="text-xs bg-blue-600 hover:bg-blue-700"
+                                onClick={() => handleCompleteDeal(deal.id)}
+                              >
+                                Complete
+                              </Button>
+                            )}
+                            {(deal.status === "approved") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-xs text-red-600 hover:text-red-700 bg-transparent"
+                                onClick={() => handleCancelDeal(deal.id, "Cancelled by admin")}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
 
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <p className="font-medium text-sm">
-                  {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                  <span>Email:</span>
-                  <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
-                  
-                  <span>Phone:</span>
-                  <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
-                  
-                  {selectedDeal.buyer?.address && (
-                    <>
-                      <span>Address:</span>
-                      <span className="font-medium">
-                        {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Deal Detail Dialog */}
+           <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
+  <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+    <DialogHeader>
+      <DialogTitle className="text-sm sm:text-base">
+        Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
+      </DialogTitle>
+    </DialogHeader>
+    {selectedDeal && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
+            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+              {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
+            </p>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <p className="font-medium text-sm">
-                  {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
-                </p>
-                <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                  <span>Email:</span>
-                  <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
-                  
-                  <span>Phone:</span>
-                  <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
-                </div>
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="flex items-center space-x-2 mb-2">
+                {getItemIcon(selectedDeal.itemType)}
+                <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Type:</span>
+                <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
+
+                <span>Price:</span>
+                <span className="font-medium">
+                  ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
+                </span>
+
+                {selectedDeal.item?.make && (
+                  <>
+                    <span>Make:</span>
+                    <span className="font-medium">{selectedDeal.item.make}</span>
+                  </>
+                )}
+
+                {selectedDeal.item?.model && (
+                  <>
+                    <span>Model:</span>
+                    <span className="font-medium">{selectedDeal.item.model}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
 
-          <div className="space-y-3 sm:space-y-4">
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
-                  {getStatusIcon(selectedDeal.status)}
-                  <span className="capitalize">{selectedDeal.status}</span>
-                </Badge>
-                
-                {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
-                  <div className="mt-3">
-                    <Label className="text-xs font-medium">Status History</Label>
-                    <div className="space-y-1 mt-1">
-                      {selectedDeal.statusHistory.map((history: any, index: number) => (
-                        <div key={index} className="flex justify-between text-xs">
-                          <span className="capitalize">{history.status}</span>
-                          <span className="text-gray-500">
-                            {new Date(history.timestamp).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <p className="font-medium text-sm">
+                {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                <span>Email:</span>
+                <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
+
+                <span>Phone:</span>
+                <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
+
+                {selectedDeal.buyer?.address && (
+                  <>
+                    <span>Address:</span>
+                    <span className="font-medium">
+                      {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
+                    </span>
+                  </>
                 )}
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <span>Original Price:</span>
-                  <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
-                  
-                  <span>Final Price:</span>
-                  <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
-                  
-                  <span>Commission:</span>
-                  <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
-                  
-                  <span>Platform Fee:</span>
-                  <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
-                  
-                  <span>Payment Method:</span>
-                  <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
-                  
-                  {selectedDeal.paymentStatus && (
-                    <>
-                      <span>Payment Status:</span>
-                      <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <p className="font-medium text-sm">
+                {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                <span>Email:</span>
+                <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
 
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <span>Created:</span>
-                  <span className="font-medium">
-                    {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                    {new Date(selectedDeal.createdAt).toLocaleTimeString()}
-                  </span>
-                  
-                  <span>Last Updated:</span>
-                  <span className="font-medium">
-                    {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                    {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
-                  </span>
-                  
-                  {selectedDeal.approvedAt && (
-                    <>
-                      <span>Approved:</span>
-                      <span className="font-medium">
-                        {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
-                        {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
-                      </span>
-                    </>
-                  )}
-                  
-                  {selectedDeal.completedAt && (
-                    <>
-                      <span>Completed:</span>
-                      <span className="font-medium">
-                        {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
-                        {new Date(selectedDeal.completedAt).toLocaleTimeString()}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
-              <div className="border rounded-lg p-3 bg-gray-50">
-                {selectedDeal.notes ? (
-                  <p className="text-xs">{selectedDeal.notes}</p>
-                ) : (
-                  <p className="text-xs text-gray-500">No notes available</p>
-                )}
-                
-                {selectedDeal.messages && selectedDeal.messages.length > 0 && (
-                  <div className="mt-3">
-                    <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
-                    <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
-                      {selectedDeal.messages.map((message: any, index: number) => (
-                        <div key={index} className="text-xs p-2 bg-white rounded border">
-                          <div className="flex justify-between">
-                            <span className="font-medium">{message.sender}</span>
-                            <span className="text-gray-500">
-                              {new Date(message.timestamp).toLocaleDateString()}
-                            </span>
-                          </div>
-                          <p className="mt-1">{message.content}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <span>Phone:</span>
+                <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
               </div>
             </div>
           </div>
         </div>
-      )}
-      <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
-        <Button
-          variant="outline"
-          className="text-xs sm:text-sm bg-transparent"
-          onClick={() => setIsDealDetailOpen(false)}
-        >
-          Close
-        </Button>
-        {selectedDeal?.status === "pending" && (
-          <>
-            <Button
-              className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
-              onClick={() => handleAcceptDeal(selectedDeal.id)}
-            >
-              Accept Deal
-            </Button>
-            <Button
-              variant="destructive"
-              className="text-xs sm:text-sm"
-              onClick={() => handleRejectDeal(selectedDeal.id)}
-            >
-              Reject Deal
-            </Button>
-          </>
-        )}
-        {selectedDeal?.status === "approved" && (
-          <Button
-            className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-            onClick={() => handleCompleteDeal(selectedDeal.id)}
-          >
-            Mark as Completed
-          </Button>
-        )}
+
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                {getStatusIcon(selectedDeal.status)}
+                <span className="capitalize">{selectedDeal.status}</span>
+              </Badge>
+
+              {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
+                <div className="mt-3">
+                  <Label className="text-xs font-medium">Status History</Label>
+                  <div className="space-y-1 mt-1">
+                    {selectedDeal.statusHistory.map((history: any, index: number) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <span className="capitalize">{history.status}</span>
+                        <span className="text-gray-500">
+                          {new Date(history.timestamp).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Original Price:</span>
+                <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                <span>Final Price:</span>
+                <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                <span>Commission:</span>
+                <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
+
+                <span>Platform Fee:</span>
+                <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
+
+                <span>Payment Method:</span>
+                <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
+
+                {selectedDeal.paymentStatus && (
+                  <>
+                    <span>Payment Status:</span>
+                    <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Created:</span>
+                <span className="font-medium">
+                  {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                  {new Date(selectedDeal.createdAt).toLocaleTimeString()}
+                </span>
+
+                <span>Last Updated:</span>
+                <span className="font-medium">
+                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
+                </span>
+
+                {selectedDeal.approvedAt && (
+                  <>
+                    <span>Approved:</span>
+                    <span className="font-medium">
+                      {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
+                      {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
+                    </span>
+                  </>
+                )}
+
+                {selectedDeal.completedAt && (
+                  <>
+                    <span>Completed:</span>
+                    <span className="font-medium">
+                      {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
+                      {new Date(selectedDeal.completedAt).toLocaleTimeString()}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              {selectedDeal.notes ? (
+                <p className="text-xs">{selectedDeal.notes}</p>
+              ) : (
+                <p className="text-xs text-gray-500">No notes available</p>
+              )}
+
+              {selectedDeal.messages && selectedDeal.messages.length > 0 && (
+                <div className="mt-3">
+                  <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
+                  <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
+                    {selectedDeal.messages.map((message: any, index: number) => (
+                      <div key={index} className="text-xs p-2 bg-white rounded border">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{message.sender}</span>
+                          <span className="text-gray-500">
+                            {new Date(message.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="mt-1">{message.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
-    </DialogContent>
-  </Dialog>
-</TabsContent>
+    )}
+    <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+      <Button
+        variant="outline"
+        className="text-xs sm:text-sm bg-transparent"
+        onClick={() => setIsDealDetailOpen(false)}
+      >
+        Close
+      </Button>
+      {selectedDeal?.status === "pending" && (
+        <>
+          <Button
+            className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+            onClick={() => handleAcceptDeal(selectedDeal.id)}
+          >
+            Accept Deal
+          </Button>
+          <Button
+            variant="destructive"
+            className="text-xs sm:text-sm"
+            onClick={() => handleRejectDeal(selectedDeal.id)}
+          >
+            Reject Deal
+          </Button>
+        </>
+      )}
+      {selectedDeal?.status === "approved" && (
+        <Button
+          className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+          onClick={() => handleCompleteDeal(selectedDeal.id)}
+        >
+          Mark as Completed
+        </Button>
+      )}
+    </div>
+  </DialogContent>
+</Dialog>
+          </TabsContent>
         </Tabs>
       </div>
     </div>

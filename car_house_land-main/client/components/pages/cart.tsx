@@ -277,21 +277,8 @@ export function Cart() {
                   {isCreatingDeals ? "Creating Deals..." : "Go to Deals"}
                 </Button>
 
-                <div className="text-center">
-                  <Link
-                    href="/"
-                    className="text-sm text-blue-600 hover:text-blue-700 hover:underline transition-colors duration-200"
-                  >
-                    Continue Shopping
-                  </Link>
-                </div>
+                
 
-                {/* Security Notice */}
-                <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border border-green-100">
-                  <p className="text-xs text-gray-700 text-center font-medium">
-                    🔒 Secure checkout with SSL encryption
-                  </p>
-                </div>
 
                 {/* Trust Badges */}
                 <div className="grid grid-cols-3 gap-2 pt-4">

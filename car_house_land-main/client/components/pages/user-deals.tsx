@@ -115,8 +115,7 @@ export function UserDeals() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-red-50 to-orange-50 py-16">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-responsive-2xl font-bold text-gray-900">Please Sign In</h1>
-          <p className="text-responsive-base text-gray-600 mt-2">You need to be signed in to view your deals</p>
+          <h1 className="text-responsive-2xl font-bold text-gray-900">Loading deals.....</h1>
         </div>
       </div>
     )
@@ -207,13 +206,18 @@ export function UserDeals() {
                   {deal.dealId && <p className="text-xs text-gray-500 font-mono">ID: {deal.dealId}</p>}
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="aspect-video relative overflow-hidden rounded-lg">
-                    <img
-                      src={deal.item.images[0] || "/placeholder.svg"}
-                      alt={deal.item.title}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
+                 <div className="aspect-video relative overflow-hidden rounded-lg">
+  <img
+    src={Array.isArray(deal.item.images) && deal.item.images.length > 0 
+      ? (typeof deal.item.images[0] === 'string' 
+        ? deal.item.images[0] 
+        : deal.item.images[0]?.url || "/placeholder.svg")
+      : "/placeholder.svg"}
+    alt={deal.item.title}
+    className="w-full h-full object-cover"
+    onError={(e) => { e.target.src = "/placeholder.svg"; }}
+  />
+</div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
