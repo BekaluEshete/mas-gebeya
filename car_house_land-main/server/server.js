@@ -11,7 +11,8 @@ const LandRoutes=require("./routes/landRoute");
 const MachineRoutes=require("./routes/machineRoute")
 const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
-const PropertyRoute=require("./routes/propertyRoute");
+const PropertyRoute = require("./routes/propertyRoute");
+const ConsultationRoutes = require("./routes/consultationRoute");
 const app = express();
 app.set("trust proxy", 1);
 
@@ -34,6 +35,8 @@ app.use('/api/machines', MachineRoutes);
 app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
+ // NEW: Mount consultations route
+app.use('/api/consultations', ConsultationRoutes);
 
 // Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {
