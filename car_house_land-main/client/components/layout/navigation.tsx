@@ -27,6 +27,7 @@ export function Navigation() {
     { href: "/houses", label: "Properties" },
     { href: "/lands", label: "Lands" },
     { href: "/machines", label: "Machines" },
+    { href: "/consult", label: "Consult"},
   ]
 
   const adminNavItems = [
@@ -44,13 +45,13 @@ export function Navigation() {
   const cartItemCount = Array.isArray(cart) ? cart.length : 0
 
   const handleLogout = async () => {
-    console.log("[v0] Navigation logout triggered")
+    console.log(" Navigation logout triggered")
     setIsLoggingOut(true)
     try {
       await logout()
       await new Promise((resolve) => setTimeout(resolve, 1000))
     } catch (error) {
-      console.error("[v0] Logout error:", error)
+      console.error("Logout error:", error)
     } finally {
       setIsLoggingOut(false)
     }
@@ -268,7 +269,7 @@ export function Navigation() {
                   </>
                 ) : (
                   <Button
-                    className="w-full hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-sm py-2.5 mt-2"
+                    className="w-full hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-blue-500 font-medium text-sm py-2.5 mt-2"
                     onClick={() => {
                       setIsAuthModalOpen(true)
                       setIsMobileMenuOpen(false)

@@ -16,7 +16,7 @@ const admin = require('../middleware/adminMiddleware'); // If you have admin che
 router.get('/', protect, admin, getConsultations);
 
 // POST /api/consultations - Create new consultation
-router.post('/', protect, createConsultation); // Authenticated users only
+router.post('/',createConsultation); // Authenticated users only
 
 // PUT /api/consultations/:id - Update status/notes (admin only)
 router.put('/:id', protect, admin, updateConsultationStatus);

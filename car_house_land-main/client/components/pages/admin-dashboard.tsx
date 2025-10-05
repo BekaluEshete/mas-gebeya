@@ -63,8 +63,13 @@ import {
   ArrowUpRight,
   Download,
   RefreshCw,
+  Headphones, // NEW: For consult icon
+  Video, // NEW: For mode icons
+  Phone, // NEW
+  Map, // NEW
+  Calendar, // NEW
 } from "lucide-react"
-import type { Deal } from "@/types"
+import type { Deal, Consultation } from "@/types" // Add Consultation
 import { Label } from "@/components/ui/label"
 import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
@@ -94,6 +99,12 @@ export function AdminDashboard() {
     updateLand,
     deleteLand,
     refreshDeals,
+    // NEW: Destructure consultation context
+    consultations,
+    fetchConsultations,
+    updateConsultationStatus,
+    getPendingConsultationsCount,
+
   } = useApp()
   const [activeTab, setActiveTab] = useState("overview")
   const [selectedCategory, setSelectedCategory] = useState("cars")
@@ -124,6 +135,12 @@ export function AdminDashboard() {
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
+  // NEW: Fetch consultations when tab changes
+  useEffect(() => {
+    if (activeTab === "consult") {
+      fetchConsultations();
+    }
+  }, [activeTab, fetchConsultations]);
 
 
   const fetchOwners = async () => {
@@ -242,6 +259,7 @@ export function AdminDashboard() {
   const totalRevenue = 2450000
   const activeUsers = 1250
   const pendingDeals = getPendingDealsCount()
+  const pendingConsultations = getPendingConsultationsCount()
 
   const categoryData = [
     {
@@ -1194,6 +1212,42 @@ const handleView = async (item: any) => {
     }
   }
 
+ // NEW: Consultation helpers
+  const getModeIcon = (mode: Consultation["mode"]) => {
+    switch (mode) {
+      case "Online video call": return <Video className="w-4 h-4" />;
+      case "Phone call": return <Phone className="w-4 h-4" />;
+      case "In-person": return <Map className="w-4 h-4" />;
+      default: return <Calendar className="w-4 h-4" />;
+    }
+  };
+
+  const getConsultStatusColor = (status: Consultation["status"]) => {
+    switch (status) {
+      case "pending": return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "accepted": return "bg-green-100 text-green-800 border-green-200";
+      case "rescheduled": return "bg-blue-100 text-blue-800 border-blue-200";
+      case "cancelled": return "bg-red-100 text-red-800 border-red-200";
+      case "completed": return "bg-gray-100 text-gray-800 border-gray-200";
+      default: return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    }
+  };
+
+  const handleAcceptConsult = async (id: string) => {
+    await updateConsultationStatus(id, "accepted");
+  };
+
+  const handleRescheduleConsult = async (id: string, newDateTime: string) => {
+    await updateConsultationStatus(id, "rescheduled", `Rescheduled to ${newDateTime}`);
+  };
+
+  const handleCancelConsult = async (id: string) => {
+    await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
+  };
+
+  const handleCompleteConsult = async (id: string) => {
+    await updateConsultationStatus(id, "completed");
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1211,6 +1265,15 @@ const handleView = async (item: any) => {
                   <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600" />
                   <span className="text-xs sm:text-sm font-medium text-amber-800">
                     {pendingDeals} new deal{pendingDeals > 1 ? "s" : ""} pending
+                  </span>
+                </div>
+              )}
+              {/* NEW: Pending consultations badge */}
+              {pendingConsultations > 0 && (
+                <div className="flex items-center space-x-2 bg-blue-50 border border-blue-200 rounded-lg px-3 sm:px-4 py-2 animate-pulse">
+                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                  <span className="text-xs sm:text-sm font-medium text-blue-800">
+                    {pendingConsultations} consultation{pendingConsultations > 1 ? "s" : ""} pending
                   </span>
                 </div>
               )}
@@ -1316,12 +1379,32 @@ const handleView = async (item: any) => {
               </div>
             </CardContent>
           </Card>
+          {/* NEW: Add pending consultations card */}
+          <Card className="border-l-4 border-l-blue-500 hover:shadow-lg transition-all duration-300 group">
+            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    {pendingConsultations}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">Pending Consultations</div>
+                  <div className="flex items-center mt-2 text-blue-600">
+                    <Headphones className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                    <span className="text-xs font-medium">Requires review</span>
+                  </div>
+                </div>
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
+                  <Headphones className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600" />
+                </div>
+              </div>
+            </CardContent>
+          </Card> 
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-6 sm:mb-8">
             <div className="flex overflow-x-auto scrollbar-hide">
-              <TabsList className="grid grid-cols-5 w-full min-w-max sm:min-w-0">
+              <TabsList className="grid grid-cols-6 w-full min-w-max sm:min-w-0">
                 <TabsTrigger
                   value="overview"
                   className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
@@ -1364,6 +1447,20 @@ const handleView = async (item: any) => {
                   {pendingDeals > 0 && (
                     <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center bg-red-500 text-white border-0">
                       {pendingDeals}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                {/* NEW: Consult tab trigger */}
+                <TabsTrigger
+                  value="consult"
+                  className="relative flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
+                >
+                  <Headphones className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Consult</span>
+                  <span className="sm:hidden">Consult</span>
+                  {pendingConsultations > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center bg-blue-500 text-white border-0">
+                      {pendingConsultations}
                     </Badge>
                   )}
                 </TabsTrigger>
@@ -3459,8 +3556,112 @@ const handleView = async (item: any) => {
   </DialogContent>
 </Dialog>
           </TabsContent>
-        </Tabs>
+          {/* NEW: Consult tab content (add after deals TabsContent) */}
+          <TabsContent value="consult" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+                  Consultation Management
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Review and manage booked consultations</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">ID</TableHead>
+                      <TableHead className="text-xs sm:text-sm">User</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Mode</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {consultations.slice(0, 10).map((consult) => (
+                      <TableRow key={consult.id}>
+                        <TableCell className="text-xs sm:text-sm font-mono">{consult.id.slice(-8)}</TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div>
+                            <p className="font-medium">{consult.fullName}</p>
+                            <p className="text-gray-500">{consult.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <Badge variant="secondary">{consult.category} / {consult.type}</Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div className="flex items-center space-x-1">
+                            {getModeIcon(consult.mode)}
+                            <span>{consult.mode}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(consult.dateTime).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
+                            {consult.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button size="sm" variant="outline" className="text-xs">
+                                  Reschedule
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent>
+                                <DialogHeader>
+                                  <DialogTitle>Reschedule {consult.fullName}'s Consultation</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-2">
+                                  <Label>New Date & Time</Label>
+                                  <Input type="datetime-local" defaultValue={new Date(consult.dateTime).toISOString().slice(0, 16)} />
+                                  <Button
+                                    onClick={(e) => {
+                                      const newDateTime = (e.target as any).previousSibling.value;
+                                      if (newDateTime) handleRescheduleConsult(consult.id, newDateTime);
+                                      setIsDealDetailOpen(false); // Reuse existing close logic if needed
+                                    }}
+                                  >
+                                    Confirm Reschedule
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                            <Button
+                              size="sm"
+                              variant={consult.status === 'pending' ? "default" : "outline"}
+                              className="text-xs"
+                              onClick={() => consult.status === 'pending' ? handleAcceptConsult(consult.id) : handleCompleteConsult(consult.id)}
+                            >
+                              {consult.status === 'pending' ? 'Accept' : 'Complete'}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="text-xs"
+                              onClick={() => handleCancelConsult(consult.id)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs> 
+        
       </div>
     </div>
+
   )
 }

@@ -247,3 +247,19 @@ export interface Machine {
   views: number
   favorites: string[]
 }
+// lib/types.ts
+export interface Consultation {
+  id: string;
+  fullName: string;
+  email: string;
+  phone: string;
+  category: 'Car' | 'Land' | 'Machinery' | 'Property' | 'Business';
+  description: string;
+  type: 'Car' | 'Land' | 'Machinery' | 'Property' | 'Business';
+  mode: 'Online video call' | 'Phone call' | 'In-person';
+  dateTime: string; // ISO string, e.g., "2025-10-10T14:00:00Z"
+  status: 'pending' | 'accepted' | 'rescheduled' | 'cancelled' | 'completed';
+  createdAt: string;
+  updatedAt: string;
+  agentNotes?: string; // For admin updates
+}
