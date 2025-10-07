@@ -7,6 +7,8 @@ const Property = require('../models/Property');
 const Machine = require('../models/Machine');
 const mongoose = require('mongoose');
 const { sendEmail, emailTemplates } = require('../utils/email');
+const Activity = require('../models/Activity'); // NEW
+
 
 
 const getDeals = async (req, res) => {
@@ -158,6 +160,19 @@ const createDeal = async (req, res) => {
       itemType,
       dealType, // Include dealType if it's part of your schema
     });
+    // Log activity
+    await Activity.create({
+      user: buyer,
+      action: 'created',
+      entityType: 'deal',
+      entityId: deal._id,
+      description: `created a deal for ${itemExists.title || itemExists.name}`,
+      metadata: { 
+        itemType,
+        dealType,
+        seller: sellerExists.fullName 
+      }
+    });
 try {
   await sendEmail({
     email: "tommr2323@gmail.com", // Admin email
@@ -219,6 +234,20 @@ const updateDealStatus = async (req, res) => {
         message: 'Deal not found',
       });
     }
+    // Log activity before updating
+    await Activity.create({
+      user: req.userId,
+      action: status,
+      entityType: 'deal',
+      entityId: deal._id,
+      description: `updated deal status to ${status}`,
+      metadata: { 
+        previousStatus: deal.status,
+        newStatus: status,
+        cancellationReason 
+      }
+    });
+
 
     deal.status = status;
     if (status === 'completed') deal.completedAt = new Date();

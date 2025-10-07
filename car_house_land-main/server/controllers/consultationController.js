@@ -1,4 +1,6 @@
 const Consultation = require('../models/Consultation');
+const Activity = require('../models/Activity'); // NEW
+
 
 // @desc    Get all consultations (admin only)
 // @route   GET /api/consultations
@@ -55,6 +57,19 @@ const createConsultation = async (req, res) => {
       mode,
       dateTime
     });
+    // Log activity
+    await Activity.create({
+      user: req.userId,
+      action: 'created',
+      entityType: 'consultation',
+      entityId: consultation._id,
+      description: `booked a ${type} consultation`,
+      metadata: { 
+        category,
+        mode,
+        dateTime: new Date(dateTime) 
+      }
+    });
 
     // TODO: Send confirmation email/SMS here (e.g., using Nodemailer or Twilio)
 
@@ -105,6 +120,18 @@ const updateConsultationStatus = async (req, res) => {
         message: 'Consultation not found'
       });
     }
+    // Log activity
+    await Activity.create({
+      user: req.userId,
+      action: status,
+      entityType: 'consultation',
+      entityId: consultation._id,
+      description: `updated consultation status to ${status}`,
+      metadata: { 
+        previousStatus: consultation.status,
+        agentNotes 
+      }
+    });
 
     // TODO: Send notification to user (email/SMS) about status change
 
