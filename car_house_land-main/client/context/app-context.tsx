@@ -986,8 +986,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           localStorage.setItem("consultations", JSON.stringify(data.data));
         }
       } else {
-        console.error("Failed to fetch consultations:", response.status);
-      }
+  if (response.status !== 404) {  // NEW: Ignore 404 (backend not ready)
+    console.error("Failed to fetch consultations:", response.status);
+  } else {
+    console.warn("Consultations endpoint not found (404) - using local data only");  // NEW: Softer log
+  }
+}
       // Always fallback to localStorage
       const savedConsultations = localStorage.getItem("consultations");
       if (savedConsultations) {
