@@ -75,6 +75,7 @@ import { createCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
 
 import { useState, useEffect } from "react"
+import RecentActivities from "./RecentActivities"
 
 export function AdminDashboard() {
   const {
@@ -1469,162 +1470,52 @@ const handleView = async (item: any) => {
             </div>
           </div>
 
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              <Card className="lg:col-span-1">
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
-                    Listings Distribution
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      cars: { label: "Cars", color: "var(--color-cars-primary)" },
-                      houses: { label: "Houses", color: "var(--color-houses-primary)" },
-                      lands: { label: "Lands", color: "var(--color-lands-primary)" },
-                      machines: { label: "Machines", color: "var(--color-machines-primary)" },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius="80%"
-                          dataKey="value"
-                          label={({ name, percentage }) => `${name}: ${percentage}%`}
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+       <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <Card className="lg:col-span-3">
+      <CardHeader className="pb-2 sm:pb-4">
+        <CardTitle className="flex items-center text-sm sm:text-base">
+          <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
+          Listings Distribution
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          config={{
+            cars: { label: "Cars", color: "var(--color-cars-primary)" },
+            houses: { label: "Houses", color: "var(--color-houses-primary)" },
+            lands: { label: "Lands", color: "var(--color-lands-primary)" },
+            machines: { label: "Machines", color: "var(--color-machines-primary)" },
+          }}
+          className="h-[200px] sm:h-[250px] md:h-[300px]"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                dataKey="value"
+                label={({ name, percentage }) => `${name}: ${percentage}%`}
+              >
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  </div>
 
-              <Card className="lg:col-span-2">
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Target className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                    Performance Metrics
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Key performance indicators</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-4 sm:gap-6">
-                    {performanceData.map((metric, index) => (
-                      <div key={index} className="text-center">
-                        <ChartContainer
-                          config={{
-                            value: { label: metric.name, color: metric.color },
-                          }}
-                          className="h-[80px] sm:h-[100px] md:h-[120px]"
-                        >
-                          <ResponsiveContainer width="100%" height="100%">
-                            <RadialBarChart cx="50%" cy="50%" innerRadius="60%" outerRadius="90%" data={[metric]}>
-                              <RadialBar dataKey="value" cornerRadius={10} fill={metric.color} />
-                            </RadialBarChart>
-                          </ResponsiveContainer>
-                        </ChartContainer>
-                        <div className="mt-2">
-                          <div className="text-xl sm:text-2xl font-bold" style={{ color: metric.color }}>
-                            {metric.value}%
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-600">{metric.name}</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
-                    Recent Activity
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Latest platform updates</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 sm:space-y-4">
-                    {[
-                      { type: "user", message: "New user registration", time: "2 hours ago", color: "bg-blue-500" },
-                      { type: "listing", message: "Car listing approved", time: "4 hours ago", color: "bg-green-500" },
-                      {
-                        type: "deal",
-                        message: "Deal completed successfully",
-                        time: "6 hours ago",
-                        color: "bg-purple-500",
-                      },
-                      {
-                        type: "system",
-                        message: "System maintenance completed",
-                        time: "8 hours ago",
-                        color: "bg-orange-500",
-                      },
-                    ].map((activity, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center space-x-3 sm:space-x-4 p-2 sm:p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        <div className={`w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full ${activity.color}`}></div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs sm:text-sm font-medium truncate">{activity.message}</p>
-                          <p className="text-xs text-gray-500">{activity.time}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Star className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-amber-500" />
-                    Top Performing Items
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Most viewed and inquired items</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3 sm:space-y-4">
-                    {topPerformingItems.map((item, index) => (
-                      <div key={index} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-xs sm:text-sm truncate">{item.name}</span>
-                            <Badge variant="secondary" className="text-xs flex-shrink-0">
-                              {item.category}
-                            </Badge>
-                          </div>
-                          <div className="flex items-center space-x-2 sm:space-x-4 mt-1 text-xs text-gray-600">
-                            <span>{item.views} views</span>
-                            <span>{item.inquiries} inquiries</span>
-                          </div>
-                        </div>
-                        <div className="text-right flex-shrink-0 ml-2">
-                          <div className="font-semibold text-brand-blue text-xs sm:text-sm">
-                            ETB {(item.revenue || 0).toLocaleString()}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
+  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+    <RecentActivities />
+  </div>
+</TabsContent>
 
           <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

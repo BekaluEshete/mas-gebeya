@@ -4,7 +4,7 @@ import { useEffect, Suspense } from "react"
 import type React from "react"
 import { createContext, useContext, useReducer, type ReactNode } from "react"
 import { useSearchParams } from "next/navigation"
-import type { Car, House, Land, Machine, Deal,Consultation } from "@/types"
+import type { Car, House, Land, Machine, Deal,Consultation,Activity,} from "@/types"
 import { fetchCars, deleteCar as apiDeleteCar } from "@/lib/api/cars"
 import { fetchProperties, deleteHouse as apiDeleteHouse } from "@/lib/api/properties"
 import { fetchLands, deleteLand as apiDeleteLand } from "@/lib/api/lands"
@@ -30,6 +30,7 @@ interface AppState {
   }>
   deals: Deal[]
   consultations: Consultation[] // NEW: Add consultations
+  activities: Activity[] // NEW: Add activities
   soldItems: Set<string>
   isAuthModalOpen: boolean
   cars: Car[]
@@ -40,6 +41,7 @@ interface AppState {
   housesLoading: boolean
   landsLoading: boolean
   machinesLoading: boolean
+  activitiesLoading: boolean // NEW: Add activities loading
 }
 
 type AppAction =
@@ -56,7 +58,9 @@ type AppAction =
   | { type: "ADD_DEAL"; payload: Deal }
   | { type: "UPDATE_DEAL"; payload: { id: string; updates: Partial<Deal> } }
   | {
-      type: "SET_CONSULTATIONS"; payload: Consultation[] // NEW
+    type: "SET_CONSULTATIONS"; payload: Consultation[] // NEW
+  | { type: "SET_ACTIVITIES"; payload: Activity[] } // NEW: Add activities actions
+  | { type: "ADD_ACTIVITY"; payload: Activity }
     }
   | { type: "ADD_CONSULTATION"; payload: Consultation } // NEW
   | { type: "UPDATE_CONSULTATION"; payload: { id: string; updates: Partial<Consultation> } } // NEW
@@ -144,6 +148,10 @@ interface AppContextType extends AppState {
   fetchConsultations: () => Promise<void>
   refreshConsultations: () => Promise<void>
   getPendingConsultationsCount: () => number
+  // NEW: Activity methods
+  fetchRecentActivities: (limit?: number) => Promise<void>
+  logActivity: (action: string, entityType: string, description: string, entityId?: string) => Promise<void>
+  getRecentActivities: () => Activity[]
 
 }
 
@@ -269,6 +277,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, landsLoading: action.payload }
     case "SET_MACHINES_LOADING":
       return { ...state, machinesLoading: action.payload }
+     // NEW: Activity cases
+    case "SET_ACTIVITIES":
+      return { ...state, activities: action.payload }
+    case "ADD_ACTIVITY":
+      return { ...state, activities: [action.payload, ...state.activities.slice(0, 9)] }
+    case "SET_ACTIVITIES_LOADING":
+      return { ...state, activitiesLoading: action.payload }
     default:
       return state
   }
@@ -293,6 +308,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     favorites: [],
     deals: [],
     consultations: [], // NEW: Initialize consultations
+    activities: [], // NEW: Initialize activities
+
     soldItems: new Set(),
     isAuthModalOpen: false,
     cars: [],
@@ -303,6 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     housesLoading: false,
     landsLoading: false,
     machinesLoading: false,
+    activitiesLoading: false, // NEW: Initialize activities loading
   })
 
   const handleAuthRequired = (required: boolean) => {
@@ -697,6 +715,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         // Also save to localStorage as backup
         const updatedDeals = [...state.deals, mappedDeal]
         localStorage.setItem("deals", JSON.stringify(updatedDeals))
+        // After successful deal creation, log activity
+      await logActivity(
+        'created',
+        'deal',
+        `created a deal for ${item.title}`,
+        newDeal.id
+      );
 
         console.log("[v0] Successfully created deal for:", item.title)
         return
@@ -810,6 +835,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
           },
         })
       }
+       // Log the activity
+      await logActivity(
+        status,
+        'deal',
+        `updated deal status to ${status}`,
+        dealId
+      );
+
     } catch (error) {
       console.error("Error updating deal status:", error)
 
@@ -837,11 +870,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   const addCar = (car: Car) => {
-    dispatch({ type: "ADD_CAR", payload: car })
+    dispatch({ type: "ADD_CAR", payload: car });
+    logActivity('created', 'car', `added car: ${car.title}`, car.id);
+
   }
 
   const updateCar = (id: string, updates: Partial<Car>) => {
     dispatch({ type: "UPDATE_CAR", payload: { id, updates } })
+     logActivity('updated', 'car', `updated car: ${updates.title}`, id);
   }
 
   const deleteCar = async (id: string) => {
@@ -849,7 +885,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const success = await apiDeleteCar(id, auth.user.token)
         if (success) {
-          dispatch({ type: "DELETE_CAR", payload: id })
+          dispatch({ type: "DELETE_CAR", payload: id });
+          logActivity('deleted', 'car', `deleted car`, id);
+
           // Also remove from localStorage
           const savedCars = localStorage.getItem("carsData")
           if (savedCars) {
@@ -869,10 +907,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addHouse = (house: House) => {
     dispatch({ type: "ADD_HOUSE", payload: house })
+    logActivity('created', 'house', `added house: ${house.title}`, house.id);
   }
 
   const updateHouse = (id: string, updates: Partial<House>) => {
-    dispatch({ type: "UPDATE_HOUSE", payload: { id, updates } })
+    dispatch({ type: "UPDATE_HOUSE", payload: { id, updates } });
+    logActivity('updated', 'house', `updated house: ${updates.title}`, id);
   }
 
   const deleteHouse = async (id: string) => {
@@ -880,7 +920,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       try {
         const success = await apiDeleteHouse(id, auth.user.token)
         if (success) {
-          dispatch({ type: "DELETE_HOUSE", payload: id })
+          dispatch({ type: "DELETE_HOUSE", payload: id });
+          logActivity('deleted', 'house', `deleted house`, id);
           // Also remove from localStorage
           const savedHouses = localStorage.getItem("housesData")
           if (savedHouses) {
@@ -900,10 +941,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addMachine = (machine: Machine) => {
     dispatch({ type: "ADD_MACHINE", payload: machine })
+    logActivity('created', 'machine', `added machine: ${machine.title}`, machine.id);
   }
 
   const updateMachine = (id: string, updates: Partial<Machine>) => {
     dispatch({ type: "UPDATE_MACHINE", payload: { id, updates } })
+    logActivity('updated', 'machine', `updated machine: ${updates.title}`, id);
   }
 
   const deleteMachine = async (id: string) => {
@@ -912,6 +955,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const success = await apiDeleteMachine(id, auth.user.token)
         if (success) {
           dispatch({ type: "DELETE_MACHINE", payload: id })
+          logActivity('deleted', 'machine', `deleted machine`, id);
           // Also remove from localStorage
           const savedMachines = localStorage.getItem("machinesData")
           if (savedMachines) {
@@ -931,10 +975,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const addLand = (land: Land) => {
     dispatch({ type: "ADD_LAND", payload: land })
+    logActivity('created', 'land', `added land: ${land.title}`, land.id);
   }
 
   const updateLand = (id: string, updates: Partial<Land>) => {
     dispatch({ type: "UPDATE_LAND", payload: { id, updates } })
+    logActivity('updated', 'land', `updated land: ${updates.title}`, id);
   }
 
   const deleteLand = async (id: string) => {
@@ -943,6 +989,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const success = await apiDeleteLand(id, auth.user.token)
         if (success) {
           dispatch({ type: "DELETE_LAND", payload: id })
+          logActivity('deleted', 'land', `deleted land`, id);
           // Also remove from localStorage
           const savedLands = localStorage.getItem("landsData")
           if (savedLands) {
@@ -1017,6 +1064,7 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
     if (!token) {
       console.error('No token in createConsultation'); // FIXED: Better log
       throw new Error("No authentication token found - please log in again");
+
     }
 
     try {
@@ -1037,12 +1085,20 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
         console.log('Raw response:', newConsult); // Debug
         if (newConsult.success && newConsult.data) {
           dispatch({ type: "ADD_CONSULTATION", payload: newConsult.data });
+          // Log consultation activity
+          await logActivity(
+            'created',
+            'consultation',
+            `booked a ${data.type} consultation`,
+            newConsult.data.id
+          );
           const updated = [...state.consultations, newConsult.data];
           localStorage.setItem("consultations", JSON.stringify(updated));
           return newConsult.data;
         } else {
           throw new Error(newConsult.message || 'Invalid response from server');
         }
+
       } else {
         const errorText = await response.text();
         console.error('Error response body:', errorText); // Debug
@@ -1070,6 +1126,7 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
 
     if (!token) {
       console.error('No token in updateConsultationStatus'); // FIXED
+
       throw new Error("No authentication token found");
     }
 
@@ -1092,10 +1149,20 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
             type: "UPDATE_CONSULTATION",
             payload: { id, updates: updated.data },
           });
+       
+          // Log the activity
+      await logActivity(
+        status,
+        'consultation',
+        `updated consultation status to ${status}`,
+        id
+      );
+          // Update localStorage
           const updatedConsultations = state.consultations.map(c => c.id === id ? updated.data : c);
           localStorage.setItem("consultations", JSON.stringify(updatedConsultations));
         }
       }
+
     } catch (error) {
       console.error("Error updating consultation status:", error);
       // Fallback: Update locally
@@ -1111,6 +1178,355 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
 
   const refreshConsultations = async () => {
     await fetchConsultations();
+  };
+  
+  // NEW: Activity methods
+// In your AppContext, replace the fetchRecentActivities function:
+
+// In your AppContext, replace the fetchRecentActivities function:
+
+const fetchRecentActivities = async (limit = 10) => {
+  dispatch({ type: "SET_ACTIVITIES_LOADING", payload: true });
+  
+  try {
+    const token = authService.getStoredToken();
+    
+    if (!token) {
+      console.log('🔄 No token available, generating activities from existing data');
+      generateActivitiesFromExistingData();
+      return;
+    }
+
+    console.log('🔄 Fetching activities from API...');
+    
+    // Try the activities endpoint first
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    try {
+      const response = await fetch(
+        `https://car-house-land.onrender.com/api/activities/recent?limit=${limit}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      console.log('📨 Activities API response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data.success && Array.isArray(data.activities)) {
+          console.log(`✅ Successfully loaded ${data.activities.length} activities from API`);
+          dispatch({ type: "SET_ACTIVITIES", payload: data.activities });
+          return;
+        }
+      }
+      
+      // If activities endpoint fails, generate from existing data
+      console.log('⚠️ Activities endpoint not available, generating from existing data');
+      generateActivitiesFromExistingData();
+      
+    } catch (apiError) {
+      console.log('🌐 Activities API error, generating from existing data:', apiError.message);
+      generateActivitiesFromExistingData();
+    }
+
+  } catch (error) {
+    console.log('❌ Activities fetch failed:', error.message);
+    generateActivitiesFromExistingData();
+  } finally {
+    dispatch({ type: "SET_ACTIVITIES_LOADING", payload: false });
+  }
+};
+
+// Generate activities from your existing APIs data
+const generateActivitiesFromExistingData = async () => {
+  try {
+    console.log('🔄 Generating activities from existing data...');
+    
+    const activities = [];
+    const now = new Date();
+    
+    // Get recent deals and convert to activities
+    if (state.deals && state.deals.length > 0) {
+      const recentDeals = state.deals
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+      
+      recentDeals.forEach(deal => {
+        activities.push({
+          _id: `deal-activity-${deal.id}`,
+          user: deal.buyer || { _id: 'user', fullName: 'User', email: 'user@example.com' },
+          action: deal.status === 'pending' ? 'created' : deal.status,
+          entityType: 'deal',
+          entityId: deal.id,
+          description: `${deal.status === 'pending' ? 'created' : deal.status} deal for ${deal.item?.title || 'item'}`,
+          timestamp: deal.createdAt || new Date(now.getTime() - Math.random() * 86400000).toISOString(),
+          metadata: { 
+            dealId: deal.dealId,
+            price: deal.originalPrice,
+            autoGenerated: true 
+          }
+        });
+      });
+    }
+    
+    // Get recent consultations and convert to activities
+    if (state.consultations && state.consultations.length > 0) {
+      const recentConsultations = state.consultations
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3);
+      
+      recentConsultations.forEach(consultation => {
+        activities.push({
+          _id: `consult-activity-${consultation.id}`,
+          user: { 
+            _id: 'user', 
+            fullName: consultation.fullName, 
+            email: consultation.email 
+          },
+          action: consultation.status === 'pending' ? 'created' : consultation.status,
+          entityType: 'consultation',
+          entityId: consultation.id,
+          description: `${consultation.status === 'pending' ? 'booked' : consultation.status} ${consultation.type} consultation`,
+          timestamp: consultation.createdAt || new Date(now.getTime() - Math.random() * 172800000).toISOString(),
+          metadata: { 
+            category: consultation.category,
+            mode: consultation.mode,
+            autoGenerated: true 
+          }
+        });
+      });
+    }
+    
+    // Get recent cars and convert to activities
+    if (state.cars && state.cars.length > 0) {
+      const recentCars = state.cars
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        .slice(0, 2);
+      
+      recentCars.forEach(car => {
+        activities.push({
+          _id: `car-activity-${car.id}`,
+          user: { _id: 'user', fullName: 'Seller', email: 'seller@example.com' },
+          action: 'created',
+          entityType: 'car',
+          entityId: car.id,
+          description: `added car: ${car.title}`,
+          timestamp: car.createdAt || new Date(now.getTime() - Math.random() * 259200000).toISOString(),
+          metadata: { 
+            make: car.make,
+            model: car.model,
+            price: car.price,
+            autoGenerated: true 
+          }
+        });
+      });
+    }
+    
+    // Get recent properties and convert to activities
+    if (state.houses && state.houses.length > 0) {
+      const recentHouses = state.houses
+        .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
+        .slice(0, 2);
+      
+      recentHouses.forEach(house => {
+        activities.push({
+          _id: `property-activity-${house.id}`,
+          user: { _id: 'user', fullName: 'Seller', email: 'seller@example.com' },
+          action: 'created',
+          entityType: 'property',
+          entityId: house.id,
+          description: `added property: ${house.title}`,
+          timestamp: house.createdAt || new Date(now.getTime() - Math.random() * 345600000).toISOString(),
+          metadata: { 
+            propertyType: house.propertyType,
+            bedrooms: house.bedrooms,
+            price: house.price,
+            autoGenerated: true 
+          }
+        });
+      });
+    }
+    
+    // Sort all activities by timestamp
+    activities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    console.log(`✅ Generated ${activities.length} activities from existing data`);
+    dispatch({ type: "SET_ACTIVITIES", payload: activities });
+    
+  } catch (error) {
+    console.error('❌ Error generating activities from existing data:', error);
+    // Even if generation fails, set empty array to avoid errors
+    dispatch({ type: "SET_ACTIVITIES", payload: [] });
+  }
+};
+// Add this helper function for local activities
+const useLocalActivities = () => {
+  console.log('🏠 Using local activities data');
+  
+  // Try to get activities from localStorage first
+  try {
+    const savedActivities = localStorage.getItem('localActivities');
+    if (savedActivities) {
+      const parsedActivities = JSON.parse(savedActivities);
+      if (Array.isArray(parsedActivities) && parsedActivities.length > 0) {
+        console.log('📁 Loaded activities from localStorage');
+        dispatch({ type: "SET_ACTIVITIES", payload: parsedActivities });
+        return;
+      }
+    }
+  } catch (error) {
+    console.log('❌ Error loading activities from localStorage:', error);
+  }
+
+  // Create initial local activities
+  const localActivities = createLocalActivities();
+  
+  // Save to localStorage for next time
+  try {
+    localStorage.setItem('localActivities', JSON.stringify(localActivities));
+  } catch (error) {
+    console.log('❌ Error saving activities to localStorage:', error);
+  }
+  
+  dispatch({ type: "SET_ACTIVITIES", payload: localActivities });
+};
+
+// Create realistic local activities
+const createLocalActivities = () => {
+  const now = new Date();
+  
+  return [
+    {
+      _id: 'local-' + Date.now() + '-1',
+      user: {
+        _id: 'system',
+        fullName: 'System Admin',
+        email: 'admin@example.com',
+        avatar: null
+      },
+      action: 'created',
+      entityType: 'user',
+      description: 'system initialized dashboard',
+      timestamp: new Date(now.getTime() - 300000).toISOString(), // 5 minutes ago
+      metadata: { local: true }
+    },
+    {
+      _id: 'local-' + Date.now() + '-2',
+      user: {
+        _id: 'system',
+        fullName: 'John Smith',
+        email: 'john@example.com',
+        avatar: null
+      },
+      action: 'created',
+      entityType: 'car',
+      description: 'added new Toyota Camry 2023',
+      timestamp: new Date(now.getTime() - 900000).toISOString(), // 15 minutes ago
+      metadata: { local: true, price: 25000 }
+    },
+    {
+      _id: 'local-' + Date.now() + '-3',
+      user: {
+        _id: 'system',
+        fullName: 'Admin User',
+        email: 'admin@example.com',
+        avatar: null
+      },
+      action: 'approved',
+      entityType: 'deal',
+      description: 'approved deal #DEAL-12345',
+      timestamp: new Date(now.getTime() - 1800000).toISOString(), // 30 minutes ago
+      metadata: { local: true, dealId: 'DEAL-12345' }
+    },
+    {
+      _id: 'local-' + Date.now() + '-4',
+      user: {
+        _id: 'system',
+        fullName: 'Maria Garcia',
+        email: 'maria@example.com',
+        avatar: null
+      },
+      action: 'created',
+      entityType: 'consultation',
+      description: 'booked property consultation',
+      timestamp: new Date(now.getTime() - 3600000).toISOString(), // 1 hour ago
+      metadata: { local: true, type: 'property' }
+    },
+    {
+      _id: 'local-' + Date.now() + '-5',
+      user: {
+        _id: 'system',
+        fullName: 'Admin User',
+        email: 'admin@example.com',
+        avatar: null
+      },
+      action: 'updated',
+      entityType: 'machine',
+      description: 'updated excavator specifications',
+      timestamp: new Date(now.getTime() - 7200000).toISOString(), // 2 hours ago
+      metadata: { local: true, machine: 'excavator' }
+    },
+    {
+      _id: 'local-' + Date.now() + '-6',
+      user: {
+        _id: 'system',
+        fullName: 'David Wilson',
+        email: 'david@example.com',
+        avatar: null
+      },
+      action: 'completed',
+      entityType: 'deal',
+      description: 'completed land purchase deal',
+      timestamp: new Date(now.getTime() - 10800000).toISOString(), // 3 hours ago
+      metadata: { local: true, amount: 50000 }
+    }
+  ];
+};
+  const logActivity = async (action: string, entityType: string, description: string, entityId?: string) => {
+    try {
+      const token = authService.getStoredToken();
+      if (!token) return;
+
+      const activityData = {
+        action,
+        entityType,
+        entityId,
+        description,
+        metadata: {}
+      };
+
+      const response = await fetch('https://car-house-land.onrender.com/api/activities', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(activityData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.activity) {
+          dispatch({ type: "ADD_ACTIVITY", payload: result.activity });
+        }
+      }
+    } catch (error) {
+      console.error('Error logging activity:', error);
+    }
+  };
+
+  const getRecentActivities = () => {
+    return state.activities;
   };
 
   useEffect(() => {
@@ -1138,6 +1554,9 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
           dispatch({ type: "SET_DEALS", payload: parsedDeals })
         }
       }
+       // Load activities when app starts
+      fetchRecentActivities();
+
 
       loadCarsFromAPI()
       loadHousesFromAPI()
@@ -1249,6 +1668,11 @@ const createConsultation = async (data: Omit<Consultation, 'id' | 'status' | 'cr
     fetchConsultations,
     refreshConsultations,
     getPendingConsultationsCount: () => state.consultations.filter((c) => c.status === "pending").length,
+
+     // NEW: Activity methods
+    fetchRecentActivities,
+    logActivity,
+    getRecentActivities,
   
   }
 

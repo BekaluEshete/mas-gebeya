@@ -263,3 +263,21 @@ export interface Consultation {
   updatedAt: string;
   agentNotes?: string; // For admin updates
 }
+// types/index.ts (add Activity type)
+export interface Activity {
+  _id: string;
+  user: {
+    _id: string;
+    fullName: string;
+    email: string;
+    avatar?: string;
+  };
+  action: string;
+  entityType: string;
+  entityId?: string;
+  description: string;
+  timestamp: string;
+  metadata?: any;
+  createdAt?: string;
+  updatedAt?: string;
+}
