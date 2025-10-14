@@ -1235,21 +1235,161 @@ const handleView = async (item: any) => {
     }
   };
 
-  const handleAcceptConsult = async (id: string) => {
-    await updateConsultationStatus(id, "accepted");
-  };
+  // ... (previous imports and state declarations remain unchanged)
+// FIXED: Proper consultation ID resolution
+const getConsultationId = (consult: Consultation) => {
+  return consult.id || consult._id || consult.consultationId;
+};
 
-  const handleRescheduleConsult = async (id: string, newDateTime: string) => {
-    await updateConsultationStatus(id, "rescheduled", `Rescheduled to ${newDateTime}`);
-  };
+// FIXED: Accept consultation handler
+const handleAcceptConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  const newStatus = "accepted";
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: { 
+        status: newStatus, 
+        updatedAt: new Date().toISOString() 
+      },
+    },
+  });
 
-  const handleCancelConsult = async (id: string) => {
+  try {
+    await updateConsultationStatus(id, newStatus);
+    console.log("Accept API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Accept API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
+
+// FIXED: Complete consultation handler
+const handleCompleteConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  const newStatus = "completed";
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: { 
+        status: newStatus,
+        completedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  try {
+    await updateConsultationStatus(id, newStatus);
+    console.log("Complete API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Complete API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
+
+// FIXED: Reschedule consultation handler with proper state management
+const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
+const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
+
+const handleOpenReschedule = (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  setRescheduleConsultId(id);
+  // Set default value to current datetime
+  setRescheduleDateTime(new Date(consult.dateTime).toISOString().slice(0, 16));
+};
+
+const handleRescheduleConsult = async () => {
+  if (!rescheduleConsultId || !rescheduleDateTime) {
+    alert("Please select a new date/time.");
+    return;
+  }
+
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id: rescheduleConsultId,
+      updates: {
+        status: "rescheduled",
+        dateTime: new Date(rescheduleDateTime).toISOString(),
+        agentNotes: `Rescheduled by admin to ${new Date(rescheduleDateTime).toLocaleString()}`,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  try {
+    await updateConsultationStatus(
+      rescheduleConsultId, 
+      "rescheduled", 
+      `Rescheduled to ${new Date(rescheduleDateTime).toLocaleString()}`
+    );
+    console.log("Reschedule API success");
+    await fetchConsultations(); // Sync with server
+    setRescheduleConsultId(null);
+    setRescheduleDateTime("");
+  } catch (error) {
+    console.error("Reschedule API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
+
+// FIXED: Cancel consultation handler
+const handleCancelConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  if (!confirm("Cancel this consultation? This cannot be undone.")) return;
+  
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: {
+        status: "cancelled",
+        agentNotes: "Cancelled by admin",
+        cancelledAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    },
+  });
+
+  try {
     await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
-  };
+    console.log("Cancel API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Cancel API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
 
-  const handleCompleteConsult = async (id: string) => {
-    await updateConsultationStatus(id, "completed");
-  };
+// ... (rest of the component, including the JSX, remains unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -3450,7 +3590,7 @@ const handleView = async (item: any) => {
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
 
-{/* FIXED: Consult tab content - ID removed, buttons with local fallback */}
+{/* FIXED: Consult tab content , buttons with local fallback */}
 {/* NEW: Consult tab content */}
 <TabsContent value="consult" className="space-y-4 sm:space-y-6">
   <Card>
@@ -3459,7 +3599,9 @@ const handleView = async (item: any) => {
         <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
         Consultation Management
       </CardTitle>
-      <CardDescription className="text-xs sm:text-sm">Review and manage booked consultations</CardDescription>
+      <CardDescription className="text-xs sm:text-sm">
+        Review and manage booked consultations
+      </CardDescription>
     </CardHeader>
     <CardContent className="p-0">
       <Table>
@@ -3476,16 +3618,20 @@ const handleView = async (item: any) => {
         </TableHeader>
         <TableBody>
           {consultations.slice(0, 10).map((consult) => (
-            <TableRow key={consult.id}>
+            <TableRow key={consult.id || consult._id}>
               <TableCell className="text-xs sm:text-sm">
                 <div>
                   <p className="font-medium">{consult.fullName}</p>
                   <p className="text-gray-500">{consult.email}</p>
                 </div>
               </TableCell>
-              <TableCell className="text-xs sm:text-sm text-gray-600">{consult.phone || 'N/A'}</TableCell>
+              <TableCell className="text-xs sm:text-sm text-gray-600">
+                {consult.phone || 'N/A'}
+              </TableCell>
               <TableCell className="text-xs sm:text-sm">
-                <Badge variant="secondary">{consult.category} / {consult.type}</Badge>
+                <Badge variant="secondary">
+                  {consult.category} / {consult.type}
+                </Badge>
               </TableCell>
               <TableCell className="text-xs sm:text-sm">
                 <div className="flex items-center space-x-1">
@@ -3502,102 +3648,28 @@ const handleView = async (item: any) => {
                 </Badge>
               </TableCell>
               <TableCell>
-                <div className="flex space-x-1">
-                  {/* Reschedule Dialog with local state */}
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button size="sm" variant="outline" className="text-xs" disabled={consult.status === 'cancelled' || consult.status === 'completed'}>
-                        Reschedule
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Reschedule {consult.fullName}'s Consultation</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-2">
-                        <Label>New Date & Time</Label>
-                        {/* NEW: Use local state for input */}
-                        <Input 
-                          id="new-datetime"
-                          type="datetime-local" 
-                          defaultValue={new Date(consult.dateTime).toISOString().slice(0, 16)} 
-                        />
-                        <Button
-                          onClick={async () => {
-                            const newDateTime = (document.getElementById('new-datetime') as HTMLInputElement)?.value;
-                            if (!newDateTime) {
-                              alert('Please select a new date/time.');
-                              return;
-                            }
-                            // Optimistic update FIRST (instant UI)
-                            dispatch({
-                              type: "UPDATE_CONSULTATION",
-                              payload: {
-                                id: consult.id,
-                                updates: {
-                                  status: 'rescheduled',
-                                  dateTime: new Date(newDateTime).toISOString(),
-                                  agentNotes: `Rescheduled by admin to ${new Date(newDateTime).toLocaleString()}`,
-                                  updatedAt: new Date().toISOString(),
-                                },
-                              },
-                            });
-                            
-                            try {
-                              await updateConsultationStatus(consult.id, 'rescheduled', `Rescheduled to ${new Date(newDateTime).toLocaleString()}`);
-                              console.log('Reschedule API success');  // Debug
-                              await fetchConsultations();  // Sync with server
-                            } catch (error) {
-                              console.error('Reschedule API failed:', error);
-                              // No refresh—local update already done
-                              if (error.message?.includes('404')) {
-                                alert('Rescheduled locally (backend not ready yet). Data saved offline.');
-                              } else {
-                                alert('Rescheduled locally due to network error. Data saved offline.');
-                              }
-                            }
-                          }}
-                        >
-                          Confirm Reschedule
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                <div className="flex space-x-1 flex-wrap gap-1">
+                  {/* Reschedule Button */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                    onClick={() => handleOpenReschedule(consult)}
+                  >
+                    Reschedule
+                  </Button>
                   
                   {/* Accept/Complete Button */}
                   <Button
                     size="sm"
                     variant={consult.status === 'pending' ? "default" : "outline"}
                     className="text-xs"
-                    disabled={consult.status === 'cancelled'}
-                    onClick={async () => {
-                      const newStatus = consult.status === 'pending' ? 'accepted' : 'completed';
-                      // Optimistic update FIRST
-                      dispatch({
-                        type: "UPDATE_CONSULTATION",
-                        payload: {
-                          id: consult.id,
-                          updates: { 
-                            status: newStatus,
-                            ...(newStatus === 'completed' && { completedAt: new Date().toISOString() }),
-                            updatedAt: new Date().toISOString(),
-                          },
-                        },
-                      });
-                      
-                      try {
-                        await updateConsultationStatus(consult.id, newStatus);
-                        console.log('Accept/Complete API success');  // Debug
-                        await fetchConsultations();  // Sync
-                      } catch (error) {
-                        console.error('Accept/Complete API failed:', error);
-                        if (error.message?.includes('404')) {
-                          alert('Updated locally (backend not ready). Data saved offline.');
-                        } else {
-                          alert('Updated locally due to network error. Data saved offline.');
-                        }
-                      }
-                    }}
+                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                    onClick={() => consult.status === 'pending' 
+                      ? handleAcceptConsult(consult) 
+                      : handleCompleteConsult(consult)
+                    }
                   >
                     {consult.status === 'pending' ? 'Accept' : 'Complete'}
                   </Button>
@@ -3607,36 +3679,8 @@ const handleView = async (item: any) => {
                     size="sm"
                     variant="destructive"
                     className="text-xs"
-                    disabled={consult.status === 'completed'}
-                    onClick={async () => {
-                      if (!confirm('Cancel this consultation? This cannot be undone.')) return;
-                      // Optimistic update FIRST
-                      dispatch({
-                        type: "UPDATE_CONSULTATION",
-                        payload: {
-                          id: consult.id,
-                          updates: { 
-                            status: 'cancelled',
-                            agentNotes: 'Cancelled by admin',
-                            cancelledAt: new Date().toISOString(),
-                            updatedAt: new Date().toISOString(),
-                          },
-                        },
-                      });
-                      
-                      try {
-                        await updateConsultationStatus(consult.id, 'cancelled', 'Cancelled by admin');
-                        console.log('Cancel API success');  // Debug
-                        await fetchConsultations();  // Sync
-                      } catch (error) {
-                        console.error('Cancel API failed:', error);
-                        if (error.message?.includes('404')) {
-                          alert('Cancelled locally (backend not ready). Data saved offline.');
-                        } else {
-                          alert('Cancelled locally due to network error. Data saved offline.');
-                        }
-                      }
-                    }}
+                    disabled={consult.status === 'completed' || consult.status === 'cancelled'}
+                    onClick={() => handleCancelConsult(consult)}
                   >
                     Cancel
                   </Button>
@@ -3648,6 +3692,50 @@ const handleView = async (item: any) => {
       </Table>
     </CardContent>
   </Card>
+
+  {/* Reschedule Dialog */}
+  <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
+    <DialogContent className="max-w-xs sm:max-w-md mx-4">
+      <DialogHeader>
+        <DialogTitle className="text-sm sm:text-base">
+          Reschedule Consultation
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
+            New Date & Time
+          </Label>
+          <Input
+            id="reschedule-datetime"
+            type="datetime-local"
+            value={rescheduleDateTime}
+            onChange={(e) => setRescheduleDateTime(e.target.value)}
+            className="text-sm"
+            min={new Date().toISOString().slice(0, 16)}
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            className="text-xs sm:text-sm"
+            onClick={() => {
+              setRescheduleConsultId(null);
+              setRescheduleDateTime("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRescheduleConsult}
+            className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+          >
+            Confirm Reschedule
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
 </TabsContent>
         </Tabs> 
         
