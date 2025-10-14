@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Heart, Settings, User, Loader2 } from "lucide-react"
+import { Heart, Settings, User, Loader2, Lock } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,7 +18,11 @@ export function UserDashboard() {
   const { user, favorites, setIsAuthModalOpen, removeFromFavorites } = useApp()
   const [activeTab, setActiveTab] = useState("saved")
   const [editForm, setEditForm] = useState({ fullName: user?.fullName || "" })
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "" })
   const [isLoading, setIsLoading] = useState(false)
+  const [isPasswordLoading, setIsPasswordLoading] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -53,16 +57,16 @@ export function UserDashboard() {
       })
 
       console.log("Response status:", response.status)
-      // Read the response as JSON directly
       const data = await response.json()
-      console.log("Response data:", data)
 
       if (response.ok) {
-        const updatedUser = data // Use the parsed data directly
+        const updatedUser = data
         console.log("Profile updated successfully:", updatedUser)
         alert("Profile updated successfully!")
+        // Close the dialog on success
+        setIsEditDialogOpen(false)
         // Optionally update the user state in context if supported by useApp
-        // e.g., dispatch({ type: "UPDATE_USER", payload: updatedUser })
+        // e.g., dispatch({ type: "UPDATE_USER", payload: updatedUser.data.user })
       } else {
         const errorMsg = data.message || "Unknown error"
         if (response.status === 403 && errorMsg.includes("Admin privileges required")) {
@@ -71,11 +75,62 @@ export function UserDashboard() {
         throw new Error(`Failed to update profile: ${response.status} - ${errorMsg}`)
       }
     } catch (error) {
-      console.error("Error updating profile:", error)
-      const errorMsg = error instanceof Error ? error.message : "Failed to update profile. Please try again."
-      alert(errorMsg)
+      console.error("Fetch error:", error)
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        alert("Network error: Unable to connect to the server. Please check your internet connection or try again later.")
+      } else {
+        const errorMsg = error instanceof Error ? error.message : "Failed to update profile. Please try again."
+        alert(errorMsg)
+      }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsPasswordLoading(true)
+    try {
+      const token = authService.getStoredToken()
+      if (!token) throw new Error("No token available. Please log in again.")
+
+      const response = await fetch(`https://car-house-land.onrender.com/api/auth/change-password`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      })
+
+      console.log("Password change response status:", response.status)
+      const data = await response.json()
+
+      if (response.ok) {
+        console.log("Password changed successfully:", data)
+        alert("Password changed successfully! Please log in again.")
+        // Close the dialog on success
+        setIsPasswordDialogOpen(false)
+        // Optionally log out the user and redirect to login
+        await authService.logout() // Assuming logout clears tokens
+        setIsAuthModalOpen(true) // Open login modal if supported
+      } else {
+        const errorMsg = data.message || "Unknown error"
+        throw new Error(`Failed to change password: ${response.status} - ${errorMsg}`)
+      }
+    } catch (error) {
+      console.error("Password change error:", error)
+      if (error instanceof TypeError && error.message === "Failed to fetch") {
+        alert("Network error: Unable to connect to the server. Please check your internet connection or try again later.")
+      } else {
+        const errorMsg = error instanceof Error ? error.message : "Failed to change password. Please try again."
+        alert(errorMsg)
+      }
+    } finally {
+      setIsPasswordLoading(false)
     }
   }
 
@@ -228,7 +283,7 @@ export function UserDashboard() {
                         <p className="text-gray-900 bg-gray-50 p-3 rounded-lg">December 2023</p>
                       </div>
                     </div>
-                    <Dialog>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                       <DialogTrigger asChild>
                         <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-4">Edit Profile</Button>
                       </DialogTrigger>
@@ -262,12 +317,43 @@ export function UserDashboard() {
                         </form>
                       </DialogContent>
                     </Dialog>
-                    <Button
-                      variant="outline"
-                      className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-transparent mt-4"
-                    >
-                      Change Password
-                    </Button>
+                    <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 text-white mt-4 flex items-center">
+                          <Lock className="mr-2 h-4 w-4" /> Change Password
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Change Password</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="currentPassword">Current Password</Label>
+                            <Input
+                              id="currentPassword"
+                              type="password"
+                              value={passwordForm.currentPassword}
+                              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="newPassword">New Password</Label>
+                            <Input
+                              id="newPassword"
+                              type="password"
+                              value={passwordForm.newPassword}
+                              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <Button type="submit" disabled={isPasswordLoading} className="w-full">
+                            {isPasswordLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Change Password"}
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </CardContent>
               </Card>
