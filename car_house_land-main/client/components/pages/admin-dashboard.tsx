@@ -1453,7 +1453,7 @@ const handleCancelConsult = async (consult: Consultation) => {
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Listings</div>
                   <div className="flex items-center mt-2 text-green-600">
                     <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="text-xs font-medium">+12% from last month</span>
+                  
                   </div>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
