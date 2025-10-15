@@ -133,6 +133,9 @@ export function AdminDashboard() {
   const [isUserDialogOpen, setIsUserDialogOpen] = useState(false)
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
+  // FIXED: Reschedule consultation handler with proper state management
+const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
+const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
 
 
   const [owners, setOwners] = useState([])
@@ -1306,9 +1309,7 @@ const handleCompleteConsult = async (consult: Consultation) => {
   }
 };
 
-// FIXED: Reschedule consultation handler with proper state management
-const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
-const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
+
 
 const handleOpenReschedule = (consult: Consultation) => {
   const id = getConsultationId(consult);
