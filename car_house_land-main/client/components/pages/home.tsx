@@ -43,7 +43,7 @@ export function Home() {
   const ActiveUsers =
   users && users.length > 0
     ? users.filter(u => u.status?.toLowerCase() === "active").length
-    : 9
+    : 7
 
   const completedDeals = deals?.filter(deal => deal.status === "completed" || deal.status === "accepted").length || 850
 
