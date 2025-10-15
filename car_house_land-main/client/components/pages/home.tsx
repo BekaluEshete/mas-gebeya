@@ -1,4 +1,5 @@
 "use client"
+
 import Link from "next/link"
 import { ArrowRight, Car, HomeIcon, MessageCircle, Star, Users, TrendingUp, Shield, TreePine } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -8,7 +9,7 @@ import { useApp } from "@/context/app-context"
 import { useState, useEffect } from "react"
 
 export function Home() {
-  const { user, setIsAuthModalOpen, cars, houses, lands, machines } = useApp()
+  const { user, setIsAuthModalOpen, cars, houses, lands, machines, deals,users } = useApp()
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
 
@@ -35,19 +36,43 @@ export function Home() {
     },
   ]
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length)
-    }, 7000)
+  // Calculate stats from actual data - use reasonable estimates for public stats
+  const totalListings = (cars?.length || 0) + (houses?.length || 0) + (lands?.length || 0) + (machines?.length || 0)
+  
+  // For public home page, use a reasonable default since users aren't provided by context
+  const ActiveUsers =
+  users && users.length > 0
+    ? users.filter(u => u.status?.toLowerCase() === "active").length
+    : 9
 
-    return () => clearInterval(interval)
-  }, [videos.length])
+  const completedDeals = deals?.filter(deal => deal.status === "completed" || deal.status === "accepted").length || 850
 
+  // Dynamic stats based on actual data where available, estimates for private data
   const stats = [
-    { label: "ንቁ ዝርዝሮች", value: "2,500+", icon: Car, color: "brand-green" },
-    { label: "ደስተኛ ደንበኞች", value: "10,000+", icon: Users, color: "brand-red" },
-    { label: "የተሳካ ስምምነቶች", value: "8,500+", icon: TrendingUp, color: "brand-yellow" },
-    { label: "አማካይ ደረጃ", value: "4.9/5", icon: Star, color: "brand-green" },
+    { 
+      label: "ንቁ ዝርዝሮች", 
+      value: `${totalListings}+`, 
+      icon: Car, 
+      color: "brand-green" 
+    },
+    { 
+      label: "ደስተኛ ደንበኞች", 
+      value: `${ActiveUsers.toLocaleString()}+`, 
+      icon: Users, 
+      color: "brand-red" 
+    },
+    { 
+      label: "የተሳካ ስምምነቶች", 
+      value: `${completedDeals}+`, 
+      icon: TrendingUp, 
+      color: "brand-yellow" 
+    },
+    { 
+      label: "አማካይ ደረጃ", 
+      value: "4.9/5", 
+      icon: Star, 
+      color: "brand-green" 
+    },
   ]
 
   const features = [
@@ -126,8 +151,17 @@ export function Home() {
       })),
   ]
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentVideoIndex((prevIndex) => (prevIndex + 1) % videos.length)
+    }, 7000)
+
+    return () => clearInterval(interval)
+  }, [videos.length])
+
   return (
     <div className="min-h-screen">
+      {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-emerald-600 via-green-600 to-teal-500 text-white overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/20" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop&crop=center')] opacity-20 bg-cover bg-center" />
@@ -167,8 +201,7 @@ export function Home() {
                       size="lg"
                       variant="outline"
                       onClick={() => setIsAuthModalOpen(true)}
-                                           className="w-full sm:w-auto text-white hover:bg-white  bg-blue-500 hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
-
+                      className="w-full sm:w-auto text-white hover:bg-white  bg-blue-400 hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ግባ
                     </Button>
@@ -197,7 +230,6 @@ export function Home() {
                   <video
                     key={index}
                     src={video.src}
-                    alt={video.alt}
                     className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
                       index === currentVideoIndex ? "opacity-100" : "opacity-0"
                     }`}
@@ -207,10 +239,10 @@ export function Home() {
                     playsInline
                     preload="metadata"
                     onError={(e) => {
-                      console.log("[v0] Video loading error:", e)
+                      console.log(" Video loading error:", e)
                     }}
                     onLoadedData={() => {
-                      console.log("[v0] Video loaded successfully")
+                      console.log(" Video loaded successfully")
                     }}
                   />
                 ))}
@@ -241,6 +273,7 @@ export function Home() {
         </div>
       </section>
 
+      {/* Stats Section */}
       <section className="py-8 sm:py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
@@ -253,7 +286,9 @@ export function Home() {
                     <stat.icon className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
                   </div>
                 </div>
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">{stat.value}</div>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 mb-1 sm:mb-2">
+                  {stat.value}
+                </div>
                 <div className="text-xs sm:text-sm md:text-base text-gray-600">{stat.label}</div>
               </div>
             ))}
@@ -261,6 +296,7 @@ export function Home() {
         </div>
       </section>
 
+      {/* Features Section */}
       <section className="py-12 sm:py-16 md:py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in">
@@ -298,6 +334,7 @@ export function Home() {
         </div>
       </section>
 
+      {/* Featured Listings Section */}
       <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in">
