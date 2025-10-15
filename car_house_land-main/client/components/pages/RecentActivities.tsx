@@ -1,12 +1,42 @@
-// components/RecentActivities.tsx
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '@/context/app-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, User, Package, DollarSign, Headphones, Car, Home, MapPin, Wrench, RefreshCw } from 'lucide-react';
+import { Activity, User, Package, DollarSign, Headphones, Car, Home, MapPin, Wrench, RefreshCw, AlertCircle } from 'lucide-react';
 
 const RecentActivities = () => {
   const { activities, activitiesLoading, fetchRecentActivities } = useApp();
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [error, setError] = useState<string | null>(null);
+
+  const loadActivities = async () => {
+    try {
+      setError(null);
+      await fetchRecentActivities();
+      setLastRefreshed(new Date());
+    } catch (err) {
+      setError('Failed to refresh activities');
+      console.error('Error loading activities:', err);
+    }
+  };
+
+  // Auto-refresh on mount
+  useEffect(() => {
+    loadActivities();
+  }, []);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      loadActivities();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleRefresh = async () => {
+    await loadActivities();
+  };
 
   const getActivityIcon = (entityType: string, action: string) => {
     const entityIcons = {
@@ -44,14 +74,23 @@ const RecentActivities = () => {
     const now = new Date();
     const activityTime = new Date(timestamp);
     const diffInMinutes = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60));
-    
+
     if (diffInMinutes < 1) return 'Just now';
     if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
     if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
     return activityTime.toLocaleDateString();
   };
 
-  if (activitiesLoading) {
+  const formatLastRefreshed = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    return date.toLocaleTimeString();
+  };
+
+  if (activitiesLoading && activities.length === 0) {
     return (
       <Card>
         <CardHeader className="pb-4">
@@ -59,7 +98,7 @@ const RecentActivities = () => {
             <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
             Recent Activity
           </CardTitle>
-          <CardDescription className="text-xs sm:text-sm">Latest platform updates</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Loading activities...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -86,18 +125,41 @@ const RecentActivities = () => {
             <Activity className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
             Recent Activity
           </CardTitle>
-          <RefreshCw 
-            className="w-4 h-4 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors" 
-            onClick={() => fetchRecentActivities()}
-          />
+          <div className="flex items-center space-x-2">
+            <span className="text-xs text-gray-500 hidden sm:inline">
+              Last: {formatLastRefreshed(lastRefreshed)}
+            </span>
+            <RefreshCw
+              className={`w-4 h-4 cursor-pointer text-gray-500 hover:text-gray-700 transition-colors ${
+                activitiesLoading ? 'animate-spin' : ''
+              }`}
+              onClick={handleRefresh}
+              title="Refresh activities"
+            />
+          </div>
         </div>
-        <CardDescription className="text-xs sm:text-sm">Latest platform updates</CardDescription>
+        <CardDescription className="text-xs sm:text-sm">
+          {error ? (
+            <span className="text-red-500 flex items-center">
+              <AlertCircle className="w-3 h-3 mr-1" />
+              {error}
+            </span>
+          ) : (
+            `Latest platform updates • Auto-refreshes every 30s`
+          )}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {activities.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-sm text-gray-500">No recent activities</p>
+              <button
+                onClick={handleRefresh}
+                className="text-xs text-blue-600 hover:text-blue-800 mt-2"
+              >
+                Refresh
+              </button>
             </div>
           ) : (
             activities.slice(0, 6).map((activity) => (
