@@ -135,12 +135,24 @@ export function AdminDashboard() {
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
   // FIXED: Reschedule consultation handler with proper state management
 const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
-const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
+  const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
+  const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
+  
 
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
   // NEW: Fetch consultations when tab changes
+  // Add this useEffect for auto-refresh
+useEffect(() => {
+  const loadInitialData = async () => {
+    setIsLoadingConsultations(true);
+    await fetchConsultations();
+    setIsLoadingConsultations(false);
+  };
+
+  loadInitialData();
+}, [fetchConsultations]);
   useEffect(() => {
     if (activeTab === "consult") {
       fetchConsultations();
@@ -1397,6 +1409,21 @@ const handleCancelConsult = async (consult: Consultation) => {
     alert(`Updated locally only. Sync failed: ${errorMsg}`);
   }
 };
+// Add this function near your other handlers
+const handleRefreshAll = async () => {
+  try {
+    setIsLoadingUsers(true);
+    await Promise.all([
+      fetchConsultations(),
+      // You can add other refresh functions here
+      new Promise(resolve => setTimeout(resolve, 1000)) // Simulate loading
+    ]);
+  } catch (error) {
+    console.error("Error refreshing data:", error);
+  } finally {
+    setIsLoadingUsers(false);
+  }
+};
 
 // ... (rest of the component, including the JSX, remains unchanged)
   return (
@@ -1429,22 +1456,19 @@ const handleCancelConsult = async (consult: Consultation) => {
                 </div>
               )}
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
-                >
-                  <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Refresh</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
-                >
-                  <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Export</span>
-                </Button>
+               <Button
+  variant="outline"
+  size="sm"
+  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
+  onClick={handleRefreshAll}
+  disabled={isLoadingUsers}
+>
+  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+  <span className="hidden sm:inline">
+    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
+  </span>
+</Button>
+                
               </div>
             </div>
           </div>
