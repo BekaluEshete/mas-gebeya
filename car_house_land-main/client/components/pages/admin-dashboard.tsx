@@ -1483,25 +1483,7 @@ const handleCancelConsult = async (consult: Consultation) => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-brand-orange hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-orange transition-colors">
-                    ETB {(totalRevenue || 0).toLocaleString()}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Revenue</div>
-                  <div className="flex items-center mt-2 text-green-600">
-                    <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="text-xs font-medium">+15% from last month</span>
-                  </div>
-                </div>
-                <div className="p-2 sm:p-3 bg-orange-100 rounded-full group-hover:bg-orange-200 transition-colors">
-                  <DollarSign className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-orange" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        
 
           <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
