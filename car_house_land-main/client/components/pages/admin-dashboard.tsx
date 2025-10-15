@@ -262,7 +262,15 @@ const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(nu
 
   const totalListings = cars.length + houses.length + lands.length + machines.length
   const totalRevenue = 2450000
-  const activeUsers = 1250
+  // Calculate active users from actual data
+const activeUsers = users.filter(user => user.status === "active").length;
+
+// You can also calculate total users
+const totalUsers = users.length;
+
+// Calculate user growth percentage (example logic)
+  const userGrowthPercentage = 8; // You can calculate this based on previous data
+  
   const pendingDeals = getPendingDealsCount()
   const pendingConsultations = getPendingConsultationsCount()
 
@@ -439,7 +447,7 @@ const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(nu
           }
         }
       } catch (error) {
-        console.error("[v0] Error with car API operation:", error)
+        console.error(" Error with car API operation:", error)
         // Fallback to local state operations
         if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
           updateCar(itemData.id, itemWithDefaults)
@@ -1453,7 +1461,7 @@ const handleCancelConsult = async (consult: Consultation) => {
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Listings</div>
                   <div className="flex items-center mt-2 text-green-600">
                     <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                  
+                   
                   </div>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
@@ -1462,28 +1470,41 @@ const handleCancelConsult = async (consult: Consultation) => {
               </div>
             </CardContent>
           </Card>
+<Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
+  <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
+          {isLoadingUsers ? (
+            <div className="animate-pulse bg-gray-200 rounded h-8 w-16"></div>
+          ) : (
+            activeUsers
+          )}
+        </div>
+        <div className="text-xs sm:text-sm text-gray-600 font-medium">
+          {isLoadingUsers ? "Loading..." : "Active Users"}
+        </div>
+        {!isLoadingUsers && (
+          <div className="flex items-center mt-2 text-green-600">
+            <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="text-xs font-medium">
+              {totalUsers} total users
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
+        {isLoadingUsers ? (
+          <div className="animate-pulse bg-gray-300 rounded-full w-8 h-8"></div>
+        ) : (
+          <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
-          <Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
-                    {activeUsers}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium">Active Users</div>
-                  <div className="flex items-center mt-2 text-green-600">
-                    <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                    <span className="text-xs font-medium">+8% from last month</span>
-                  </div>
-                </div>
-                <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
-                  <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-        
+         
 
           <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
