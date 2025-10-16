@@ -76,6 +76,7 @@ import { authService } from "@/lib/auth"
 
 import { useState, useEffect } from "react"
 import RecentActivities from "./RecentActivities"
+import { analyticsAPI } from "@/lib/api/analytics";
 
 export function AdminDashboard() {
   const {
@@ -134,25 +135,67 @@ export function AdminDashboard() {
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
   // FIXED: Reschedule consultation handler with proper state management
-  const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
+const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
   const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
   const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
-
+  
 
 
   const [owners, setOwners] = useState([])
   const [isLoadingOwners, setIsLoadingOwners] = useState(false)
-  // NEW: Fetch consultations when tab changes
-  // Add this useEffect for auto-refresh
-  useEffect(() => {
-    const loadInitialData = async () => {
-      setIsLoadingConsultations(true);
-      await fetchConsultations();
-      setIsLoadingConsultations(false);
-    };
 
-    loadInitialData();
-  }, [fetchConsultations]);
+
+  const [analyticsData, setAnalyticsData] = useState({
+  userGrowth: [],
+  dealCompletion: [],
+  dailyTraffic: [],
+});
+const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+const [analyticsError, setAnalyticsError] = useState(null);
+  // NEW: Fetch consultations when tab changes
+
+  // Add this useEffect to fetch analytics data
+useEffect(() => {
+  const fetchAnalyticsData = async () => {
+    if (activeTab === "analytics") {
+      setIsLoadingAnalytics(true);
+      setAnalyticsError(null);
+      
+      try {
+        const [userGrowth, dealCompletion, dailyTraffic] = await Promise.all([
+          analyticsAPI.getUserGrowth(),
+          analyticsAPI.getDealCompletion(),
+          analyticsAPI.getDailyTraffic(),
+        ]);
+
+        setAnalyticsData({
+          userGrowth,
+          dealCompletion,
+          dailyTraffic,
+        });
+      } catch (error) {
+        console.error("Error fetching analytics data:", error);
+        setAnalyticsError("Failed to load analytics data");
+      } finally {
+        setIsLoadingAnalytics(false);
+      }
+    }
+  };
+
+  fetchAnalyticsData();
+}, [activeTab]);
+
+
+  // Add this useEffect for auto-refresh
+useEffect(() => {
+  const loadInitialData = async () => {
+    setIsLoadingConsultations(true);
+    await fetchConsultations();
+    setIsLoadingConsultations(false);
+  };
+
+  loadInitialData();
+}, [fetchConsultations]);
   useEffect(() => {
     if (activeTab === "consult") {
       fetchConsultations();
@@ -275,14 +318,14 @@ export function AdminDashboard() {
   const totalListings = cars.length + houses.length + lands.length + machines.length
   const totalRevenue = 2450000
   // Calculate active users from actual data
-  const activeUsers = users.filter(user => user.status === "active").length;
+const activeUsers = users.filter(user => user.status === "active").length;
 
-  // You can also calculate total users
-  const totalUsers = users.length;
+// You can also calculate total users
+const totalUsers = users.length;
 
-  // Calculate user growth percentage (example logic)
+// Calculate user growth percentage (example logic)
   const userGrowthPercentage = 8; // You can calculate this based on previous data
-
+  
   const pendingDeals = getPendingDealsCount()
   const pendingConsultations = getPendingConsultationsCount()
 
@@ -748,84 +791,84 @@ export function AdminDashboard() {
     setDeletingItem(null)
   }
 
-  const handleView = async (item: any) => {
-    const baseUrl = "https://car-house-land.onrender.com"
-    try {
-      let endpoint = '';
+const handleView = async (item: any) => {
+  const baseUrl = "https://car-house-land.onrender.com"
+  try {
+    let endpoint = '';
 
-      switch (selectedCategory) {
-        case 'cars':
-          endpoint = `${baseUrl}/api/cars/${item.id}`;
-          break;
-        case 'machines':
-          endpoint = `${baseUrl}/api/machines/${item.id}`;
-          break;
-        case 'lands':
-          endpoint = `${baseUrl}/api/lands/${item.id}`;
-          break;
-        case 'houses':
-          endpoint = `${baseUrl}/api/properties/${item.id}`;
-          break;
-        default:
-          console.error('Invalid category');
-          return;
-      }
+    switch (selectedCategory) {
+      case 'cars':
+        endpoint = `${baseUrl}/api/cars/${item.id}`;
+        break;
+      case 'machines':
+        endpoint = `${baseUrl}/api/machines/${item.id}`;
+        break;
+      case 'lands':
+        endpoint = `${baseUrl}/api/lands/${item.id}`;
+        break;
+      case 'houses':
+        endpoint = `${baseUrl}/api/properties/${item.id}`;
+        break;
+      default:
+        console.error('Invalid category');
+        return;
+    }
 
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch item details');
-      }
+    if (!response.ok) {
+      throw new Error('Failed to fetch item details');
+    }
 
-      const itemDetails = await response.json();
-
-      // Process images to ensure they have proper URLs - FIXED VERSION
-      let processedImages: string[] = [];
-
-      if (itemDetails.data && itemDetails.data.images) {
-        processedImages = itemDetails.data.images.map((img: string) => {
-          if (img.startsWith('http')) return img;
-          // Handle both absolute and relative paths
-          if (img.startsWith('/')) {
-            return `${baseUrl}${img}`;
-          } else {
-            return `${baseUrl}/${img}`;
-          }
-        });
-      }
-
-      // Create the viewing item with processed images
-      const viewingItemData = {
-        ...(itemDetails.data || itemDetails),
-        images: processedImages.length > 0 ? processedImages : (item.images || [])
-      };
-
-      setViewingItem(viewingItemData);
-      setIsViewDialogOpen(true);
-    } catch (error) {
-      console.error('Error fetching item details:', error);
-      // Fallback to local item data with processed images
-      const processedImages = (item.images || []).map((img: string) => {
+    const itemDetails = await response.json();
+    
+    // Process images to ensure they have proper URLs - FIXED VERSION
+    let processedImages: string[] = [];
+    
+    if (itemDetails.data && itemDetails.data.images) {
+      processedImages = itemDetails.data.images.map((img: string) => {
         if (img.startsWith('http')) return img;
+        // Handle both absolute and relative paths
         if (img.startsWith('/')) {
-          return `https://car-house-land.onrender.com${img}`;
+          return `${baseUrl}${img}`;
         } else {
-          return `https://car-house-land.onrender.com/${img}`;
+          return `${baseUrl}/${img}`;
         }
       });
-
-      setViewingItem({
-        ...item,
-        images: processedImages
-      });
-      setIsViewDialogOpen(true);
     }
+    
+    // Create the viewing item with processed images
+    const viewingItemData = {
+      ...(itemDetails.data || itemDetails),
+      images: processedImages.length > 0 ? processedImages : (item.images || [])
+    };
+    
+    setViewingItem(viewingItemData);
+    setIsViewDialogOpen(true);
+  } catch (error) {
+    console.error('Error fetching item details:', error);
+    // Fallback to local item data with processed images
+    const processedImages = (item.images || []).map((img: string) => {
+      if (img.startsWith('http')) return img;
+      if (img.startsWith('/')) {
+        return `https://car-house-land.onrender.com${img}`;
+      } else {
+        return `https://car-house-land.onrender.com/${img}`;
+      }
+    });
+    
+    setViewingItem({
+      ...item,
+      images: processedImages
+    });
+    setIsViewDialogOpen(true);
   }
+}
 
 
   const handleImageUpload = (e) => {
@@ -1087,60 +1130,60 @@ export function AdminDashboard() {
       alert(`Failed to save ${selectedCategory}. Please try again.`)
     }
   }
-  const handleViewDeal = async (deal: Deal) => {
-    try {
-      // Set the deal immediately for UI response
-      setSelectedDeal(deal);
-      setIsDealDetailOpen(true);
+ const handleViewDeal = async (deal: Deal) => {
+  try {
+    // Set the deal immediately for UI response
+    setSelectedDeal(deal);
+    setIsDealDetailOpen(true);
 
-      // Fetch complete deal details from API
-      const token = authService.getStoredToken();
-      if (!token) {
-        console.error("No authentication token found");
-        return;
-      }
-
-      const response = await fetch(`https://car-house-land.onrender.com/api/deals/${deal.id}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch deal details');
-      }
-
-      const result = await response.json();
-
-      if (result.status === 'success') {
-        // Merge API data with existing deal data to preserve all properties
-        setSelectedDeal(prevDeal => ({
-          ...prevDeal,
-          ...result.data.deal,
-          // Preserve critical properties that might be missing in API response
-          id: prevDeal.id,
-          item: { ...prevDeal.item, ...(result.data.deal?.item || {}) },
-          buyer: { ...prevDeal.buyer, ...(result.data.deal?.buyer || {}) },
-          seller: { ...prevDeal.seller, ...(result.data.deal?.seller || {}) },
-          // Ensure we have the dealId
-          dealId: result.data.deal?.dealId || prevDeal.dealId
-        }));
-      }
-    } catch (error) {
-      console.error('Error fetching deal details:', error);
-      // Keep the basic deal data even if detailed fetch fails
+    // Fetch complete deal details from API
+    const token = authService.getStoredToken();
+    if (!token) {
+      console.error("No authentication token found");
+      return;
     }
-  };
+
+    const response = await fetch(`https://car-house-land.onrender.com/api/deals/${deal.id}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch deal details');
+    }
+
+    const result = await response.json();
+
+    if (result.status === 'success') {
+      // Merge API data with existing deal data to preserve all properties
+      setSelectedDeal(prevDeal => ({
+        ...prevDeal,
+        ...result.data.deal,
+        // Preserve critical properties that might be missing in API response
+        id: prevDeal.id,
+        item: { ...prevDeal.item, ...(result.data.deal?.item || {}) },
+        buyer: { ...prevDeal.buyer, ...(result.data.deal?.buyer || {}) },
+        seller: { ...prevDeal.seller, ...(result.data.deal?.seller || {}) },
+        // Ensure we have the dealId
+        dealId: result.data.deal?.dealId || prevDeal.dealId
+      }));
+    }
+  } catch (error) {
+    console.error('Error fetching deal details:', error);
+    // Keep the basic deal data even if detailed fetch fails
+  }
+};
   const handleAcceptDeal = async (dealId: string) => {
-    setIsDealDetailOpen(false);
+     setIsDealDetailOpen(false);
     try {
       await updateDealStatus(dealId, "approved")
       // Refresh deals to get updated data
       await refreshDeals()
       // Close the deal detail dialog
-
+  
     } catch (error) {
       console.error("Error accepting deal:", error)
     }
@@ -1152,7 +1195,7 @@ export function AdminDashboard() {
     try {
       await updateDealStatus(dealId, "rejected")
       await refreshDeals()
-      // Close the deal detail dialog
+        // Close the deal detail dialog
 
     } catch (error) {
       console.error("Error rejecting deal:", error)
@@ -1164,7 +1207,7 @@ export function AdminDashboard() {
     try {
       await updateDealStatus(dealId, "completed")
       await refreshDeals()
-      // Close the deal detail dialog
+        // Close the deal detail dialog
     } catch (error) {
       console.error("Error completing deal:", error)
     }
@@ -1176,7 +1219,7 @@ export function AdminDashboard() {
     try {
       await updateDealStatus(dealId, "cancelled", reason)
       await refreshDeals()
-      // Close the deal detail dialog
+        // Close the deal detail dialog
     } catch (error) {
       console.error("Error cancelling deal:", error)
     }
@@ -1237,7 +1280,7 @@ export function AdminDashboard() {
     }
   }
 
-  // NEW: Consultation helpers
+ // NEW: Consultation helpers
   const getModeIcon = (mode: Consultation["mode"]) => {
     switch (mode) {
       case "Online video call": return <Video className="w-4 h-4" />;
@@ -1259,173 +1302,185 @@ export function AdminDashboard() {
   };
 
   // ... (previous imports and state declarations remain unchanged)
-  // FIXED: Proper consultation ID resolution
-  const getConsultationId = (consult: Consultation) => {
-    return consult.id || consult._id || consult.consultationId;
-  };
+// FIXED: Proper consultation ID resolution
+const getConsultationId = (consult: Consultation) => {
+  return consult.id || consult._id || consult.consultationId;
+};
 
-  // FIXED: Accept consultation handler
-  const handleAcceptConsult = async (consult: Consultation) => {
-    const id = getConsultationId(consult);
-    if (!id) {
-      alert("Invalid consultation ID. Please refresh the page.");
-      return;
-    }
-
-    const newStatus = "accepted";
-    // Optimistic update FIRST
-    dispatch({
-      type: "UPDATE_CONSULTATION",
-      payload: {
-        id,
-        updates: {
-          status: newStatus,
-          updatedAt: new Date().toISOString()
-        },
+// FIXED: Accept consultation handler
+const handleAcceptConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  const newStatus = "accepted";
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: { 
+        status: newStatus, 
+        updatedAt: new Date().toISOString() 
       },
-    });
+    },
+  });
 
-    try {
-      await updateConsultationStatus(id, newStatus);
-      console.log("Accept API success");
-      await fetchConsultations(); // Sync with server
-    } catch (error) {
-      console.error("Accept API failed:", error);
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      alert(`Updated locally only. Sync failed: ${errorMsg}`);
-    }
-  };
+  try {
+    await updateConsultationStatus(id, newStatus);
+    console.log("Accept API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Accept API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
 
-  // FIXED: Complete consultation handler
-  const handleCompleteConsult = async (consult: Consultation) => {
-    const id = getConsultationId(consult);
-    if (!id) {
-      alert("Invalid consultation ID. Please refresh the page.");
-      return;
-    }
-
-    const newStatus = "completed";
-    // Optimistic update FIRST
-    dispatch({
-      type: "UPDATE_CONSULTATION",
-      payload: {
-        id,
-        updates: {
-          status: newStatus,
-          completedAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+// FIXED: Complete consultation handler
+const handleCompleteConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  const newStatus = "completed";
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: { 
+        status: newStatus,
+        completedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
-    });
+    },
+  });
 
-    try {
-      await updateConsultationStatus(id, newStatus);
-      console.log("Complete API success");
-      await fetchConsultations(); // Sync with server
-    } catch (error) {
-      console.error("Complete API failed:", error);
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      alert(`Updated locally only. Sync failed: ${errorMsg}`);
-    }
-  };
+  try {
+    await updateConsultationStatus(id, newStatus);
+    console.log("Complete API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Complete API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
 
 
 
-  const handleOpenReschedule = (consult: Consultation) => {
-    const id = getConsultationId(consult);
-    setRescheduleConsultId(id);
-    // Set default value to current datetime
-    setRescheduleDateTime(new Date(consult.dateTime).toISOString().slice(0, 16));
-  };
+const handleOpenReschedule = (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  setRescheduleConsultId(id);
+  // Set default value to current datetime
+  setRescheduleDateTime(new Date(consult.dateTime).toISOString().slice(0, 16));
+};
 
-  const handleRescheduleConsult = async () => {
-    if (!rescheduleConsultId || !rescheduleDateTime) {
-      alert("Please select a new date/time.");
-      return;
-    }
+const handleRescheduleConsult = async () => {
+  if (!rescheduleConsultId || !rescheduleDateTime) {
+    alert("Please select a new date/time.");
+    return;
+  }
 
-    // Optimistic update FIRST
-    dispatch({
-      type: "UPDATE_CONSULTATION",
-      payload: {
-        id: rescheduleConsultId,
-        updates: {
-          status: "rescheduled",
-          dateTime: new Date(rescheduleDateTime).toISOString(),
-          agentNotes: `Rescheduled by admin to ${new Date(rescheduleDateTime).toLocaleString()}`,
-          updatedAt: new Date().toISOString(),
-        },
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id: rescheduleConsultId,
+      updates: {
+        status: "rescheduled",
+        dateTime: new Date(rescheduleDateTime).toISOString(),
+        agentNotes: `Rescheduled by admin to ${new Date(rescheduleDateTime).toLocaleString()}`,
+        updatedAt: new Date().toISOString(),
       },
-    });
+    },
+  });
 
-    try {
-      await updateConsultationStatus(
-        rescheduleConsultId,
-        "rescheduled",
-        `Rescheduled to ${new Date(rescheduleDateTime).toLocaleString()}`
-      );
-      console.log("Reschedule API success");
-      await fetchConsultations(); // Sync with server
-      setRescheduleConsultId(null);
-      setRescheduleDateTime("");
-    } catch (error) {
-      console.error("Reschedule API failed:", error);
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      alert(`Updated locally only. Sync failed: ${errorMsg}`);
-    }
-  };
+  try {
+    await updateConsultationStatus(
+      rescheduleConsultId, 
+      "rescheduled", 
+      `Rescheduled to ${new Date(rescheduleDateTime).toLocaleString()}`
+    );
+    console.log("Reschedule API success");
+    await fetchConsultations(); // Sync with server
+    setRescheduleConsultId(null);
+    setRescheduleDateTime("");
+  } catch (error) {
+    console.error("Reschedule API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
 
-  // FIXED: Cancel consultation handler
-  const handleCancelConsult = async (consult: Consultation) => {
-    const id = getConsultationId(consult);
-    if (!id) {
-      alert("Invalid consultation ID. Please refresh the page.");
-      return;
-    }
-
-    if (!confirm("Cancel this consultation? This cannot be undone.")) return;
-
-    // Optimistic update FIRST
-    dispatch({
-      type: "UPDATE_CONSULTATION",
-      payload: {
-        id,
-        updates: {
-          status: "cancelled",
-          agentNotes: "Cancelled by admin",
-          cancelledAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
+// FIXED: Cancel consultation handler
+const handleCancelConsult = async (consult: Consultation) => {
+  const id = getConsultationId(consult);
+  if (!id) {
+    alert("Invalid consultation ID. Please refresh the page.");
+    return;
+  }
+  
+  if (!confirm("Cancel this consultation? This cannot be undone.")) return;
+  
+  // Optimistic update FIRST
+  dispatch({
+    type: "UPDATE_CONSULTATION",
+    payload: {
+      id,
+      updates: {
+        status: "cancelled",
+        agentNotes: "Cancelled by admin",
+        cancelledAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       },
-    });
+    },
+  });
 
-    try {
-      await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
-      console.log("Cancel API success");
-      await fetchConsultations(); // Sync with server
-    } catch (error) {
-      console.error("Cancel API failed:", error);
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      alert(`Updated locally only. Sync failed: ${errorMsg}`);
-    }
-  };
-  // Add this function near your other handlers
-  const handleRefreshAll = async () => {
-    try {
-      setIsLoadingUsers(true);
-      await Promise.all([
-        fetchConsultations(),
-        // You can add other refresh functions here
-        new Promise(resolve => setTimeout(resolve, 1000)) // Simulate loading
-      ]);
-    } catch (error) {
-      console.error("Error refreshing data:", error);
-    } finally {
-      setIsLoadingUsers(false);
-    }
-  };
+  try {
+    await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
+    console.log("Cancel API success");
+    await fetchConsultations(); // Sync with server
+  } catch (error) {
+    console.error("Cancel API failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Unknown error";
+    alert(`Updated locally only. Sync failed: ${errorMsg}`);
+  }
+};
+// Add this function near your other handlers
+const handleRefreshAll = async () => {
+  try {
+    setIsLoadingUsers(true);
+    setIsLoadingAnalytics(true);
+    
+    await Promise.all([
+      fetchConsultations(),
+      // Refresh analytics when on analytics tab
+      activeTab === "analytics" && analyticsAPI.getUserGrowth().then(data => 
+        setAnalyticsData(prev => ({ ...prev, userGrowth: data }))
+      ),
+      activeTab === "analytics" && analyticsAPI.getDealCompletion().then(data => 
+        setAnalyticsData(prev => ({ ...prev, dealCompletion: data }))
+      ),
+      activeTab === "analytics" && analyticsAPI.getDailyTraffic().then(data => 
+        setAnalyticsData(prev => ({ ...prev, dailyTraffic: data }))
+      ),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
+  } catch (error) {
+    console.error("Error refreshing data:", error);
+  } finally {
+    setIsLoadingUsers(false);
+    setIsLoadingAnalytics(false);
+  }
+};
 
-  // ... (rest of the component, including the JSX, remains unchanged)
+// ... (rest of the component, including the JSX, remains unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1456,19 +1511,19 @@ export function AdminDashboard() {
                 </div>
               )}
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
-                  onClick={handleRefreshAll}
-                  disabled={isLoadingUsers}
-                >
-                  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">
-                    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
-                  </span>
-                </Button>
-
+               <Button
+  variant="outline"
+  size="sm"
+  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
+  onClick={handleRefreshAll}
+  disabled={isLoadingUsers}
+>
+  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+  <span className="hidden sm:inline">
+    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
+  </span>
+</Button>
+                
               </div>
             </div>
           </div>
@@ -1485,7 +1540,7 @@ export function AdminDashboard() {
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Listings</div>
                   <div className="flex items-center mt-2 text-green-600">
                     <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-
+                   
                   </div>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
@@ -1494,41 +1549,41 @@ export function AdminDashboard() {
               </div>
             </CardContent>
           </Card>
-          <Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
-            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
-                    {isLoadingUsers ? (
-                      <div className="animate-pulse bg-gray-200 rounded h-8 w-16"></div>
-                    ) : (
-                      activeUsers
-                    )}
-                  </div>
-                  <div className="text-xs sm:text-sm text-gray-600 font-medium">
-                    {isLoadingUsers ? "Loading..." : "Active Users"}
-                  </div>
-                  {!isLoadingUsers && (
-                    <div className="flex items-center mt-2 text-green-600">
-                      <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                      <span className="text-xs font-medium">
-                        {totalUsers} total users
-                      </span>
-                    </div>
-                  )}
-                </div>
-                <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
-                  {isLoadingUsers ? (
-                    <div className="animate-pulse bg-gray-300 rounded-full w-8 h-8"></div>
-                  ) : (
-                    <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
-                  )}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+<Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
+  <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+    <div className="flex items-center justify-between">
+      <div>
+        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
+          {isLoadingUsers ? (
+            <div className="animate-pulse bg-gray-200 rounded h-8 w-16"></div>
+          ) : (
+            activeUsers
+          )}
+        </div>
+        <div className="text-xs sm:text-sm text-gray-600 font-medium">
+          {isLoadingUsers ? "Loading..." : "Active Users"}
+        </div>
+        {!isLoadingUsers && (
+          <div className="flex items-center mt-2 text-green-600">
+            <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+            <span className="text-xs font-medium">
+              {totalUsers} total users
+            </span>
+          </div>
+        )}
+      </div>
+      <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
+        {isLoadingUsers ? (
+          <div className="animate-pulse bg-gray-300 rounded-full w-8 h-8"></div>
+        ) : (
+          <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
+        )}
+      </div>
+    </div>
+  </CardContent>
+</Card>
 
-
+         
 
           <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
@@ -1568,7 +1623,7 @@ export function AdminDashboard() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+          </Card> 
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -1638,179 +1693,290 @@ export function AdminDashboard() {
             </div>
           </div>
 
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-              <Card className="lg:col-span-3">
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
-                    Listings Distribution
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      cars: { label: "Cars", color: "var(--color-cars-primary)" },
-                      houses: { label: "Houses", color: "var(--color-houses-primary)" },
-                      lands: { label: "Lands", color: "var(--color-lands-primary)" },
-                      machines: { label: "Machines", color: "var(--color-machines-primary)" },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <RechartsPieChart>
-                        <Pie
-                          data={categoryData}
-                          cx="50%"
-                          cy="50%"
-                          outerRadius="80%"
-                          dataKey="value"
-                          label={({ name, percentage }) => `${name}: ${percentage}%`}
-                        >
-                          {categoryData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                      </RechartsPieChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+       <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+    <Card className="lg:col-span-3">
+      <CardHeader className="pb-2 sm:pb-4">
+        <CardTitle className="flex items-center text-sm sm:text-base">
+          <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
+          Listings Distribution
+        </CardTitle>
+        <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          config={{
+            cars: { label: "Cars", color: "var(--color-cars-primary)" },
+            houses: { label: "Houses", color: "var(--color-houses-primary)" },
+            lands: { label: "Lands", color: "var(--color-lands-primary)" },
+            machines: { label: "Machines", color: "var(--color-machines-primary)" },
+          }}
+          className="h-[200px] sm:h-[250px] md:h-[300px]"
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <RechartsPieChart>
+              <Pie
+                data={categoryData}
+                cx="50%"
+                cy="50%"
+                outerRadius="80%"
+                dataKey="value"
+                label={({ name, percentage }) => `${name}: ${percentage}%`}
+              >
+                {categoryData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <ChartTooltip content={<ChartTooltipContent />} />
+            </RechartsPieChart>
+          </ResponsiveContainer>
+        </ChartContainer>
+      </CardContent>
+    </Card>
+  </div>
+
+  <div className="grid grid-cols-1 gap-4 sm:gap-6">
+    <RecentActivities />
+  </div>
+</TabsContent>
+
+        <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+  {isLoadingAnalytics ? (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
+        <p className="text-sm text-gray-500">Loading analytics data...</p>
+      </div>
+    </div>
+  ) : analyticsError ? (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+        <p className="text-sm text-red-500">{analyticsError}</p>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="mt-2"
+          onClick={() => window.location.reload()}
+        >
+          Retry
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Daily Traffic Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
+              Daily Traffic
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Visitors and page views throughout the day
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                visitors: {
+                  label: "Visitors",
+                  color: "var(--color-brand-orange)",
+                },
+                pageViews: {
+                  label: "Page Views",
+                  color: "var(--color-brand-blue)",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={analyticsData.dailyTraffic}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="timeInterval" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
+                      />
+                    }
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="visitors" 
+                    stroke="var(--color-brand-orange)" 
+                    strokeWidth={3} 
+                    dot={{ r: 4 }}
+                  />
+                  <Line 
+                    type="monotone" 
+                    dataKey="pageViews" 
+                    stroke="var(--color-brand-blue)" 
+                    strokeWidth={3} 
+                    dot={{ r: 4 }}
+                  />
+                  <Legend />
+                </LineChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* User Growth Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
+              User Growth
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly new user registrations
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                newUsers: {
+                  label: "New Users",
+                  color: "var(--color-brand-purple)",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData.userGrowth}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
+                      />
+                    }
+                  />
+                  <Bar 
+                    dataKey="newUsers" 
+                    fill="var(--color-brand-purple)" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
+        {/* Deal Completion Chart - Updated with real data */}
+        <Card>
+          <CardHeader className="pb-2 sm:pb-4">
+            <CardTitle className="flex items-center text-sm sm:text-base">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
+              Deal Completion Rate
+            </CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Monthly completed deals
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                completedDeals: {
+                  label: "Completed Deals",
+                  color: "#10b981",
+                },
+              }}
+              className="h-[200px] sm:h-[250px] md:h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analyticsData.dealCompletion}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
+                      />
+                    }
+                  />
+                  <Bar 
+                    dataKey="completedDeals" 
+                    fill="#10b981" 
+                    radius={[4, 4, 0, 0]} 
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Analytics Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total Users This Month</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.userGrowth.length > 0 
+                    ? analyticsData.userGrowth[analyticsData.userGrowth.length - 1]?.newUsers || 0
+                    : 0
+                  }
+                </p>
+              </div>
+              <Users className="w-8 h-8 text-brand-purple" />
             </div>
+          </CardContent>
+        </Card>
 
-            <div className="grid grid-cols-1 gap-4 sm:gap-6">
-              <RecentActivities />
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Completed Deals This Month</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.dealCompletion.length > 0 
+                    ? analyticsData.dealCompletion[analyticsData.dealCompletion.length - 1]?.completedDeals || 0
+                    : 0
+                  }
+                </p>
+              </div>
+              <ShoppingCart className="w-8 h-8 text-emerald-600" />
             </div>
-          </TabsContent>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
-                    Daily Traffic
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">
-                    Visitors and page views throughout the day
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      visitors: {
-                        label: "Visitors",
-                        color: "var(--color-brand-orange)",
-                      },
-                      pageViews: {
-                        label: "Page Views",
-                        color: "var(--color-brand-blue)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={trafficData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="time" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
-                            />
-                          }
-                        />
-                        <Line type="monotone" dataKey="visitors" stroke="var(--color-brand-orange)" strokeWidth={3} />
-                        <Line type="monotone" dataKey="pageViews" stroke="var(--color-brand-blue)" strokeWidth={3} />
-                        <Legend />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-                    User Growth
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly active users</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      users: {
-                        label: "Active Users",
-                        color: "var(--color-brand-purple)",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
-                            />
-                          }
-                        />
-                        <Bar dataKey="users" fill="var(--color-brand-purple)" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Today's Visitors</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {analyticsData.dailyTraffic.reduce((sum, item) => sum + (item.visitors || 0), 0)}
+                </p>
+              </div>
+              <Globe className="w-8 h-8 text-brand-orange" />
             </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
-
-              <Card>
-                <CardHeader className="pb-2 sm:pb-4">
-                  <CardTitle className="flex items-center text-sm sm:text-base">
-                    <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-                    Deal Completion Rate
-                  </CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Monthly deal success metrics</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ChartContainer
-                    config={{
-                      deals: {
-                        label: "Completed Deals",
-                        color: "#10b981",
-                      },
-                    }}
-                    className="h-[200px] sm:h-[250px] md:h-[300px]"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" />
-                        <YAxis />
-                        <ChartTooltip
-                          content={
-                            <ChartTooltipContent
-                              formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
-                            />
-                          }
-                        />
-                        <Bar dataKey="deals" fill="#10b981" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
+          </CardContent>
+        </Card>
+      </div>
+    </>
+  )}
+</TabsContent>
 
 
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
@@ -2843,41 +3009,41 @@ export function AdminDashboard() {
                       <div className="space-y-2">
                         <Label className="text-xs sm:text-sm font-medium">Images</Label>
                         {viewingItem.images && viewingItem.images.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
-                            {viewingItem.images.map((image: string, index: number) => (
-                              <div key={index} className="relative">
-                                <div className="aspect-square relative overflow-hidden rounded-lg border">
-                                  <img
-                                    src={image || "/placeholder.svg"}
-                                    alt={`Image ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      // Fallback if image fails to load
-                                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                                    }}
-                                  />
-                                </div>
-                                {index === 0 && (
-                                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                                    <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">No images available</p>
-                        )}
+  <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+    {viewingItem.images.map((image: string, index: number) => (
+      <div key={index} className="relative">
+        <div className="aspect-square relative overflow-hidden rounded-lg border">
+          <img
+            src={image || "/placeholder.svg"}
+            alt={`Image ${index + 1}`}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              // Fallback if image fails to load
+              (e.target as HTMLImageElement).src = "/placeholder.svg";
+            }}
+          />
+        </div>
+        {index === 0 && (
+          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+            <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+) : (
+  <p className="text-sm text-gray-500">No images available</p>
+)}
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Owner</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {viewingItem.owner
-                            ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner
-                            : "N/A"
-                          }
-                        </p>
-                      </div>
+                   <div className="space-y-2">
+  <Label className="text-xs sm:text-sm font-medium">Owner</Label>
+  <p className="text-sm border rounded-lg p-2 bg-gray-50">
+    {viewingItem.owner 
+      ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner 
+      : "N/A"
+    }
+  </p>
+</div>
 
                     </div>
                   </div>
@@ -3312,413 +3478,413 @@ export function AdminDashboard() {
             </Card>
 
             {/* Deal Detail Dialog */}
-            <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
-              <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">
-                    Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
-                  </DialogTitle>
-                </DialogHeader>
-                {selectedDeal && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
-                        </p>
-                      </div>
+           <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
+  <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+    <DialogHeader>
+      <DialogTitle className="text-sm sm:text-base">
+        Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
+      </DialogTitle>
+    </DialogHeader>
+    {selectedDeal && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
+            <p className="text-sm border rounded-lg p-2 bg-gray-50">
+              {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
+            </p>
+          </div>
 
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <div className="flex items-center space-x-2 mb-2">
-                            {getItemIcon(selectedDeal.itemType)}
-                            <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <span>Type:</span>
-                            <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="flex items-center space-x-2 mb-2">
+                {getItemIcon(selectedDeal.itemType)}
+                <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Type:</span>
+                <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
 
-                            <span>Price:</span>
-                            <span className="font-medium">
-                              ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
-                            </span>
+                <span>Price:</span>
+                <span className="font-medium">
+                  ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
+                </span>
 
-                            {selectedDeal.item?.make && (
-                              <>
-                                <span>Make:</span>
-                                <span className="font-medium">{selectedDeal.item.make}</span>
-                              </>
-                            )}
-
-                            {selectedDeal.item?.model && (
-                              <>
-                                <span>Model:</span>
-                                <span className="font-medium">{selectedDeal.item.model}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <p className="font-medium text-sm">
-                            {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
-                          </p>
-                          <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                            <span>Email:</span>
-                            <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
-
-                            <span>Phone:</span>
-                            <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
-
-                            {selectedDeal.buyer?.address && (
-                              <>
-                                <span>Address:</span>
-                                <span className="font-medium">
-                                  {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <p className="font-medium text-sm">
-                            {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
-                          </p>
-                          <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                            <span>Email:</span>
-                            <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
-
-                            <span>Phone:</span>
-                            <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
-                            {getStatusIcon(selectedDeal.status)}
-                            <span className="capitalize">{selectedDeal.status}</span>
-                          </Badge>
-
-                          {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
-                            <div className="mt-3">
-                              <Label className="text-xs font-medium">Status History</Label>
-                              <div className="space-y-1 mt-1">
-                                {selectedDeal.statusHistory.map((history: any, index: number) => (
-                                  <div key={index} className="flex justify-between text-xs">
-                                    <span className="capitalize">{history.status}</span>
-                                    <span className="text-gray-500">
-                                      {new Date(history.timestamp).toLocaleDateString()}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <span>Original Price:</span>
-                            <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
-
-                            <span>Final Price:</span>
-                            <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
-
-                            <span>Commission:</span>
-                            <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
-
-                            <span>Platform Fee:</span>
-                            <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
-
-                            <span>Payment Method:</span>
-                            <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
-
-                            {selectedDeal.paymentStatus && (
-                              <>
-                                <span>Payment Status:</span>
-                                <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          <div className="grid grid-cols-2 gap-2 text-xs">
-                            <span>Created:</span>
-                            <span className="font-medium">
-                              {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                              {new Date(selectedDeal.createdAt).toLocaleTimeString()}
-                            </span>
-
-                            <span>Last Updated:</span>
-                            <span className="font-medium">
-                              {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                              {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
-                            </span>
-
-                            {selectedDeal.approvedAt && (
-                              <>
-                                <span>Approved:</span>
-                                <span className="font-medium">
-                                  {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
-                                  {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
-                                </span>
-                              </>
-                            )}
-
-                            {selectedDeal.completedAt && (
-                              <>
-                                <span>Completed:</span>
-                                <span className="font-medium">
-                                  {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
-                                  {new Date(selectedDeal.completedAt).toLocaleTimeString()}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
-                        <div className="border rounded-lg p-3 bg-gray-50">
-                          {selectedDeal.notes ? (
-                            <p className="text-xs">{selectedDeal.notes}</p>
-                          ) : (
-                            <p className="text-xs text-gray-500">No notes available</p>
-                          )}
-
-                          {selectedDeal.messages && selectedDeal.messages.length > 0 && (
-                            <div className="mt-3">
-                              <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
-                              <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
-                                {selectedDeal.messages.map((message: any, index: number) => (
-                                  <div key={index} className="text-xs p-2 bg-white rounded border">
-                                    <div className="flex justify-between">
-                                      <span className="font-medium">{message.sender}</span>
-                                      <span className="text-gray-500">
-                                        {new Date(message.timestamp).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                    <p className="mt-1">{message.content}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                {selectedDeal.item?.make && (
+                  <>
+                    <span>Make:</span>
+                    <span className="font-medium">{selectedDeal.item.make}</span>
+                  </>
                 )}
-                <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
-                  <Button
-                    variant="outline"
-                    className="text-xs sm:text-sm bg-transparent"
-                    onClick={() => setIsDealDetailOpen(false)}
-                  >
-                    Close
-                  </Button>
-                  {selectedDeal?.status === "pending" && (
-                    <>
-                      <Button
-                        className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
-                        onClick={() => handleAcceptDeal(selectedDeal.id)}
-                      >
-                        Accept Deal
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        className="text-xs sm:text-sm"
-                        onClick={() => handleRejectDeal(selectedDeal.id)}
-                      >
-                        Reject Deal
-                      </Button>
-                    </>
-                  )}
-                  {selectedDeal?.status === "approved" && (
-                    <Button
-                      className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-                      onClick={() => handleCompleteDeal(selectedDeal.id)}
-                    >
-                      Mark as Completed
-                    </Button>
-                  )}
+
+                {selectedDeal.item?.model && (
+                  <>
+                    <span>Model:</span>
+                    <span className="font-medium">{selectedDeal.item.model}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <p className="font-medium text-sm">
+                {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                <span>Email:</span>
+                <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
+
+                <span>Phone:</span>
+                <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
+
+                {selectedDeal.buyer?.address && (
+                  <>
+                    <span>Address:</span>
+                    <span className="font-medium">
+                      {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <p className="font-medium text-sm">
+                {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
+              </p>
+              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                <span>Email:</span>
+                <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
+
+                <span>Phone:</span>
+                <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-3 sm:space-y-4">
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                {getStatusIcon(selectedDeal.status)}
+                <span className="capitalize">{selectedDeal.status}</span>
+              </Badge>
+
+              {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
+                <div className="mt-3">
+                  <Label className="text-xs font-medium">Status History</Label>
+                  <div className="space-y-1 mt-1">
+                    {selectedDeal.statusHistory.map((history: any, index: number) => (
+                      <div key={index} className="flex justify-between text-xs">
+                        <span className="capitalize">{history.status}</span>
+                        <span className="text-gray-500">
+                          {new Date(history.timestamp).toLocaleDateString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Original Price:</span>
+                <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                <span>Final Price:</span>
+                <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                <span>Commission:</span>
+                <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
+
+                <span>Platform Fee:</span>
+                <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
+
+                <span>Payment Method:</span>
+                <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
+
+                {selectedDeal.paymentStatus && (
+                  <>
+                    <span>Payment Status:</span>
+                    <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <span>Created:</span>
+                <span className="font-medium">
+                  {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                  {new Date(selectedDeal.createdAt).toLocaleTimeString()}
+                </span>
+
+                <span>Last Updated:</span>
+                <span className="font-medium">
+                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
+                </span>
+
+                {selectedDeal.approvedAt && (
+                  <>
+                    <span>Approved:</span>
+                    <span className="font-medium">
+                      {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
+                      {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
+                    </span>
+                  </>
+                )}
+
+                {selectedDeal.completedAt && (
+                  <>
+                    <span>Completed:</span>
+                    <span className="font-medium">
+                      {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
+                      {new Date(selectedDeal.completedAt).toLocaleTimeString()}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
+            <div className="border rounded-lg p-3 bg-gray-50">
+              {selectedDeal.notes ? (
+                <p className="text-xs">{selectedDeal.notes}</p>
+              ) : (
+                <p className="text-xs text-gray-500">No notes available</p>
+              )}
+
+              {selectedDeal.messages && selectedDeal.messages.length > 0 && (
+                <div className="mt-3">
+                  <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
+                  <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
+                    {selectedDeal.messages.map((message: any, index: number) => (
+                      <div key={index} className="text-xs p-2 bg-white rounded border">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{message.sender}</span>
+                          <span className="text-gray-500">
+                            {new Date(message.timestamp).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="mt-1">{message.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+      <Button
+        variant="outline"
+        className="text-xs sm:text-sm bg-transparent"
+        onClick={() => setIsDealDetailOpen(false)}
+      >
+        Close
+      </Button>
+      {selectedDeal?.status === "pending" && (
+        <>
+          <Button
+            className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+            onClick={() => handleAcceptDeal(selectedDeal.id)}
+          >
+            Accept Deal
+          </Button>
+          <Button
+            variant="destructive"
+            className="text-xs sm:text-sm"
+            onClick={() => handleRejectDeal(selectedDeal.id)}
+          >
+            Reject Deal
+          </Button>
+        </>
+      )}
+      {selectedDeal?.status === "approved" && (
+        <Button
+          className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+          onClick={() => handleCompleteDeal(selectedDeal.id)}
+        >
+          Mark as Completed
+        </Button>
+      )}
+    </div>
+  </DialogContent>
+</Dialog>
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
 
-          {/* FIXED: Consult tab content , buttons with local fallback */}
-          {/* NEW: Consult tab content */}
-          <TabsContent value="consult" className="space-y-4 sm:space-y-6">
-            <Card>
-              <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="flex items-center text-sm sm:text-base">
-                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-                  Consultation Management
-                </CardTitle>
-                <CardDescription className="text-xs sm:text-sm">
-                  Review and manage booked consultations
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-xs sm:text-sm">User</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Phone</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Mode</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {consultations.slice(0, 10).map((consult) => (
-                      <TableRow key={consult.id || consult._id}>
-                        <TableCell className="text-xs sm:text-sm">
-                          <div>
-                            <p className="font-medium">{consult.fullName}</p>
-                            <p className="text-gray-500">{consult.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm text-gray-600">
-                          {consult.phone || 'N/A'}
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <Badge variant="secondary">
-                            {consult.category} / {consult.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          <div className="flex items-center space-x-1">
-                            {getModeIcon(consult.mode)}
-                            <span>{consult.mode}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-xs sm:text-sm">
-                          {new Date(consult.dateTime).toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
-                            {consult.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-1 flex-wrap gap-1">
-                            {/* Reschedule Button */}
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-xs"
-                              disabled={consult.status === 'cancelled' || consult.status === 'completed'}
-                              onClick={() => handleOpenReschedule(consult)}
-                            >
-                              Reschedule
-                            </Button>
-
-                            {/* Accept/Complete Button */}
-                            <Button
-                              size="sm"
-                              variant={consult.status === 'pending' ? "default" : "outline"}
-                              className="text-xs"
-                              disabled={consult.status === 'cancelled' || consult.status === 'completed'}
-                              onClick={() => consult.status === 'pending'
-                                ? handleAcceptConsult(consult)
-                                : handleCompleteConsult(consult)
-                              }
-                            >
-                              {consult.status === 'pending' ? 'Accept' : 'Complete'}
-                            </Button>
-
-                            {/* Cancel Button */}
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              className="text-xs"
-                              disabled={consult.status === 'completed' || consult.status === 'cancelled'}
-                              onClick={() => handleCancelConsult(consult)}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            {/* Reschedule Dialog */}
-            <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
-              <DialogContent className="max-w-xs sm:max-w-md mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">
-                    Reschedule Consultation
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
-                      New Date & Time
-                    </Label>
-                    <Input
-                      id="reschedule-datetime"
-                      type="datetime-local"
-                      value={rescheduleDateTime}
-                      onChange={(e) => setRescheduleDateTime(e.target.value)}
-                      className="text-sm"
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      className="text-xs sm:text-sm"
-                      onClick={() => {
-                        setRescheduleConsultId(null);
-                        setRescheduleDateTime("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleRescheduleConsult}
-                      className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-                    >
-                      Confirm Reschedule
-                    </Button>
-                  </div>
+{/* FIXED: Consult tab content , buttons with local fallback */}
+{/* NEW: Consult tab content */}
+<TabsContent value="consult" className="space-y-4 sm:space-y-6">
+  <Card>
+    <CardHeader className="pb-2 sm:pb-4">
+      <CardTitle className="flex items-center text-sm sm:text-base">
+        <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+        Consultation Management
+      </CardTitle>
+      <CardDescription className="text-xs sm:text-sm">
+        Review and manage booked consultations
+      </CardDescription>
+    </CardHeader>
+    <CardContent className="p-0">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="text-xs sm:text-sm">User</TableHead>
+            <TableHead className="text-xs sm:text-sm">Phone</TableHead>
+            <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
+            <TableHead className="text-xs sm:text-sm">Mode</TableHead>
+            <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
+            <TableHead className="text-xs sm:text-sm">Status</TableHead>
+            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {consultations.slice(0, 10).map((consult) => (
+            <TableRow key={consult.id || consult._id}>
+              <TableCell className="text-xs sm:text-sm">
+                <div>
+                  <p className="font-medium">{consult.fullName}</p>
+                  <p className="text-gray-500">{consult.email}</p>
                 </div>
-              </DialogContent>
-            </Dialog>
-          </TabsContent>
-        </Tabs>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm text-gray-600">
+                {consult.phone || 'N/A'}
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <Badge variant="secondary">
+                  {consult.category} / {consult.type}
+                </Badge>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                <div className="flex items-center space-x-1">
+                  {getModeIcon(consult.mode)}
+                  <span>{consult.mode}</span>
+                </div>
+              </TableCell>
+              <TableCell className="text-xs sm:text-sm">
+                {new Date(consult.dateTime).toLocaleString()}
+              </TableCell>
+              <TableCell>
+                <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
+                  {consult.status}
+                </Badge>
+              </TableCell>
+              <TableCell>
+                <div className="flex space-x-1 flex-wrap gap-1">
+                  {/* Reschedule Button */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs"
+                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                    onClick={() => handleOpenReschedule(consult)}
+                  >
+                    Reschedule
+                  </Button>
+                  
+                  {/* Accept/Complete Button */}
+                  <Button
+                    size="sm"
+                    variant={consult.status === 'pending' ? "default" : "outline"}
+                    className="text-xs"
+                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                    onClick={() => consult.status === 'pending' 
+                      ? handleAcceptConsult(consult) 
+                      : handleCompleteConsult(consult)
+                    }
+                  >
+                    {consult.status === 'pending' ? 'Accept' : 'Complete'}
+                  </Button>
+                  
+                  {/* Cancel Button */}
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="text-xs"
+                    disabled={consult.status === 'completed' || consult.status === 'cancelled'}
+                    onClick={() => handleCancelConsult(consult)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </CardContent>
+  </Card>
 
+  {/* Reschedule Dialog */}
+  <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
+    <DialogContent className="max-w-xs sm:max-w-md mx-4">
+      <DialogHeader>
+        <DialogTitle className="text-sm sm:text-base">
+          Reschedule Consultation
+        </DialogTitle>
+      </DialogHeader>
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
+            New Date & Time
+          </Label>
+          <Input
+            id="reschedule-datetime"
+            type="datetime-local"
+            value={rescheduleDateTime}
+            onChange={(e) => setRescheduleDateTime(e.target.value)}
+            className="text-sm"
+            min={new Date().toISOString().slice(0, 16)}
+          />
+        </div>
+        <div className="flex justify-end space-x-2">
+          <Button
+            variant="outline"
+            className="text-xs sm:text-sm"
+            onClick={() => {
+              setRescheduleConsultId(null);
+              setRescheduleDateTime("");
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleRescheduleConsult}
+            className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+          >
+            Confirm Reschedule
+          </Button>
+        </div>
+      </div>
+    </DialogContent>
+  </Dialog>
+</TabsContent>
+        </Tabs> 
+        
       </div>
     </div>
 
