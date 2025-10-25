@@ -15,22 +15,22 @@ export function Home() {
 
   const videos = [
     {
-      src: "https://res.cloudinary.com/dbdohnv2x/video/upload/car_kojzkd.mp4",
+      src: "https://res.cloudinary.com/dsu9nxhpc/video/upload/car_qv0tej.mp4",
       alt: "Modern luxury car showcase",
       category: "cars",
     },
     {
-      src: "https://res.cloudinary.com/dbdohnv2x/video/upload/house_kwlgm0.mp4",
+      src: "https://res.cloudinary.com/dsu9nxhpc/video/upload/house_fxe3y4.mp4",
       alt: "Modern architectural design showcase",
       category: "houses",
     },
     {
-      src: "https://res.cloudinary.com/dbdohnv2x/video/upload/land_quvf35.mp4",
+      src: "https://res.cloudinary.com/dsu9nxhpc/video/upload/land_rmdl3e.mp4",
       alt: "Beautiful landscapes and real estate plots",
       category: "lands",
     },
     {
-      src: "https://res.cloudinary.com/dbdohnv2x/video/upload/machine_ptglft.mp4",
+      src: "https://res.cloudinary.com/dsu9nxhpc/video/upload/machine_d13rjy.mp4",
       alt: "Construction machines and industrial equipment",
       category: "machines",
     },
