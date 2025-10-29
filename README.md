@@ -121,7 +121,7 @@ It provides a modern, localized, and secure platform for individuals and busines
 
 **Bekalu Eshetie**  
 📍 Ethiopia  
-💼 Full-Stack Web and App Developer (Next.js | Node.js | MongoDB)  
+💼 Full-Stack Web and App Developer (Flutter,Next.js | Node.js | MongoDB,Django|postgress)  
 ---
 
 ## 📝 License
