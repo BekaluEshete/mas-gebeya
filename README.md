@@ -104,8 +104,8 @@ It provides a modern, localized, and secure platform for individuals and busines
 | Contingency | 2,000 |
 | **Total** | **50,000 ETB** |
 
-💵 **Milestone Payments:**
-)
+
+
 
 
 ## ✅ Acceptance Criteria
