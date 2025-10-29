@@ -1,7 +1,7 @@
 # 🏡 MAS Gebeya
 
 **MAS Gebeya** is a web-based marketplace for **buying and renting cars, properties, lands, and machines** in Ethiopia.  
-It provides a modern, localized, and secure platform for individuals and businesses to browse, post, and negotiate deals with real-time chat — all within an Ethiopian context.
+It provides a modern, localized, and secure platform for individuals and businesses to browse, post, and negotiate deals - all within an Ethiopian context.
 
 
 
@@ -12,7 +12,6 @@ It provides a modern, localized, and secure platform for individuals and busines
 | **Frontend** | Next.js (React) + Redux + Tailwind CSS |
 | **Backend** | Node.js + Express |
 | **Database** | MongoDB (hosted on MongoDB Atlas) |
-| **Realtime Chat** | WebSocket (Socket.IO or MongoDB Change Streams) |
 | **Hosting** | Vercel (Frontend), AWS / Render (Backend) |
 | **Charts & UI** | Recharts, Radix UI, Lucide-React |
 | **Authentication** | JWT (JSON Web Token) |
@@ -45,15 +44,13 @@ It provides a modern, localized, and secure platform for individuals and busines
 
 ## 🧩 System Architecture
 
-💻 Next.js (React + Redux) — Frontend (Vercel)
-⇅
-⚙️ Node.js (Express) — Backend (AWS / Render)
-⇅
-🍃 MongoDB Atlas — Database
-⇅
-💬 WebSockets (Socket.IO / MongoDB Change Streams)
-⇅
-🎨 Tailwind CSS + Radix UI — Styling & Components
+💻  Next.js (React + Redux) — Frontend (Vercel)  
+   ⇅  
+⚙️  Node.js (Express) — Backend (Render)  
+   ⇅  
+🍃  MongoDB Atlas — Database  
+   ⇅    
+🎨  Tailwind CSS + Radix UI — Styling & Components
 
 
 
