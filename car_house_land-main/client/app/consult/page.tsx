@@ -190,10 +190,9 @@ export default function ConsultPage() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Car">Car</SelectItem>
-                        <SelectItem value="Land">Land</SelectItem>
-                        <SelectItem value="Machinery">Machinery</SelectItem>
-                        <SelectItem value="Property">Property</SelectItem>
+                        <SelectItem value="Research">Research</SelectItem>
+                        <SelectItem value="Cases in law">Cases in law</SelectItem>
+                        <SelectItem value="Health">Health</SelectItem>
                         <SelectItem value="Business">Business</SelectItem>
                       </SelectContent>
                     </Select>
@@ -224,10 +223,9 @@ export default function ConsultPage() {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Car">Car</SelectItem>
-                      <SelectItem value="Land">Land</SelectItem>
-                      <SelectItem value="Machinery">Machinery</SelectItem>
-                      <SelectItem value="Property">Property</SelectItem>
+                      <SelectItem value="Research">Research</SelectItem>
+                      <SelectItem value="Cases in law">Cases in law</SelectItem>
+                      <SelectItem value="Health">Health</SelectItem>
                       <SelectItem value="Business">Business</SelectItem>
                     </SelectContent>
                   </Select>

@@ -24,8 +24,8 @@ const consultationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     enum: {
-      values: ['Car', 'Land', 'Machinery', 'Property', 'Business'],
-      message: 'Category must be one of: Car, Land, Machinery, Property, Business'
+      values: ['Research', 'Cases in law', 'Health', 'Business'],
+      message: 'Category must be one of: Research, Cases in law, Health, Business'
     }
   },
   description: {
@@ -38,8 +38,8 @@ const consultationSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Consultation type is required'],
     enum: {
-      values: ['Car', 'Land', 'Machinery', 'Property', 'Business'],
-      message: 'Type must be one of: Car, Land, Machinery, Property, Business'
+      values: ['Research', 'Cases in law', 'Health', 'Business'],
+      message: 'Type must be one of: Research, Cases in law, Health, Business'
     }
   },
   mode: {
