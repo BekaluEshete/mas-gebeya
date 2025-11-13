@@ -32,6 +32,8 @@ export default function ConsultPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  const [tempDateTime, setTempDateTime] = useState<Date | null>(null)
 
   // Generate available slots for the next 30 days
   const generateAvailableSlots = () => {
@@ -245,20 +247,35 @@ export default function ConsultPage() {
                 </div>
                 <div>
                   <Label>Available Date & Time *</Label>
-                  <Dialog>
+                  <Dialog 
+                    open={isDatePickerOpen} 
+                    onOpenChange={(open) => {
+                      setIsDatePickerOpen(open)
+                      if (open) {
+                        // Initialize temp date when dialog opens
+                        setTempDateTime(bookingData.dateTime)
+                      } else {
+                        // Reset temp date when dialog closes
+                        setTempDateTime(null)
+                      }
+                    }}
+                  >
                     <DialogTrigger asChild>
-                      <Button className="w-full justify-start">
+                      <Button className="w-full justify-start" type="button">
                         <Calendar className="w-4 h-4 mr-2" />
                         {bookingData.dateTime.toLocaleDateString()} at {bookingData.dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Select Date & Time</DialogTitle>
+                      </DialogHeader>
                       <div className="p-4">
                         <DatePicker
-                          selected={bookingData.dateTime}
+                          selected={tempDateTime || bookingData.dateTime}
                           onChange={(date) => {
                             if (date) {
-                              setBookingData({ ...bookingData, dateTime: date })
+                              setTempDateTime(date)
                             }
                           }}
                           showTimeSelect
@@ -277,6 +294,27 @@ export default function ConsultPage() {
                           }}
                           className="w-full"
                         />
+                      </div>
+                      <div className="flex justify-end gap-3 p-4 pt-0 border-t">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setTempDateTime(null)
+                            setIsDatePickerOpen(false)
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={() => {
+                            const dateToUse = tempDateTime || bookingData.dateTime
+                            setBookingData({ ...bookingData, dateTime: dateToUse })
+                            setTempDateTime(null)
+                            setIsDatePickerOpen(false)
+                          }}
+                        >
+                          OK
+                        </Button>
                       </div>
                     </DialogContent>
                   </Dialog>

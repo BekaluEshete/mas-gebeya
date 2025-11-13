@@ -50,7 +50,7 @@ export function Footer() {
                 Help Center
               </Link>
               <Link href="/consult" className="block text-gray-300 hover:text-white transition-colors text-sm">
-                Service
+                Consult
               </Link>
               <a href="#" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Privacy Policy

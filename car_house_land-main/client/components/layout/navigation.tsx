@@ -27,7 +27,7 @@ export function Navigation() {
     { href: "/houses", label: "House" },
     { href: "/lands", label: "Lands" },
     { href: "/machines", label: "Machines" },
-    { href: "/consult", label: "Service"},
+    { href: "/consult", label: "Consult"},
   ]
 
   const adminNavItems = [

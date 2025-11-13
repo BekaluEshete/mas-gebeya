@@ -2024,14 +2024,14 @@ const handleRefreshAll = async () => {
                   <span className="hidden sm:inline">History</span>
                   <span className="sm:hidden">Hist</span>
                 </TabsTrigger>
-                {/* NEW: Service tab trigger */}
+                {/* NEW: Consult tab trigger */}
                 <TabsTrigger
                   value="consult"
                   className="relative flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
                 >
                   <Headphones className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Service</span>
-                  <span className="sm:hidden">Service</span>
+                  <span className="hidden sm:inline">Consult</span>
+                  <span className="sm:hidden">Consult</span>
                   {pendingConsultations > 0 && (
                     <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center bg-blue-500 text-white border-0">
                       {pendingConsultations}
