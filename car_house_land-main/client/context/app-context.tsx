@@ -601,8 +601,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateCar = (id: string, updates: Partial<Car>) => {
+    if (!updates) {
+      console.error("updateCar called with undefined updates");
+      return;
+    }
     dispatch({ type: "UPDATE_CAR", payload: { id, updates } });
-    logActivity("updated", "car", `updated car: ${updates.title}`, id);
+    logActivity("updated", "car", `updated car: ${updates?.title || 'car'}`, id);
   };
 
   const deleteCar = async (id: string) => {
@@ -626,8 +630,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateHouse = (id: string, updates: Partial<House>) => {
+    if (!updates) {
+      console.error("updateHouse called with undefined updates");
+      return;
+    }
     dispatch({ type: "UPDATE_HOUSE", payload: { id, updates } });
-    logActivity("updated", "house", `updated house: ${updates.title}`, id);
+    logActivity("updated", "house", `updated house: ${updates?.title || 'house'}`, id);
   };
 
   const deleteHouse = async (id: string) => {
@@ -651,8 +659,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateMachine = (id: string, updates: Partial<Machine>) => {
+    if (!updates) {
+      console.error("updateMachine called with undefined updates");
+      return;
+    }
     dispatch({ type: "UPDATE_MACHINE", payload: { id, updates } });
-    logActivity("updated", "machine", `updated machine: ${updates.title}`, id);
+    logActivity("updated", "machine", `updated machine: ${updates?.title || 'machine'}`, id);
   };
 
   const deleteMachine = async (id: string) => {
@@ -676,8 +688,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const updateLand = (id: string, updates: Partial<Land>) => {
+    if (!updates) {
+      console.error("updateLand called with undefined updates");
+      return;
+    }
     dispatch({ type: "UPDATE_LAND", payload: { id, updates } });
-    logActivity("updated", "land", `updated land: ${updates.title}`, id);
+    logActivity("updated", "land", `updated land: ${updates?.title || 'land'}`, id);
   };
 
   const deleteLand = async (id: string) => {

@@ -69,9 +69,9 @@ import {
   Map, // NEW
   Calendar, // NEW
 } from "lucide-react"
-import type { Deal, Consultation } from "@/types" // Add Consultation
+import type { Deal, Consultation, Car, House, Land, Machine } from "@/types" // Add Consultation and item types
 import { Label } from "@/components/ui/label"
-import { createCar } from "@/lib/api/cars"
+import { createCar, updateCar as apiUpdateCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
 
 import { useState, useEffect } from "react"
@@ -454,18 +454,25 @@ const totalUsers = users.length;
 
           const token = localStorage.getItem("accessToken")
           if (token) {
-            const updatedCar = await updateCar(itemData.id, formData, token)
+            const updatedCar = await apiUpdateCar(itemData.id, formData, token)
             if (updatedCar) {
-              updateCar(itemData.id, updatedCar)
+              // Update local state with the returned car - ensure title exists
+              const carId = updatedCar.id || updatedCar._id || itemData.id
+              const { id, ...updates } = { ...updatedCar, id: carId }
+              const safeUpdates = { ...updates, title: updates.title || updatedCar.title || itemData.title || 'car' }
+              updateCar(carId, safeUpdates)
               console.log("[v0] Car updated successfully via API")
             } else {
               console.error("[v0] Failed to update car via API")
-              // Fallback to local state update
-              updateCar(itemData.id, itemWithDefaults)
+              // Fallback to local state update - ensure title exists
+              const safeUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'car' }
+              updateCar(itemData.id, safeUpdates)
             }
           } else {
             console.error("[v0] No auth token found")
-            updateCar(itemData.id, itemWithDefaults)
+            // Fallback to local state update - ensure title exists
+            const safeUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'car' }
+            updateCar(itemData.id, safeUpdates)
           }
         } else {
           // Create new car via API
@@ -503,39 +510,47 @@ const totalUsers = users.length;
         }
       } catch (error) {
         console.error(" Error with car API operation:", error)
-        // Fallback to local state operations
+        // Fallback to local state operations - ensure title exists
         if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
-          updateCar(itemData.id, itemWithDefaults)
+          const safeUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'car' }
+          updateCar(itemData.id, safeUpdates)
         } else {
-          addCar(itemWithDefaults)
+          const safeItem = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'car' }
+          addCar(safeItem)
         }
       }
     } else {
       // Keep existing logic for other categories (houses, lands, machines)
       if (itemData.id && getCurrentData().find((item: any) => item.id === itemData.id)) {
-        // Update existing item
+        // Update existing item - ensure title exists
         switch (selectedCategory) {
           case "houses":
-            updateHouse(itemData.id, itemWithDefaults)
+            const safeHouseUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'house' }
+            updateHouse(itemData.id, safeHouseUpdates)
             break
           case "lands":
-            updateLand(itemData.id, itemWithDefaults)
+            const safeLandUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'land' }
+            updateLand(itemData.id, safeLandUpdates)
             break
           case "machines":
-            updateMachine(itemData.id, itemWithDefaults)
+            const safeMachineUpdates = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'machine' }
+            updateMachine(itemData.id, safeMachineUpdates)
             break
         }
       } else {
-        // Add new item
+        // Add new item - ensure title exists
         switch (selectedCategory) {
           case "houses":
-            addHouse(itemWithDefaults)
+            const safeHouse = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'house' }
+            addHouse(safeHouse)
             break
           case "lands":
-            addLand(itemWithDefaults)
+            const safeLand = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'land' }
+            addLand(safeLand)
             break
           case "machines":
-            addMachine(itemWithDefaults)
+            const safeMachine = { ...itemWithDefaults, title: itemWithDefaults.title || itemData.title || 'machine' }
+            addMachine(safeMachine)
             break
         }
       }
@@ -791,6 +806,119 @@ const totalUsers = users.length;
     setDeletingItem(null)
   }
 
+  // Approval handlers for items
+  const handleApproveItem = async (item: any) => {
+    const baseUrl = "https://car-house-land.onrender.com"
+    try {
+      let endpoint = '';
+      switch (selectedCategory) {
+        case 'cars':
+          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          break;
+        case 'machines':
+          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          break;
+        case 'lands':
+          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          break;
+        case 'houses':
+          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          break;
+        default:
+          console.error('Invalid category');
+          return;
+      }
+
+      const token = authService.getStoredToken()
+      if (!token) {
+        console.error("No authentication token found")
+        alert("Please log in again")
+        return
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ approved: true, approvedAt: new Date().toISOString() }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve item');
+      }
+
+      // Update local state
+      const updateFunction = selectedCategory === 'cars' ? updateCar :
+                            selectedCategory === 'machines' ? updateMachine :
+                            selectedCategory === 'lands' ? updateLand : updateHouse;
+      
+      updateFunction({ ...item, approved: true, approvedAt: new Date().toISOString() });
+      alert('Item approved successfully!');
+      setDataVersion(prev => prev + 1);
+    } catch (error) {
+      console.error('Error approving item:', error);
+      alert(`Approval failed: ${error.message}`);
+    }
+  }
+
+  const handleRejectItem = async (item: any) => {
+    const baseUrl = "https://car-house-land.onrender.com"
+    try {
+      let endpoint = '';
+      switch (selectedCategory) {
+        case 'cars':
+          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          break;
+        case 'machines':
+          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          break;
+        case 'lands':
+          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          break;
+        case 'houses':
+          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          break;
+        default:
+          console.error('Invalid category');
+          return;
+      }
+
+      const token = authService.getStoredToken()
+      if (!token) {
+        console.error("No authentication token found")
+        alert("Please log in again")
+        return
+      }
+
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ approved: false }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reject item');
+      }
+
+      // Update local state
+      const updateFunction = selectedCategory === 'cars' ? updateCar :
+                            selectedCategory === 'machines' ? updateMachine :
+                            selectedCategory === 'lands' ? updateLand : updateHouse;
+      
+      updateFunction({ ...item, approved: false });
+      alert('Item rejected successfully!');
+      setDataVersion(prev => prev + 1);
+    } catch (error) {
+      console.error('Error rejecting item:', error);
+      alert(`Rejection failed: ${error.message}`);
+    }
+  }
+
 const handleView = async (item: any) => {
   const baseUrl = "https://car-house-land.onrender.com"
   try {
@@ -906,9 +1034,7 @@ const handleView = async (item: any) => {
       if (!editingItem.region?.trim()) requiredFields.push("Region")
       if (!editingItem.address?.trim()) requiredFields.push("Address")
       if (!editingItem.owner?.trim()) requiredFields.push("Owner")
-      if (!editingItem.description?.trim() || editingItem.description.length < 20) {
-        requiredFields.push("Description (minimum 20 characters)")
-      }
+      // Description is now optional - removed validation
     }
 
     if (selectedCategory === "lands") {
@@ -922,9 +1048,7 @@ const handleView = async (item: any) => {
       if (!editingItem.region?.trim()) requiredFields.push("Region")
       if (!editingItem.address?.trim()) requiredFields.push("Address")
       if (!editingItem.owner?.trim()) requiredFields.push("Owner")
-      if (!editingItem.description?.trim() || editingItem.description.length < 20) {
-        requiredFields.push("Description (minimum 20 characters)")
-      }
+      // Description is now optional - removed validation
     }
 
     if (requiredFields.length > 0) {
@@ -949,103 +1073,221 @@ const handleView = async (item: any) => {
       const formData = new FormData()
 
       if (selectedCategory === "cars") {
-        // Car-specific fields
-        formData.append("title", editingItem.title || "")
-        formData.append("make", editingItem.make || "")
-        formData.append("model", editingItem.model || "")
+        // Car-specific fields with required field defaults
+        const carTitle = editingItem.title?.trim() || "Vehicle"
+        const carDescription = editingItem.description?.trim() || "This is a quality vehicle available for sale or rent."
+        const carOwner = editingItem.owner || user?._id || ""
+        
+        // Ensure title meets minimum length (5 chars)
+        const finalTitle = carTitle.length >= 5 ? carTitle : carTitle + " Vehicle"
+        // Ensure description meets minimum length (20 chars)
+        const finalDescription = carDescription.length >= 20 
+          ? carDescription 
+          : carDescription + " Quality vehicle with great features and excellent condition."
+        
+        if (!carOwner) {
+          alert("Owner is required. Please select an owner from the dropdown.")
+          return
+        }
+        
+        formData.append("title", finalTitle)
+        formData.append("make", editingItem.make?.trim() || "Unknown")
+        formData.append("model", editingItem.model?.trim() || "Unknown")
         formData.append("price", editingItem.price?.toString() || "0")
-        formData.append("year", editingItem.year?.toString() || "")
+        formData.append("year", editingItem.year?.toString() || new Date().getFullYear().toString())
         formData.append("mileage", editingItem.mileage?.toString() || "0")
-        formData.append("type", editingItem.type || "sale")
+        formData.append("type", editingItem.type || editingItem.listingType || "sale")
         formData.append("condition", editingItem.condition || "used")
         formData.append("fuelType", editingItem.fuelType || "gasoline")
         formData.append("transmission", editingItem.transmission || "manual")
-        formData.append("color", editingItem.color || "")
-        formData.append("bodyType", editingItem.bodyType || "sedan")
-        formData.append("description", editingItem.description || "")
-        formData.append("city", editingItem.city || "")
-        formData.append("region", editingItem.region || "")
-        formData.append("address", editingItem.address || "")
-        formData.append("kebele", editingItem.kebele || "")
-        formData.append("owner", editingItem.owner || "")
+        formData.append("color", editingItem.color?.trim() || "Black")
+        formData.append("bodyType", editingItem.bodyType?.trim() || "sedan")
+        formData.append("description", finalDescription)
+        formData.append("city", editingItem.city?.trim() || "")
+        formData.append("region", editingItem.region?.trim() || "")
+        formData.append("address", editingItem.address?.trim() || "")
+        formData.append("kebele", editingItem.kebele?.trim() || "")
+        formData.append("owner", carOwner)
         formData.append("status", editingItem.status || "available")
+        
+        // Add reference location if provided
+        if (editingItem.referenceLocation) {
+          formData.append("referenceLocation", editingItem.referenceLocation.trim())
+        }
 
-        // Add features as JSON string
+        // Add features - backend expects comma-separated string, not JSON
         if (editingItem.features && editingItem.features.length > 0) {
-          formData.append("features", JSON.stringify(editingItem.features))
+          const featuresString = Array.isArray(editingItem.features) 
+            ? editingItem.features.join(",") 
+            : typeof editingItem.features === 'string' 
+            ? editingItem.features 
+            : JSON.stringify(editingItem.features)
+          formData.append("features", featuresString)
         }
       } else if (selectedCategory === "houses") {
-        // House-specific fields
-        formData.append("title", editingItem.title || "")
-        formData.append("propertyType", editingItem.propertyType || "")
+        // House-specific fields with required field defaults
+        const houseTitle = editingItem.title?.trim() || "House"
+        const houseDescription = editingItem.description?.trim() || "This is a quality house available for sale or rent."
+        const houseOwner = editingItem.owner || user?._id || ""
+        
+        // Ensure title meets minimum length
+        const finalHouseTitle = houseTitle.length >= 5 ? houseTitle : houseTitle + " Property"
+        // Ensure description meets minimum length
+        const finalHouseDescription = houseDescription.length >= 20 
+          ? houseDescription 
+          : houseDescription + " Quality property with great features and excellent condition."
+        
+        if (!houseOwner) {
+          alert("Owner is required. Please select an owner from the dropdown.")
+          return
+        }
+        
+        formData.append("title", finalHouseTitle)
+        formData.append("propertyType", editingItem.propertyType?.trim() || "apartment")
         formData.append("price", editingItem.price?.toString() || "0")
-        formData.append("bedrooms", editingItem.bedrooms?.toString() || "0")
-        formData.append("bathrooms", editingItem.bathrooms?.toString() || "0")
+        formData.append("bedrooms", editingItem.bedrooms?.toString() || "1")
+        formData.append("bathrooms", editingItem.bathrooms?.toString() || "1")
         formData.append("size", editingItem.size?.toString() || "0")
-        formData.append("yearBuilt", editingItem.yearBuilt?.toString() || "")
+        formData.append("yearBuilt", editingItem.yearBuilt?.toString() || new Date().getFullYear().toString())
         formData.append("floors", editingItem.floors?.toString() || "1")
-        formData.append("parkingSpaces", editingItem.parkingSpaces?.toString() || "0")
-        formData.append("type", editingItem.type || "sale")
+        formData.append("parkingSpaces", editingItem.parkingSpaces?.toString() || editingItem.parking?.toString() || "0")
+        formData.append("type", editingItem.type || editingItem.listingType || "sale")
         formData.append("condition", editingItem.condition || "used")
-        formData.append("description", editingItem.description || "")
-        formData.append("city", editingItem.city || "")
-        formData.append("region", editingItem.region || "")
-        formData.append("address", editingItem.address || "")
-        formData.append("kebele", editingItem.kebele || "")
-        formData.append("owner", editingItem.owner || "")
+        formData.append("description", finalHouseDescription)
+        formData.append("city", editingItem.city?.trim() || "")
+        formData.append("region", editingItem.region?.trim() || "")
+        formData.append("address", editingItem.address?.trim() || "")
+        formData.append("kebele", editingItem.kebele?.trim() || "")
+        formData.append("owner", houseOwner)
         formData.append("status", editingItem.status || "available")
+        
+        // Add reference location if provided
+        if (editingItem.referenceLocation) {
+          formData.append("referenceLocation", editingItem.referenceLocation.trim())
+        }
 
-        // Add amenities as JSON string
+        // Add amenities - backend expects comma-separated string or array
         if (editingItem.amenities && editingItem.amenities.length > 0) {
-          formData.append("amenities", JSON.stringify(editingItem.amenities))
+          const amenitiesString = Array.isArray(editingItem.amenities) 
+            ? editingItem.amenities.join(",") 
+            : typeof editingItem.amenities === 'string' 
+            ? editingItem.amenities 
+            : JSON.stringify(editingItem.amenities)
+          formData.append("amenities", amenitiesString)
         }
       } else if (selectedCategory === "lands") {
-        // Land-specific fields
-        formData.append("title", editingItem.title || "")
+        // Land-specific fields with required field defaults
+        const landTitle = editingItem.title?.trim() || "Land"
+        const landDescription = editingItem.description?.trim() || "This is a quality land plot available for sale or rent."
+        const landOwner = editingItem.owner || user?._id || ""
+        
+        // Ensure title meets minimum length
+        const finalLandTitle = landTitle.length >= 5 ? landTitle : landTitle + " Plot"
+        // Ensure description meets minimum length
+        const finalLandDescription = landDescription.length >= 20 
+          ? landDescription 
+          : landDescription + " Quality land plot with great potential and excellent location."
+        
+        if (!landOwner) {
+          alert("Owner is required. Please select an owner from the dropdown.")
+          return
+        }
+        
+        formData.append("title", finalLandTitle)
+        const sizeValue = editingItem.sizeValue || editingItem.size || "0"
         const sizeData = {
-          value: editingItem.sizeValue?.toString() || "0",
+          value: sizeValue.toString(),
           unit: editingItem.sizeUnit || "hectare",
         }
         formData.append("size", JSON.stringify(sizeData))
         formData.append("price", editingItem.price?.toString() || "0")
         formData.append("pricePerSqm", editingItem.pricePerSqm?.toString() || "0")
-        formData.append("zoning", editingItem.zoning || "")
-        formData.append("landUse", editingItem.landUse || "")
-        formData.append("topography", editingItem.topography || "")
-        formData.append("soilType", editingItem.soilType || "")
+        formData.append("zoning", editingItem.zoning?.trim() || "residential")
+        formData.append("landUse", editingItem.landUse?.trim() || "development")
+        formData.append("topography", editingItem.topography?.trim() || "flat")
+        formData.append("soilType", editingItem.soilType?.trim() || "clay")
         formData.append("waterAccess", editingItem.waterAccess || "none")
         formData.append("electricityAccess", editingItem.electricityAccess?.toString() || "false")
         formData.append("roadAccess", editingItem.roadAccess?.toString() || "false")
-        formData.append("type", editingItem.type || "sale")
-        formData.append("description", editingItem.description || "")
-        formData.append("city", editingItem.city || "")
-        formData.append("region", editingItem.region || "")
-        formData.append("address", editingItem.address || "")
-        formData.append("kebele", editingItem.kebele || "")
-        formData.append("owner", editingItem.owner || "")
+        formData.append("type", editingItem.type || editingItem.listingType || "sale")
+        formData.append("description", finalLandDescription)
+        formData.append("city", editingItem.city?.trim() || "")
+        formData.append("region", editingItem.region?.trim() || "")
+        formData.append("address", editingItem.address?.trim() || "")
+        formData.append("kebele", editingItem.kebele?.trim() || "")
+        formData.append("owner", landOwner)
         formData.append("status", editingItem.status || "available")
+        
+        // Add ownership type if provided
+        if (editingItem.ownershipType) {
+          formData.append("ownershipType", editingItem.ownershipType)
+        }
+        
+        // Add reference location if provided
+        if (editingItem.referenceLocation) {
+          formData.append("referenceLocation", editingItem.referenceLocation.trim())
+        }
       } else if (selectedCategory === "machines") {
-        // Machine-specific fields
-        formData.append("title", editingItem.title || "")
-        formData.append("category", editingItem.category || "")
-        formData.append("brand", editingItem.brand || "")
-        formData.append("model", editingItem.model || "")
+        // Machine-specific fields with required field defaults
+        const machineTitle = editingItem.title?.trim() || "Machine"
+        const machineDescription = editingItem.description?.trim() || "This is a quality machine available for sale or rent."
+        const machineOwner = editingItem.owner || user?._id || ""
+        
+        // Ensure title meets minimum length
+        const finalMachineTitle = machineTitle.length >= 5 ? machineTitle : machineTitle + " Equipment"
+        // Ensure description meets minimum length
+        const finalMachineDescription = machineDescription.length >= 20 
+          ? machineDescription 
+          : machineDescription + " Quality machine with great features and excellent condition."
+        
+        if (!machineOwner) {
+          alert("Owner is required. Please select an owner from the dropdown.")
+          return
+        }
+        
+        formData.append("title", finalMachineTitle)
+        formData.append("category", editingItem.category?.trim() || "construction")
+        formData.append("brand", editingItem.brand?.trim() || "Unknown")
+        formData.append("model", editingItem.model?.trim() || "Unknown")
         formData.append("price", editingItem.price?.toString() || "0")
-        formData.append("year", editingItem.yearManufactured?.toString() || "")
+        formData.append("year", editingItem.yearManufactured?.toString() || editingItem.year?.toString() || new Date().getFullYear().toString())
         formData.append("hoursUsed", editingItem.hoursUsed?.toString() || "0")
-        formData.append("type", editingItem.type || "sale")
+        formData.append("type", editingItem.type || editingItem.listingType || "sale")
         formData.append("condition", editingItem.condition || "used")
-        formData.append("description", editingItem.description || "")
-        formData.append("city", editingItem.city || "")
-        formData.append("region", editingItem.region || "")
-        formData.append("address", editingItem.address || "")
-        formData.append("kebele", editingItem.kebele || "")
-        formData.append("owner", editingItem.owner || "")
+        formData.append("description", finalMachineDescription)
+        formData.append("city", editingItem.city?.trim() || "")
+        formData.append("region", editingItem.region?.trim() || "")
+        formData.append("address", editingItem.address?.trim() || "")
+        formData.append("kebele", editingItem.kebele?.trim() || "")
+        formData.append("owner", machineOwner)
         formData.append("status", editingItem.status || "available")
+        
+        // Add machine type if provided
+        if (editingItem.machineType) {
+          formData.append("machineType", editingItem.machineType)
+        }
+        
+        // Add reference location if provided
+        if (editingItem.referenceLocation) {
+          formData.append("referenceLocation", editingItem.referenceLocation.trim())
+        }
 
-        // Add specifications as JSON string
+        // Add specifications - backend expects comma-separated string or array
         if (editingItem.specifications && editingItem.specifications.length > 0) {
-          formData.append("specifications", JSON.stringify(editingItem.specifications))
+          const specsString = Array.isArray(editingItem.specifications) 
+            ? editingItem.specifications.join(",") 
+            : typeof editingItem.specifications === 'string' 
+            ? editingItem.specifications 
+            : JSON.stringify(editingItem.specifications)
+          formData.append("specifications", specsString)
+        } else if (editingItem.features && editingItem.features.length > 0) {
+          // Fallback to features if specifications not provided
+          const featuresString = Array.isArray(editingItem.features) 
+            ? editingItem.features.join(",") 
+            : typeof editingItem.features === 'string' 
+            ? editingItem.features 
+            : JSON.stringify(editingItem.features)
+          formData.append("specifications", featuresString)
         }
       }
 
@@ -1100,30 +1342,128 @@ const handleView = async (item: any) => {
 
       console.log(`[v0] ${selectedCategory} save response status:`, response.status)
 
+      // Clone response for error handling (in case we need to read it multiple times)
+      const responseClone = response.clone()
+
       if (response.ok) {
         const result = await response.json()
-        console.log(` ${selectedCategory} saved successfully:`, result)
+        console.log(`[v0] ${selectedCategory} saved successfully:`, result)
+
+        // Update local state if item was created/updated
+        if (result.data || result) {
+          const savedItem = result.data || result
+          const itemId = savedItem._id || savedItem.id
+          
+          if (itemId && savedItem) {
+            const mappedItem = {
+              ...savedItem,
+              id: itemId,
+            }
+            
+            // Determine if this is a new item or an update
+            const isNewItem = !editingItem?.id
+            
+            if (isNewItem) {
+              // Add new item to local state
+              if (selectedCategory === 'cars') {
+                addCar(mappedItem as Car)
+              } else if (selectedCategory === 'machines') {
+                addMachine(mappedItem as Machine)
+              } else if (selectedCategory === 'lands') {
+                addLand(mappedItem as Land)
+              } else if (selectedCategory === 'houses') {
+                addHouse(mappedItem as House)
+              }
+            } else {
+              // Update existing item in local state
+              const updateItemId = mappedItem.id || itemId
+              
+              if (!updateItemId) {
+                console.error("Cannot update: missing item ID")
+                return
+              }
+              
+              // Create updates object without the id field
+              const updates: any = { ...mappedItem }
+              delete updates.id
+              delete updates._id
+              
+              // Ensure updates object exists and has data
+              if (!updates || Object.keys(updates).length === 0) {
+                console.error("Cannot update: no update data provided")
+                return
+              }
+              
+              // Ensure title exists for logging (required by logActivity)
+              if (!updates.title) {
+                updates.title = mappedItem.title || editingItem?.title || savedItem?.title || selectedCategory.slice(0, -1) || 'item'
+              }
+              
+              // Call appropriate update function
+              if (selectedCategory === 'cars') {
+                updateCar(updateItemId, updates as Partial<Car>)
+              } else if (selectedCategory === 'machines') {
+                updateMachine(updateItemId, updates as Partial<Machine>)
+              } else if (selectedCategory === 'lands') {
+                updateLand(updateItemId, updates as Partial<Land>)
+              } else if (selectedCategory === 'houses') {
+                updateHouse(updateItemId, updates as Partial<House>)
+              }
+            }
+          }
+        }
 
         // Close dialog and reset form
         setIsDialogOpen(false)
         setEditingItem(null)
         setUploadedImages([])
+        setDataVersion(prev => prev + 1)
 
-        // Refresh listings if needed
-        // fetchListings(); // Implement this if you have a listings fetch function
+        alert(`${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} saved successfully!`)
       } else {
-        const errorData = await response.json().catch(() => null)
-        const errorText = await response.text().catch(() => "Unknown error")
+        // Handle error response - read response body once
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`
+        let errorDetails = null
+
+        try {
+          const responseText = await responseClone.text()
+          console.log(`[v0] Error response text:`, responseText)
+          
+          if (responseText) {
+            try {
+              errorDetails = JSON.parse(responseText)
+              console.log(`[v0] Parsed error data:`, errorDetails)
+              
+              // Extract error message from various possible formats
+              if (errorDetails.errors && Array.isArray(errorDetails.errors)) {
+                errorMessage = errorDetails.errors
+                  .map((e: any) => `${e.param || 'field'}: ${e.msg || e.message || 'Invalid value'}`)
+                  .join("\n")
+              } else if (errorDetails.message) {
+                errorMessage = errorDetails.message
+              } else if (errorDetails.error) {
+                errorMessage = errorDetails.error
+              } else if (typeof errorDetails === 'string') {
+                errorMessage = errorDetails
+              }
+            } catch (parseError) {
+              // If not JSON, use the text as error message
+              errorMessage = responseText || errorMessage
+            }
+          }
+        } catch (e) {
+          console.error("Error reading error response:", e)
+        }
 
         console.error(`[v0] Failed to save ${selectedCategory}:`, {
           status: response.status,
           statusText: response.statusText,
-          errorData,
-          errorText,
+          errorDetails,
+          errorMessage,
         })
 
         // Show user-friendly error message
-        alert(`Failed to save ${selectedCategory}: ${errorData?.message || errorText || "Unknown error"}`)
+        alert(`Failed to save ${selectedCategory}:\n\n${errorMessage}\n\nPlease check all required fields are filled correctly.`)
       }
     } catch (error) {
       console.error(`[v0] Error saving ${selectedCategory}:`, error)
@@ -1629,7 +1969,7 @@ const handleRefreshAll = async () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="mb-6 sm:mb-8">
             <div className="flex overflow-x-auto scrollbar-hide">
-              <TabsList className="grid grid-cols-6 w-full min-w-max sm:min-w-0">
+              <TabsList className="grid grid-cols-7 w-full min-w-max sm:min-w-0">
                 <TabsTrigger
                   value="overview"
                   className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
@@ -1675,14 +2015,23 @@ const handleRefreshAll = async () => {
                     </Badge>
                   )}
                 </TabsTrigger>
-                {/* NEW: Consult tab trigger */}
+                {/* NEW: History tab trigger */}
+                <TabsTrigger
+                  value="history"
+                  className="flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
+                >
+                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">History</span>
+                  <span className="sm:hidden">Hist</span>
+                </TabsTrigger>
+                {/* NEW: Service tab trigger */}
                 <TabsTrigger
                   value="consult"
                   className="relative flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
                 >
                   <Headphones className="w-3 h-3 sm:w-4 sm:h-4" />
-                  <span className="hidden sm:inline">Consult</span>
-                  <span className="sm:hidden">Consult</span>
+                  <span className="hidden sm:inline">Service</span>
+                  <span className="sm:hidden">Service</span>
                   {pendingConsultations > 0 && (
                     <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center bg-blue-500 text-white border-0">
                       {pendingConsultations}
@@ -1995,7 +2344,22 @@ const handleRefreshAll = async () => {
                       <SelectItem value="machines">Machines</SelectItem>
                     </SelectContent>
                   </Select>
-                  <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                  <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                    setIsDialogOpen(open)
+                    if (open && !editingItem) {
+                      // Set default title based on category when opening dialog for new item
+                      const defaultTitles = {
+                        cars: "Vehicle",
+                        houses: "House",
+                        lands: "Land",
+                        machines: "Machine"
+                      }
+                      setEditingItem({ title: defaultTitles[selectedCategory as keyof typeof defaultTitles] || "" })
+                    } else if (!open) {
+                      setEditingItem(null)
+                      setUploadedImages([])
+                    }
+                  }}>
                     <DialogTrigger asChild>
                       <Button className="bg-brand-blue hover:bg-brand-blue/90 text-xs sm:text-sm">
                         <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
@@ -2005,7 +2369,7 @@ const handleRefreshAll = async () => {
                     <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
                       <DialogHeader>
                         <DialogTitle className="text-sm sm:text-base">
-                          {editingItem ? "Edit" : "Add New"} {selectedCategory.slice(0, -1)}
+                          {editingItem?.id ? "Edit" : "Add New"} {selectedCategory.slice(0, -1)}
                         </DialogTitle>
                       </DialogHeader>
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
@@ -2142,6 +2506,17 @@ const handleRefreshAll = async () => {
                                 placeholder="01"
                               />
                             </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label className="text-xs sm:text-sm font-medium">Reference Location</Label>
+                            <Input
+                              value={editingItem?.referenceLocation || ""}
+                              onChange={(e) => setEditingItem({ ...editingItem, referenceLocation: e.target.value })}
+                              className="text-sm"
+                              placeholder="e.g., infront of skylight hotel"
+                            />
+                            <p className="text-xs text-gray-500">Optional: Add a reference point to help locate the property</p>
                           </div>
 
                           {/* Category-specific fields */}
@@ -2645,22 +3020,17 @@ const handleRefreshAll = async () => {
                           )}
 
                           <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Description * (20-1000 characters)</Label>
+                            <Label className="text-xs sm:text-sm font-medium">Description (Optional)</Label>
                             <Textarea
                               value={editingItem?.description || ""}
                               onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
                               rows={4}
                               className="text-sm"
-                              placeholder="Enter a detailed description (minimum 20 characters)"
-                              minLength={20}
+                              placeholder="Enter a detailed description (optional)"
                               maxLength={1000}
-                              required
                             />
                             <div className="text-xs text-gray-500">
                               {(editingItem?.description || "").length}/1000 characters
-                              {(editingItem?.description || "").length < 20 && (
-                                <span className="text-red-500 ml-2">Minimum 20 characters required</span>
-                              )}
                             </div>
                           </div>
                         </div>
@@ -2768,6 +3138,7 @@ const handleRefreshAll = async () => {
                       <TableHead className="text-xs sm:text-sm">Price</TableHead>
                       <TableHead className="text-xs sm:text-sm">Location</TableHead>
                       <TableHead className="text-xs sm:text-sm">Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
                       <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
@@ -2786,10 +3157,19 @@ const handleRefreshAll = async () => {
                             </Badge>
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm">
+                            {item.approved === true ? (
+                              <Badge variant="default" className="bg-green-500">Approved</Badge>
+                            ) : item.approved === false ? (
+                              <Badge variant="destructive">Rejected</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-yellow-500">Pending</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
                             {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
                           </TableCell>
                           <TableCell>
-                            <div className="flex space-x-2">
+                            <div className="flex space-x-2 flex-wrap">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -2806,6 +3186,26 @@ const handleRefreshAll = async () => {
                               >
                                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
+                              {item.approved !== true && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs sm:text-sm bg-green-500 text-white hover:bg-green-600"
+                                  onClick={() => handleApproveItem(item)}
+                                >
+                                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                              )}
+                              {item.approved !== false && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="text-xs sm:text-sm bg-red-500 text-white hover:bg-red-600"
+                                  onClick={() => handleRejectItem(item)}
+                                >
+                                  <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                                </Button>
+                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -3738,6 +4138,84 @@ const handleRefreshAll = async () => {
 
 {/* FIXED: Consult tab content , buttons with local fallback */}
 {/* NEW: Consult tab content */}
+          <TabsContent value="history" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-purple-600" />
+                  Sales History
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  Completed deals and sales history
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">Item</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Seller</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Price</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Completed Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {deals
+                      .filter((deal) => deal.status === "completed")
+                      .map((deal) => (
+                        <TableRow key={deal.id}>
+                          <TableCell className="font-medium text-xs sm:text-sm">
+                            {deal.item?.title || deal.item?.make + " " + deal.item?.model || "N/A"}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            {deal.buyerName || deal.buyer?.fullName || "N/A"}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            {deal.sellerName || deal.seller?.fullName || "N/A"}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            ETB {deal.item?.price ? deal.item.price.toLocaleString() : "N/A"}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            {deal.completedAt
+                              ? new Date(deal.completedAt).toLocaleDateString()
+                              : deal.updatedAt
+                              ? new Date(deal.updatedAt).toLocaleDateString()
+                              : "N/A"}
+                          </TableCell>
+                          <TableCell className="text-xs sm:text-sm">
+                            <Badge variant="default" className="bg-green-500">
+                              Completed
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs sm:text-sm bg-transparent"
+                              onClick={() => handleViewDeal(deal)}
+                            >
+                              <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {deals.filter((deal) => deal.status === "completed").length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-xs sm:text-sm text-gray-500 py-8">
+                          No completed deals found
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
 <TabsContent value="consult" className="space-y-4 sm:space-y-6">
   <Card>
     <CardHeader className="pb-2 sm:pb-4">

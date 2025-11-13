@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Star, MapPin, Calendar, Heart, Share2, Loader2 } from "lucide-react"
+import { ArrowLeft, Star, MapPin, Calendar, Heart, Share2, Loader2, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
 import { fetchCarById } from "@/lib/api/cars"
 import type { Car } from "@/types"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface CarDetailProps {
   carId: string
@@ -16,7 +17,7 @@ interface CarDetailProps {
 
 export function CarDetail({ carId }: CarDetailProps) {
   const router = useRouter()
-  const { addToCart, user, setIsAuthModalOpen, soldItems, cars, createDeal } = useApp()
+  const { addToCart, user, setIsAuthModalOpen, soldItems, cars, createDeal, deals } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -24,6 +25,11 @@ export function CarDetail({ carId }: CarDetailProps) {
 
   const contextCar = cars?.find((c) => c.id === carId || c.id === String(carId) || String(c.id) === carId)
   const car = contextCar || apiCar
+
+  // Count applications/deals for this car
+  const applicationCount = deals?.filter(
+    (deal) => deal.itemId === carId || deal.item?._id === carId || deal.item?.id === carId
+  ).length || 0
 
   useEffect(() => {
     const loadCar = async () => {
@@ -127,13 +133,8 @@ export function CarDetail({ carId }: CarDetailProps) {
           {/* Image Gallery */}
           <div className="space-y-3 sm:space-y-4">
             <div className="relative">
-              <img
-                src={car.images?.[selectedImageIndex] || "/placeholder.svg"}
-                alt={`${car.make} ${car.model}`}
-                className="w-full h-64 sm:h-80 md:h-96 object-cover rounded-lg"
-              />
               {isSold && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg">
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center rounded-lg z-10">
                   <Badge
                     variant="destructive"
                     className="text-lg sm:text-xl md:text-2xl px-3 sm:px-4 md:px-6 py-1 sm:py-2"
@@ -142,15 +143,26 @@ export function CarDetail({ carId }: CarDetailProps) {
                   </Badge>
                 </div>
               )}
-              <div className="absolute top-2 sm:top-4 left-2 sm:left-4 flex gap-1 sm:gap-2">
+              <ImageSlider
+                images={car.images || []}
+                alt={`${car.make} ${car.model}`}
+                className="h-64 sm:h-80 md:h-96"
+              />
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4 flex gap-1 sm:gap-2 z-20">
                 <Badge
                   variant={car.condition === "new" ? "default" : "secondary"}
                   className="shadow-md text-xs sm:text-sm"
                 >
                   {car.condition || "Used"}
                 </Badge>
+                {applicationCount > 0 && (
+                  <Badge variant="secondary" className="shadow-md text-xs sm:text-sm bg-blue-500 text-white">
+                    <Users className="w-3 h-3 mr-1" />
+                    {applicationCount} {applicationCount === 1 ? "application" : "applications"}
+                  </Badge>
+                )}
               </div>
-              <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex gap-1 sm:gap-2">
+              <div className="absolute top-2 sm:top-4 right-2 sm:right-4 flex gap-1 sm:gap-2 z-20">
                 <Button
                   variant="secondary"
                   size="sm"
@@ -163,24 +175,6 @@ export function CarDetail({ carId }: CarDetailProps) {
                   <Share2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 </Button>
               </div>
-            </div>
-
-            <div className="flex gap-1.5 sm:gap-2 overflow-x-auto pb-2">
-              {(car.images || []).map((image, index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedImageIndex(index)}
-                  className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                    selectedImageIndex === index ? "border-blue-500" : "border-gray-200"
-                  }`}
-                >
-                  <img
-                    src={image || "/placeholder.svg"}
-                    alt={`${car.make} ${car.model} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
             </div>
           </div>
 

@@ -29,7 +29,8 @@ export function MachineListings() {
   })
 
   React.useEffect(() => {
-    let filtered = [...machines]
+    // Filter to show only approved items (or all if approved field doesn't exist)
+    let filtered = machines.filter((machine) => machine.approved !== false) // Show if approved is true or undefined
 
     // Search filter
     if (searchQuery) {
@@ -73,10 +74,15 @@ export function MachineListings() {
       filtered = filtered.filter((machine) => (machine.brand?.toLowerCase() || "") === filters.brand)
     }
 
-    // Price range filter
+    // Price range filter (high/low)
     if (filters.priceRange !== "all") {
-      const [min, max] = filters.priceRange.split("-").map(Number)
-      filtered = filtered.filter((machine) => machine.price >= min && machine.price <= max)
+      const allPrices = machines.map(m => m.price).sort((a, b) => a - b)
+      const medianPrice = allPrices.length > 0 ? allPrices[Math.floor(allPrices.length / 2)] : 0
+      if (filters.priceRange === "low") {
+        filtered = filtered.filter((machine) => machine.price <= medianPrice)
+      } else if (filters.priceRange === "high") {
+        filtered = filtered.filter((machine) => machine.price > medianPrice)
+      }
     }
 
     // Year range filter
@@ -236,14 +242,12 @@ export function MachineListings() {
 
             <Select value={filters.priceRange} onValueChange={(value) => handleFilterChange("priceRange", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Price Range" />
+                <SelectValue placeholder="Price Filter" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-1250000">Under ETB 1.25M</SelectItem>
-                <SelectItem value="1250000-2500000">ETB 1.25M - 2.5M</SelectItem>
-                <SelectItem value="2500000-5000000">ETB 2.5M - 5M</SelectItem>
-                <SelectItem value="5000000-999999999">Over ETB 5M</SelectItem>
+                <SelectItem value="low">Low Price</SelectItem>
+                <SelectItem value="high">High Price</SelectItem>
               </SelectContent>
             </Select>
 

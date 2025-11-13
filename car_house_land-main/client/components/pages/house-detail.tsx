@@ -20,16 +20,25 @@ import {
   MessageCircle,
   Heart,
   ShoppingCart,
+  Users,
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface HouseDetailProps {
   houseId: string
 }
 
 export function HouseDetail({ houseId }: HouseDetailProps) {
-  const { houses, housesLoading, dispatch } = useApp()
+  const { houses, housesLoading, dispatch, deals } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  const house = houses?.find((h) => h.id === houseId || h.id === String(houseId) || String(h.id) === houseId)
+
+  // Count applications/deals for this house
+  const applicationCount = deals?.filter(
+    (deal) => deal.itemId === houseId || deal.item?._id === houseId || deal.item?.id === houseId
+  ).length || 0
 
   if (housesLoading) {
     return (
@@ -51,8 +60,6 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
       </div>
     )
   }
-
-  const house = houses.find((h) => h.id === houseId || h.id === String(houseId) || String(h.id) === houseId)
 
   if (!house) {
     return (
@@ -96,47 +103,30 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
             <Card>
               <CardContent className="p-0">
                 <div className="aspect-[16/10] relative overflow-hidden rounded-t-lg">
-                  <Image
-                    src={house.images?.[selectedImageIndex] || "/placeholder.svg"}
+                  <ImageSlider
+                    images={house.images || []}
                     alt={house.title || "House"}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full"
                   />
-                  <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                  <div className="absolute top-2 sm:top-4 left-2 sm:left-4 z-20">
                     <Badge variant="secondary" className="bg-green-500 text-white text-xs sm:text-sm">
                       {house.status || "Available"}
                     </Badge>
+                    {applicationCount > 0 && (
+                      <Badge variant="secondary" className="bg-blue-500 text-white text-xs sm:text-sm ml-2">
+                        <Users className="w-3 h-3 mr-1 inline" />
+                        {applicationCount} {applicationCount === 1 ? "application" : "applications"}
+                      </Badge>
+                    )}
                   </div>
                   {house.featured && (
-                    <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+                    <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-20">
                       <Badge variant="secondary" className="bg-purple-500 text-white text-xs sm:text-sm">
                         Featured
                       </Badge>
                     </div>
                   )}
                 </div>
-
-                {house.images && house.images.length > 1 && (
-                  <div className="p-2 sm:p-4 flex space-x-1.5 sm:space-x-2 overflow-x-auto">
-                    {house.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`flex-shrink-0 w-16 h-12 sm:w-20 sm:h-16 rounded-lg overflow-hidden border-2 ${
-                          selectedImageIndex === index ? "border-green-500" : "border-gray-200"
-                        }`}
-                      >
-                        <Image
-                          src={image || "/placeholder.svg"}
-                          alt={`${house.title || "House"} ${index + 1}`}
-                          width={80}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
 

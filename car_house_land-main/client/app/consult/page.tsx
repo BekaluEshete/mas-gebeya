@@ -33,11 +33,19 @@ export default function ConsultPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [confirmation, setConfirmation] = useState<string | null>(null)
 
-  // Mock available slots
-  const availableSlots = [
-    { date: new Date("2025-10-10"), times: ["10:00 AM", "2:00 PM", "4:00 PM"] },
-    { date: new Date("2025-10-11"), times: ["9:00 AM", "11:00 AM", "3:00 PM"] },
-  ]
+  // Generate available slots for the next 30 days
+  const generateAvailableSlots = () => {
+    const slots = []
+    const today = new Date()
+    for (let i = 1; i <= 30; i++) {
+      const date = new Date(today)
+      date.setDate(today.getDate() + i)
+      slots.push(date)
+    }
+    return slots
+  }
+  
+  const availableSlots = generateAvailableSlots()
 
   const handleSubmitRequest = () => {
     console.log('=== REQUEST FORM SUBMIT ==='); // Debug
@@ -134,7 +142,7 @@ export default function ConsultPage() {
           <CardHeader>
             <CardTitle className="flex items-center">
               <Headphones className="w-6 h-6 mr-2" />
-              Request Consultation
+              Request Service
             </CardTitle>
             <CardDescription>
               Get expert advice on {step === 1 ? "your needs" : "your booking"}.
@@ -246,17 +254,32 @@ export default function ConsultPage() {
                         {bookingData.dateTime.toLocaleDateString()} at {bookingData.dateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
-                      <DatePicker
-                        selected={bookingData.dateTime}
-                        onChange={(date) => setBookingData({ ...bookingData, dateTime: date || new Date() })}
-                        showTimeSelect
-                        dateFormat="MMMM d, yyyy h:mm aa"
-                        inline
-                        filterDate={(date) => availableSlots.some(slot => slot.date.toDateString() === date.toDateString())}
-                        className="w-full"
-                        minDate={new Date()} // Prevent past dates
-                      />
+                    <DialogContent className="max-w-md">
+                      <div className="p-4">
+                        <DatePicker
+                          selected={bookingData.dateTime}
+                          onChange={(date) => {
+                            if (date) {
+                              setBookingData({ ...bookingData, dateTime: date })
+                            }
+                          }}
+                          showTimeSelect
+                          timeIntervals={30}
+                          dateFormat="MMMM d, yyyy h:mm aa"
+                          inline
+                          minDate={new Date()} // Prevent past dates
+                          maxDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
+                          filterDate={(date) => {
+                            // Allow all future dates within 30 days
+                            const today = new Date()
+                            today.setHours(0, 0, 0, 0)
+                            const maxDate = new Date(today)
+                            maxDate.setDate(today.getDate() + 30)
+                            return date >= today && date <= maxDate
+                          }}
+                          className="w-full"
+                        />
+                      </div>
                     </DialogContent>
                   </Dialog>
                 </div>

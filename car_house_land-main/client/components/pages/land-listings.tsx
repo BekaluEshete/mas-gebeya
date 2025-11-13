@@ -23,11 +23,13 @@ export function LandListings() {
     priceRange: "all",
     sizeRange: "all",
     utilities: "all",
+    ownershipType: "all",
     sortBy: "date-new",
   })
 
   React.useEffect(() => {
-    let filtered = [...lands]
+    // Filter to show only approved items (or all if approved field doesn't exist)
+    let filtered = lands.filter((land) => land.approved !== false) // Show if approved is true or undefined
 
     // Search filter
     if (searchQuery) {
@@ -49,16 +51,26 @@ export function LandListings() {
       filtered = filtered.filter((land) => land.zoning === filters.zoning)
     }
 
-    // Price range filter
+    // Price range filter (high/low)
     if (filters.priceRange !== "all") {
-      const [min, max] = filters.priceRange.split("-").map(Number)
-      filtered = filtered.filter((land) => land.price >= min && land.price <= max)
+      const allPrices = lands.map(l => l.price).sort((a, b) => a - b)
+      const medianPrice = allPrices.length > 0 ? allPrices[Math.floor(allPrices.length / 2)] : 0
+      if (filters.priceRange === "low") {
+        filtered = filtered.filter((land) => land.price <= medianPrice)
+      } else if (filters.priceRange === "high") {
+        filtered = filtered.filter((land) => land.price > medianPrice)
+      }
     }
 
     // Size range filter
     if (filters.sizeRange !== "all") {
       const [min, max] = filters.sizeRange.split("-").map(Number)
       filtered = filtered.filter((land) => land.size >= min && (max ? land.size <= max : true))
+    }
+
+    // Ownership type filter (private, lease, government, communal)
+    if (filters.ownershipType !== "all") {
+      filtered = filtered.filter((land) => land.ownershipType === filters.ownershipType)
     }
 
     // Sort
@@ -152,7 +164,7 @@ export function LandListings() {
           </div>
 
           <div
-            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 ${showMobileFilters ? "block" : "hidden md:grid"}`}
+            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4 ${showMobileFilters ? "block" : "hidden md:grid"}`}
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger>
@@ -181,14 +193,12 @@ export function LandListings() {
 
             <Select value={filters.priceRange} onValueChange={(value) => handleFilterChange("priceRange", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Price Range" />
+                <SelectValue placeholder="Price Filter" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-100000">Under $100K</SelectItem>
-                <SelectItem value="100000-250000">$100K - $250K</SelectItem>
-                <SelectItem value="250000-500000">$250K - $500K</SelectItem>
-                <SelectItem value="500000-999999999">Over $500K</SelectItem>
+                <SelectItem value="low">Low Price</SelectItem>
+                <SelectItem value="high">High Price</SelectItem>
               </SelectContent>
             </Select>
 
@@ -202,6 +212,19 @@ export function LandListings() {
                 <SelectItem value="1-5">1 - 5 Acres</SelectItem>
                 <SelectItem value="5-10">5 - 10 Acres</SelectItem>
                 <SelectItem value="10-999">Over 10 Acres</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filters.ownershipType} onValueChange={(value) => handleFilterChange("ownershipType", value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Ownership Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="private">Private</SelectItem>
+                <SelectItem value="lease">Lease</SelectItem>
+                <SelectItem value="government">Government</SelectItem>
+                <SelectItem value="communal">Communal</SelectItem>
               </SelectContent>
             </Select>
 

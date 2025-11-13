@@ -19,18 +19,25 @@ import {
   MessageCircle,
   ShoppingCart,
   Calendar,
+  Users,
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface LandDetailProps {
   landId: string
 }
 
 export function LandDetail({ landId }: LandDetailProps) {
-  const { lands, dispatch, landsLoading } = useApp() // Added landsLoading from context
+  const { lands, dispatch, landsLoading, deals } = useApp() // Added landsLoading from context
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const land = lands?.find((l) => l.id === landId || l.id === String(landId) || String(l.id) === landId)
+
+  // Count applications/deals for this land
+  const applicationCount = deals?.filter(
+    (deal) => deal.itemId === landId || deal.item?._id === landId || deal.item?.id === landId
+  ).length || 0
 
   if (landsLoading || !lands) {
     // Updated loading condition
@@ -83,47 +90,30 @@ export function LandDetail({ landId }: LandDetailProps) {
             <Card>
               <CardContent className="p-0">
                 <div className="aspect-[16/10] relative overflow-hidden rounded-t-lg">
-                  <Image
-                    src={land.images?.[selectedImageIndex] || "/placeholder.svg"}
+                  <ImageSlider
+                    images={land.images || []}
                     alt={land.title || "Land"}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full"
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-4 left-4 z-20">
                     <Badge variant="secondary" className="bg-yellow-500 text-white">
                       {land.status || "Available"}
                     </Badge>
+                    {applicationCount > 0 && (
+                      <Badge variant="secondary" className="bg-blue-500 text-white ml-2">
+                        <Users className="w-3 h-3 mr-1 inline" />
+                        {applicationCount} {applicationCount === 1 ? "application" : "applications"}
+                      </Badge>
+                    )}
                   </div>
                   {land.featured && (
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 z-20">
                       <Badge variant="secondary" className="bg-purple-500 text-white">
                         Featured
                       </Badge>
                     </div>
                   )}
                 </div>
-
-                {land.images && land.images.length > 1 && (
-                  <div className="p-4 flex space-x-2 overflow-x-auto">
-                    {land.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 ${
-                          selectedImageIndex === index ? "border-yellow-500" : "border-gray-200"
-                        }`}
-                      >
-                        <Image
-                          src={image || "/placeholder.svg"}
-                          alt={`${land.title || "Land"} ${index + 1}`}
-                          width={80}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
 

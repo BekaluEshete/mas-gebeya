@@ -29,7 +29,8 @@ export function HouseListings() {
   })
 
   React.useEffect(() => {
-    let filtered = [...houses]
+    // Filter to show only approved items (or all if approved field doesn't exist)
+    let filtered = houses.filter((house) => house.approved !== false) // Show if approved is true or undefined
 
     // Search filter
     if (searchQuery) {
@@ -55,10 +56,15 @@ export function HouseListings() {
       filtered = filtered.filter((house) => house.condition === filters.condition)
     }
 
-    // Price range filter
+    // Price range filter (high/low)
     if (filters.priceRange !== "all") {
-      const [min, max] = filters.priceRange.split("-").map(Number)
-      filtered = filtered.filter((house) => house.price >= min && house.price <= max)
+      const allPrices = houses.map(h => h.price).sort((a, b) => a - b)
+      const medianPrice = allPrices.length > 0 ? allPrices[Math.floor(allPrices.length / 2)] : 0
+      if (filters.priceRange === "low") {
+        filtered = filtered.filter((house) => house.price <= medianPrice)
+      } else if (filters.priceRange === "high") {
+        filtered = filtered.filter((house) => house.price > medianPrice)
+      }
     }
 
     // Bedrooms filter
@@ -210,14 +216,12 @@ export function HouseListings() {
 
             <Select value={filters.priceRange} onValueChange={(value) => handleFilterChange("priceRange", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Price Range" />
+                <SelectValue placeholder="Price Filter" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-500000">Under $500K</SelectItem>
-                <SelectItem value="500000-1000000">$500K - $1M</SelectItem>
-                <SelectItem value="1000000-2000000">$1M - $2M</SelectItem>
-                <SelectItem value="2000000-999999999">Over $2M</SelectItem>
+                <SelectItem value="low">Low Price</SelectItem>
+                <SelectItem value="high">High Price</SelectItem>
               </SelectContent>
             </Select>
 

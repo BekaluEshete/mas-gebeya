@@ -52,7 +52,13 @@ export function CarListings() {
     sortBy: "date-new",
   })
 
+  // Calculate median price for high/low filtering
+  const allPrices = cars.map(car => car.price).sort((a, b) => a - b)
+  const medianPrice = allPrices.length > 0 ? allPrices[Math.floor(allPrices.length / 2)] : 0
+
+  // Filter to show only approved items (or all if approved field doesn't exist)
   const filteredCars = cars
+    .filter((car) => car.approved !== false) // Show if approved is true or undefined
     .filter((car) => {
       const matchesSearch =
         (car.make?.toLowerCase() || "").includes(searchTerm.toLowerCase()) ||
@@ -65,6 +71,10 @@ export function CarListings() {
       const matchesLocation =
         !filters.location || (car.location?.toLowerCase() || "").includes(filters.location.toLowerCase())
       const matchesListingType = filters.listingType === "all" || car.listingType === filters.listingType
+      const matchesPriceRange = 
+        filters.priceRange === "all" || 
+        (filters.priceRange === "low" && car.price <= medianPrice) ||
+        (filters.priceRange === "high" && car.price > medianPrice)
 
       return (
         matchesSearch &&
@@ -73,7 +83,8 @@ export function CarListings() {
         matchesFuelType &&
         matchesTransmission &&
         matchesLocation &&
-        matchesListingType
+        matchesListingType &&
+        matchesPriceRange
       )
     })
     .sort((a, b) => {
@@ -221,13 +232,12 @@ export function CarListings() {
               onValueChange={(value) => setFilters((prev) => ({ ...prev, priceRange: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Price Range" />
+                <SelectValue placeholder="Price Filter" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Prices</SelectItem>
-                <SelectItem value="0-500000">Under ETB 500K</SelectItem>
-                <SelectItem value="500000-1000000">ETB 500K - 1M</SelectItem>
-                <SelectItem value="1000000+">Over ETB 1M</SelectItem>
+                <SelectItem value="low">Low Price</SelectItem>
+                <SelectItem value="high">High Price</SelectItem>
               </SelectContent>
             </Select>
 

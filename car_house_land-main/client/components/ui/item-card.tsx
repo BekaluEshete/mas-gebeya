@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ShoppingCart, MessageCircle, Heart, Calendar } from "lucide-react"
+import { Star, MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Car, House, Land, Machine } from "@/types"
 import { cn } from "@/lib/utils"
@@ -18,7 +18,12 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, type, className }: ItemCardProps) {
-  const { addToCart, toggleFavorite, isFavorite, user, setIsAuthModalOpen, createDeal } = useApp()
+  const { addToCart, toggleFavorite, isFavorite, user, setIsAuthModalOpen, createDeal, deals } = useApp()
+
+  // Count applications/deals for this item
+  const applicationCount = deals?.filter(
+    (deal) => deal.itemId === item.id || deal.item?._id === item.id || deal.item?.id === item.id
+  ).length || 0
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -276,6 +281,14 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
               <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
               <span className="font-medium">Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
             </div>
+
+            {/* Application count */}
+            {applicationCount > 0 && (
+              <div className="flex items-center space-x-1 text-blue-600 text-xs bg-blue-50 px-2 py-1 rounded-full">
+                <Users className="w-3 h-3" />
+                <span className="font-medium">{applicationCount} {applicationCount === 1 ? "application" : "applications"}</span>
+              </div>
+            )}
           </div>
         </Link>
 

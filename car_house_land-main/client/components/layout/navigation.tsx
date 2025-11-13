@@ -23,11 +23,11 @@ export function Navigation() {
 
   const regularNavItems = [
     { href: "/", label: "Home", icon: HomeIcon },
-    { href: "/cars", label: "Cars" },
-    { href: "/houses", label: "Properties" },
+    { href: "/cars", label: "Vehicle" },
+    { href: "/houses", label: "House" },
     { href: "/lands", label: "Lands" },
     { href: "/machines", label: "Machines" },
-    { href: "/consult", label: "Consult"},
+    { href: "/consult", label: "Service"},
   ]
 
   const adminNavItems = [

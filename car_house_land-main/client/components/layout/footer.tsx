@@ -25,10 +25,10 @@ export function Footer() {
             <h4 className="text-lg font-semibold">Quick Links</h4>
             <div className="space-y-2">
               <Link href="/cars" className="block text-gray-300 hover:text-white transition-colors text-sm">
-                Cars
+                Vehicle
               </Link>
               <Link href="/houses" className="block text-gray-300 hover:text-white transition-colors text-sm">
-                Properties
+                House
               </Link>
               <Link href="/lands" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Lands
@@ -49,8 +49,8 @@ export function Footer() {
               <Link href="/support" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Help Center
               </Link>
-              <Link href="/consultation" className="block text-gray-300 hover:text-white transition-colors text-sm">
-                Consultation
+              <Link href="/consult" className="block text-gray-300 hover:text-white transition-colors text-sm">
+                Service
               </Link>
               <a href="#" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Privacy Policy

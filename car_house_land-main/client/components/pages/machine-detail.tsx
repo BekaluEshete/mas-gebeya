@@ -19,18 +19,25 @@ import {
   MessageCircle,
   Heart,
   ShoppingCart,
+  Users,
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { ImageSlider } from "@/components/ui/image-slider"
 
 interface MachineDetailProps {
   machineId: string
 }
 
 export function MachineDetail({ machineId }: MachineDetailProps) {
-  const { machines, machinesLoading, dispatch, createDeal } = useApp()
+  const { machines, machinesLoading, dispatch, createDeal, deals } = useApp()
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
 
   const machine = machines?.find((m) => m.id === machineId || m.id === String(machineId) || String(m.id) === machineId)
+
+  // Count applications/deals for this machine
+  const applicationCount = deals?.filter(
+    (deal) => deal.itemId === machineId || deal.item?._id === machineId || deal.item?.id === machineId
+  ).length || 0
 
   if (machinesLoading) {
     return (
@@ -88,47 +95,30 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
             <Card>
               <CardContent className="p-0">
                 <div className="aspect-[16/10] relative overflow-hidden rounded-t-lg">
-                  <Image
-                    src={machine.images?.[selectedImageIndex] || "/placeholder.svg"}
+                  <ImageSlider
+                    images={machine.images || []}
                     alt={machine.title || "Machine"}
-                    fill
-                    className="object-cover"
+                    className="w-full h-full"
                   />
-                  <div className="absolute top-4 left-4">
+                  <div className="absolute top-4 left-4 z-20">
                     <Badge variant="secondary" className="bg-orange-500 text-white">
                       {machine.status || "Available"}
                     </Badge>
+                    {applicationCount > 0 && (
+                      <Badge variant="secondary" className="bg-blue-500 text-white ml-2">
+                        <Users className="w-3 h-3 mr-1 inline" />
+                        {applicationCount} {applicationCount === 1 ? "application" : "applications"}
+                      </Badge>
+                    )}
                   </div>
                   {machine.featured && (
-                    <div className="absolute top-4 right-4">
+                    <div className="absolute top-4 right-4 z-20">
                       <Badge variant="secondary" className="bg-purple-500 text-white">
                         Featured
                       </Badge>
                     </div>
                   )}
                 </div>
-
-                {machine.images && machine.images.length > 1 && (
-                  <div className="p-4 flex space-x-2 overflow-x-auto">
-                    {machine.images.map((image, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImageIndex(index)}
-                        className={`flex-shrink-0 w-20 h-16 rounded-lg overflow-hidden border-2 ${
-                          selectedImageIndex === index ? "border-orange-500" : "border-gray-200"
-                        }`}
-                      >
-                        <Image
-                          src={image || "/placeholder.svg"}
-                          alt={`${machine.title || "Machine"} ${index + 1}`}
-                          width={80}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                )}
               </CardContent>
             </Card>
 

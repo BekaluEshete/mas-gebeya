@@ -122,11 +122,14 @@ export interface Car {
   region: string
   address: string
   kebele?: string
+  referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
+  approved?: boolean // Admin approval status
+  approvedAt?: string // Approval timestamp
   rating: number
   reviews: number
-  description: string
+  description?: string // Made optional
   featured: boolean
   createdAt: string
   sellerId: string
@@ -150,11 +153,14 @@ export interface House {
   city: string
   region: string
   address: string
+  referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
+  approved?: boolean // Admin approval status
+  approvedAt?: string // Approval timestamp
   rating: number
   reviews: number
-  description: string
+  description?: string // Made optional
   featured: boolean
   createdAt: string
   sellerId: string
@@ -181,11 +187,14 @@ export interface Land {
   region: string // Added region field
   zone?: string // Added zone field
   kebele?: string // Added kebele field
+  referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending" | "reserved" // Added reserved status
+  approved?: boolean // Admin approval status
+  approvedAt?: string // Approval timestamp
   rating: number
   reviews: number
-  description: string
+  description?: string // Made optional
   featured: boolean
   createdAt: string
   sellerId: string
@@ -196,6 +205,7 @@ export interface Land {
   landUse?: string // Added land use field
   topography?: string // Added topography field
   listingType: "sale" | "rent" | "lease"
+  ownershipType?: "private" | "lease" | "government" | "communal" // Added ownership type field
   soilType: string
   waterAccess: boolean
   roadAccess: boolean
@@ -222,11 +232,14 @@ export interface Machine {
   region?: string
   zone?: string
   address: string
+  referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
+  approved?: boolean // Admin approval status
+  approvedAt?: string // Approval timestamp
   rating: number
   reviews: number
-  description: string
+  description?: string // Made optional
   featured: boolean
   createdAt: string
   sellerId: string
