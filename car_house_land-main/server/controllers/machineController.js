@@ -3,8 +3,6 @@ const Machine = require('../models/Machine');
 const { cloudinary, uploadImages } = require('../utils/cloudinary');
 const mongoose = require("mongoose");
 const User = require('../models/User');
-const Activity = require('../models/Activity'); // NEW
-
 
 const getMachines = asyncHandler(async (req, res) => {
   const machines = await Machine.find().lean();
@@ -115,21 +113,6 @@ const createMachine = asyncHandler(async (req, res) => {
       status: status || 'available', // Default to 'available' if not provided
       type, // Include type in the create call
     });
-      // Log activity
-    await Activity.create({
-      user: req.userId,
-      action: 'created',
-      entityType: 'machine',
-      entityId: machine._id,
-      description: `added a new machine: ${machine.title}`,
-      metadata: { 
-        category: machine.category,
-        brand: machine.brand,
-        price: machine.price,
-        condition: machine.condition 
-      }
-    });
-
 
     res.status(201).json({
       status: 'success',
@@ -163,19 +146,6 @@ const updateMachine = asyncHandler(async (req, res) => {
     { $set: req.body },
     { new: true, runValidators: true }
   );
-   // Log activity
-  await Activity.create({
-    user: req.userId,
-    action: 'updated',
-    entityType: 'machine',
-    entityId: machine._id,
-    description: `updated machine: ${machine.title}`,
-    metadata: { 
-      previousTitle: machine.title,
-      newTitle: updatedMachine.title,
-      price: updatedMachine.price 
-    }
-  });
 
   res.json(updatedMachine);
 });
@@ -186,19 +156,6 @@ const deleteMachine = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Machine not found');
   }
-  // Log activity before deletion
-  await Activity.create({
-    user: req.userId,
-    action: 'deleted',
-    entityType: 'machine',
-    entityId: machine._id,
-    description: `deleted machine: ${machine.title}`,
-    metadata: { 
-      title: machine.title,
-      category: machine.category,
-      brand: machine.brand 
-    }
-  });
 
   // Delete associated images from Cloudinary
   if (machine.images && machine.images.length > 0) {

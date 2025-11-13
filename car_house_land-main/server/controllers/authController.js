@@ -4,8 +4,6 @@ const User = require('../models/User');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/token');
 const { sendEmail, emailTemplates } = require('../utils/email');
 const { generateRandomString } = require('../utils/helper');
-const Activity = require('../models/Activity'); // NEW
-
 
 const register = async (req, res) => {
   try {
@@ -46,15 +44,6 @@ const register = async (req, res) => {
       verificationCode,
       verificationCodeExpire: Date.now() + 10 * 60 * 1000, // 10 minutes
       isVerified: false
-    });
-      // Log activity
-    await Activity.create({
-      user: user._id,
-      action: 'signed_up',
-      entityType: 'user',
-      entityId: user._id,
-      description: 'created a new account',
-      metadata: { email: user.email, role: user.role }
     });
 
     // Send email
@@ -186,15 +175,6 @@ const login = async (req, res) => {
     // Update last login
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
-    // Log activity
-    await Activity.create({
-      user: user._id,
-      action: 'logged_in',
-      entityType: 'user',
-      entityId: user._id,
-      description: 'logged into the system',
-      metadata: { loginTime: new Date() }
-    });
 
     // Generate tokens
     const token = generateAccessToken(user);

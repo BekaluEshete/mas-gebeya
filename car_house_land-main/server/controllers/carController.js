@@ -2,8 +2,6 @@ const Car = require('../models/Car');
 const asyncHandler = require('express-async-handler');
 const { uploadImages } = require('../utils/cloudinary');
 const mongoose = require('mongoose');
-const Activity = require('../models/Activity'); // NEW
-
 
 const getCars = asyncHandler(async (req, res) => {
   const cars = await Car.find().lean();
@@ -19,17 +17,6 @@ const getCarById = asyncHandler(async (req, res) => {
   }
 
   await Car.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
-  // Log activity
-  if (req.user && req.user._id) {
-    await Activity.create({
-      user: req.user._id,
-      action: 'viewed',
-      entityType: 'car',
-      entityId: car._id,
-      description: `viewed car: ${car.title}`,
-      metadata: { carId: car._id, title: car.title }
-    });
-  }
   res.json(car);
 });
 
@@ -95,20 +82,6 @@ const createCar = asyncHandler(async (req, res) => {
       address,
       kebele
     });
-     // Log activity
-    await Activity.create({
-      user: req.userId,
-      action: 'created',
-      entityType: 'car',
-      entityId: car._id,
-      description: `added a new car: ${car.title}`,
-      metadata: { 
-        make: car.make, 
-        model: car.model, 
-        price: car.price,
-        year: car.year 
-      }
-    });
 
     res.status(201).json(car);
   } catch (error) {
@@ -131,20 +104,6 @@ const updateCar = asyncHandler(async (req, res) => {
     { $set: req.body },
     { new: true, runValidators: true }
   );
-  
-  // Log activity
-  await Activity.create({
-    user: req.userId,
-    action: 'updated',
-    entityType: 'car',
-    entityId: car._id,
-    description: `updated car: ${car.title}`,
-    metadata: { 
-      previousTitle: car.title,
-      newTitle: updatedCar.title,
-      price: updatedCar.price 
-    }
-  });
 
   res.json(updatedCar);
 });
@@ -158,19 +117,6 @@ const deleteCar = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Car not found');
   }
-  // Log activity before deletion
-  await Activity.create({
-    user: req.userId,
-    action: 'deleted',
-    entityType: 'car',
-    entityId: car._id,
-    description: `deleted car: ${car.title}`,
-    metadata: { 
-      title: car.title,
-      make: car.make,
-      model: car.model 
-    }
-  });
 
   await car.deleteOne();
   res.json({ message: 'Car removed' });
