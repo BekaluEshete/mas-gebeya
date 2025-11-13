@@ -13,7 +13,7 @@ const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
 const PropertyRoute = require("./routes/propertyRoute");
 const ConsultationRoutes = require("./routes/consultationRoute");
-const ActivityRoutes = require("./routes/activityRoute"); // NEW
+const AnalyticsRoutes = require("./routes/analyticsRoute");
 const app = express();
 app.set("trust proxy", 1);
 
@@ -21,6 +21,8 @@ app.set("trust proxy", 1);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
+
+
 app.use(cors());
 
 // Health check route
@@ -36,12 +38,9 @@ app.use('/api/machines', MachineRoutes);
 app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
- // NEW: Mount consultations route
 app.use('/api/consultations', ConsultationRoutes);
-app.use('/api/activities', ActivityRoutes); // NEW
+app.use('/api/analytics', AnalyticsRoutes);
 
-
-// Refresh token route
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {
     const refreshToken = req.body.refreshToken || req.cookies.refreshToken;
@@ -62,7 +61,7 @@ app.post('/api/auth/refresh-token', async (req, res) => {
     res.status(401).json({ status: 'error', message: 'Refresh token invalid or expired' });
   }
 });
- 
+
 
 // 404 handler
 app.use((req, res) => {

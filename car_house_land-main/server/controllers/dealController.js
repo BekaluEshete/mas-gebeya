@@ -7,8 +7,6 @@ const Property = require('../models/Property');
 const Machine = require('../models/Machine');
 const mongoose = require('mongoose');
 const { sendEmail, emailTemplates } = require('../utils/email');
-const Activity = require('../models/Activity'); // NEW
-
 
 
 const getDeals = async (req, res) => {
@@ -101,7 +99,7 @@ const createDeal = async (req, res) => {
     const validItemTypes = ['Car', 'Property', 'Land', 'Machine'];
     if (!validItemTypes.includes(itemType)) {
       return res.status(400).json({
-        status: 'error',
+        status: 'error',  
         message: 'Invalid item type',
       });
     }
@@ -159,19 +157,6 @@ const createDeal = async (req, res) => {
       item,
       itemType,
       dealType, // Include dealType if it's part of your schema
-    });
-    // Log activity
-    await Activity.create({
-      user: buyer,
-      action: 'created',
-      entityType: 'deal',
-      entityId: deal._id,
-      description: `created a deal for ${itemExists.title || itemExists.name}`,
-      metadata: { 
-        itemType,
-        dealType,
-        seller: sellerExists.fullName 
-      }
     });
 try {
   await sendEmail({
@@ -234,20 +219,6 @@ const updateDealStatus = async (req, res) => {
         message: 'Deal not found',
       });
     }
-    // Log activity before updating
-    await Activity.create({
-      user: req.userId,
-      action: status,
-      entityType: 'deal',
-      entityId: deal._id,
-      description: `updated deal status to ${status}`,
-      metadata: { 
-        previousStatus: deal.status,
-        newStatus: status,
-        cancellationReason 
-      }
-    });
-
 
     deal.status = status;
     if (status === 'completed') deal.completedAt = new Date();

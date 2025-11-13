@@ -3,8 +3,6 @@ const asyncHandler = require('express-async-handler');
 const { cloudinary } = require('../utils/cloudinary');
 const mongoose = require('mongoose');
 const User = require('../models/User');
-const Activity = require('../models/Activity'); // NEW
-
 
 const getProperties = asyncHandler(async (req, res) => {
   const properties = await Property.find().lean();
@@ -95,20 +93,6 @@ const createProperty = asyncHandler(async (req, res) => {
       region,
       owner
     });
-     // Log activity
-    await Activity.create({
-      user: req.userId,
-      action: 'created',
-      entityType: 'property',
-      entityId: property._id,
-      description: `added a new property: ${property.title}`,
-      metadata: { 
-        propertyType: property.propertyType,
-        price: property.price,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms 
-      }
-    });
 
     // Ensure response is sent only once
     return res.status(201).json({
@@ -138,19 +122,6 @@ const updateProperty = asyncHandler(async (req, res) => {
     { $set: req.body },
     { new: true, runValidators: true }
   );
-  // Log activity
-  await Activity.create({
-    user: req.userId,
-    action: 'updated',
-    entityType: 'property',
-    entityId: property._id,
-    description: `updated property: ${property.title}`,
-    metadata: { 
-      previousTitle: property.title,
-      newTitle: updatedProperty.title,
-      price: updatedProperty.price 
-    }
-  });
 
   res.json(updatedProperty);
 });
@@ -162,18 +133,6 @@ const deleteProperty = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Property not found');
   }
-   // Log activity before deletion
-  await Activity.create({
-    user: req.userId,
-    action: 'deleted',
-    entityType: 'property',
-    entityId: property._id,
-    description: `deleted property: ${property.title}`,
-    metadata: { 
-      title: property.title,
-      propertyType: property.propertyType 
-    }
-  });
 
   await property.deleteOne();
   res.json({ message: 'Property removed' });

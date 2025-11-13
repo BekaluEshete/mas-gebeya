@@ -2,9 +2,7 @@ const asyncHandler = require('express-async-handler');
 const Land = require('../models/Land');
 const User = require('../models/User');
 const { cloudinary } = require('../utils/cloudinary');
-const mongoose = require("mongoose")
-const Activity = require('../models/Activity'); // NEW
-
+const mongoose =require("mongoose")
 
 const getLands = asyncHandler(async (req, res) => {
   const lands = await Land.find().lean();
@@ -91,20 +89,6 @@ const createLand = asyncHandler(async (req, res) => {
       nearbyAmenities: parseJSONSafely(nearbyAmenities, 'nearbyAmenities'),
       owner,
     });
-     // Log activity
-    await Activity.create({
-      user: req.userId,
-      action: 'created',
-      entityType: 'land',
-      entityId: land._id,
-      description: `added a new land: ${land.title}`,
-      metadata: { 
-        zoning: land.zoning,
-        landUse: land.landUse,
-        price: land.price,
-        size: land.size 
-      }
-    });
 
     res.status(201).json({
       status: 'success',
@@ -138,19 +122,6 @@ const updateLand = asyncHandler(async (req, res) => {
     { $set: req.body },
     { new: true, runValidators: true }
   );
-   // Log activity
-  await Activity.create({
-    user: req.userId,
-    action: 'updated',
-    entityType: 'land',
-    entityId: land._id,
-    description: `updated land: ${land.title}`,
-    metadata: { 
-      previousTitle: land.title,
-      newTitle: updatedLand.title,
-      price: updatedLand.price 
-    }
-  });
 
   res.json(updatedLand);
 });
@@ -161,19 +132,6 @@ const deleteLand = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error('Land not found');
   }
-   // Log activity before deletion
-  await Activity.create({
-    user: req.userId,
-    action: 'deleted',
-    entityType: 'land',
-    entityId: land._id,
-    description: `deleted land: ${land.title}`,
-    metadata: { 
-      title: land.title,
-      zoning: land.zoning,
-      landUse: land.landUse 
-    }
-  });
 
   // Delete associated images from Cloudinary
   let cloudinaryErrors = [];
