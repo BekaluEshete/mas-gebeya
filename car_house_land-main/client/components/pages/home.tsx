@@ -494,7 +494,7 @@ export function Home() {
                       <p className="text-gray-500 text-xs sm:text-sm line-clamp-1">{listing.location}</p>
                       {listing.applicationCount > 0 && (
                         <div className="flex items-center text-xs text-blue-600">
-                          <UsersIcon className="w-3 h-3 mr-1" />
+                          <Users className="w-3 h-3 mr-1" />
                           {listing.applicationCount} {listing.applicationCount === 1 ? "application" : "applications"}
                         </div>
                       )}
