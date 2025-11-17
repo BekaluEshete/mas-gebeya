@@ -261,6 +261,12 @@ class AuthService {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to send reset code" }))
+        return { status: "error", message: errorData.message || "Failed to send reset code" }
+      }
+      
       const result = await response.json()
       return result
     } catch (error) {
@@ -276,15 +282,78 @@ class AuthService {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, password }),
       })
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Failed to reset password" }))
+        return { status: "error", message: errorData.message || "Failed to reset password" }
+      }
+      
       const result = await response.json()
       if (result.status === "success" && result.data) {
-        this.setTokens(result.data.token, result.data.refreshToken)
-        this.setUser(result.data.user)
+        if (result.data.token) {
+          this.setTokens(result.data.token, result.data.refreshToken)
+        }
+        if (result.data.user) {
+          this.setUser(result.data.user)
+        }
       }
       return result
     } catch (error) {
       console.error("Reset password error:", error)
       return { status: "error", message: "Password reset failed. Please try again." }
+    }
+  }
+
+  async updateProfile(data: { fullName?: string; phone?: string; address?: string }): Promise<AuthResponse> {
+    try {
+      const token = this.getStoredToken()
+      if (!token) {
+        return { status: "error", message: "Not authenticated. Please log in again." }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/update-profile`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+      
+      if (result.status === "success" && result.data?.user) {
+        this.setUser(result.data.user)
+      }
+      
+      return result
+    } catch (error) {
+      console.error("Update profile error:", error)
+      return { status: "error", message: "Failed to update profile. Please try again." }
+    }
+  }
+
+  async changePassword(currentPassword: string, newPassword: string): Promise<AuthResponse> {
+    try {
+      const token = this.getStoredToken()
+      if (!token) {
+        return { status: "error", message: "Not authenticated. Please log in again." }
+      }
+
+      const response = await fetch(`${API_BASE_URL}/change-password`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      })
+
+      const result = await response.json()
+      return result
+    } catch (error) {
+      console.error("Change password error:", error)
+      return { status: "error", message: "Failed to change password. Please try again." }
     }
   }
 

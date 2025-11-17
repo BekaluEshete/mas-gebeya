@@ -462,6 +462,17 @@ const resetPassword = async (req, res) => {
       status: 'success',
       message: 'Password reset successful',
       data: {
+        user: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          isActive: user.isActive,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        },
         token: authToken,
         refreshToken
       }

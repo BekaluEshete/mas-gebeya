@@ -8,13 +8,38 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { User, Mail, Phone, MapPin, Shield, Settings, Save, Camera, Key, Loader2 } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { User, Mail, Phone, MapPin, Shield, Settings, Save, Camera, Key, Loader2, Lock } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { authService } from "@/lib/auth"
 
 export function AdminProfile() {
-  const { user, isAuthenticated } = useApp()
+  const { user, isAuthenticated, dispatch } = useApp()
   const [isEditing, setIsEditing] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false)
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false)
+  
+  // Change password form
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [passwordError, setPasswordError] = useState("")
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  
+  // Forgot password form
+  const [forgotPasswordForm, setForgotPasswordForm] = useState({
+    email: "",
+    code: "",
+    newPassword: "",
+    confirmPassword: "",
+  })
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<"email" | "reset">("email")
+  const [forgotPasswordError, setForgotPasswordError] = useState("")
+  const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false)
 
   const [profile, setProfile] = useState({
     name: "",
@@ -24,7 +49,6 @@ export function AdminProfile() {
     role: "Admin",
     department: "Platform Management",
     bio: "",
-    permissions: ["User Management", "Content Management", "Analytics", "System Settings"],
     lastLogin: "",
     accountCreated: "",
   })
@@ -40,20 +64,200 @@ export function AdminProfile() {
         role: user.role === "admin" ? "Super Admin" : "Admin",
         department: "Platform Management",
         bio: user.bio || "Platform administrator managing e-commerce operations.",
-        permissions: ["User Management", "Content Management", "Analytics", "System Settings"],
         lastLogin: user.lastLogin ? new Date(user.lastLogin).toLocaleString() : "Recently",
         accountCreated: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "2023-06-15",
       })
+      // Initialize forgot password email with user's email
+      setForgotPasswordForm(prev => ({
+        ...prev,
+        email: user.email || "",
+      }))
       setLoading(false)
     } else {
       setLoading(true)
     }
   }, [user, isAuthenticated])
 
-  const handleSave = () => {
-    setIsEditing(false)
-    console.log("[v0] Saving admin profile changes:", profile)
-    // TODO: Implement API call to update user profile
+  const handleSave = async () => {
+    setSaving(true)
+    setPasswordError("")
+    
+    try {
+      const updateData: { fullName?: string; phone?: string; address?: string } = {}
+      
+      if (profile.name && profile.name !== user?.fullName) {
+        updateData.fullName = profile.name
+      }
+      
+      if (profile.phone && profile.phone !== user?.phone) {
+        updateData.phone = profile.phone
+      }
+      
+      if (profile.location && profile.location !== (user?.address || user?.location)) {
+        updateData.address = profile.location
+      }
+      
+      if (Object.keys(updateData).length === 0) {
+        setIsEditing(false)
+        setSaving(false)
+        return
+      }
+      
+      const result = await authService.updateProfile(updateData)
+      
+      if (result.status === "success") {
+        alert("Profile updated successfully!")
+        setIsEditing(false)
+        // Refresh user data
+        if (dispatch) {
+          dispatch({ type: "SET_USER", payload: result.data?.user || user })
+        }
+        // Reload user from API
+        const updatedUser = await authService.getMe()
+        if (updatedUser && dispatch) {
+          dispatch({ type: "SET_USER", payload: updatedUser })
+        }
+      } else {
+        alert(result.message || "Failed to update profile")
+      }
+    } catch (error) {
+      console.error("Error saving profile:", error)
+      alert("Failed to update profile. Please try again.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError("")
+    
+    if (!passwordForm.newPassword || !passwordForm.confirmPassword || !passwordForm.currentPassword) {
+      setPasswordError("Please fill in all fields")
+      return
+    }
+    
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError("New password must be at least 6 characters long")
+      return
+    }
+    
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError("New passwords do not match")
+      return
+    }
+    
+    setPasswordLoading(true)
+    
+    try {
+      const result = await authService.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      )
+      
+      if (result.status === "success") {
+        alert("Password changed successfully!")
+        setIsChangePasswordOpen(false)
+        setPasswordForm({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        })
+      } else {
+        setPasswordError(result.message || "Failed to change password")
+      }
+    } catch (error) {
+      console.error("Error changing password:", error)
+      setPasswordError("Failed to change password. Please try again.")
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
+  const handleForgotPasswordEmail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotPasswordError("")
+    
+    if (!forgotPasswordForm.email) {
+      setForgotPasswordError("Please enter your email address")
+      return
+    }
+    
+    setForgotPasswordLoading(true)
+    
+    try {
+      const result = await authService.forgotPassword(forgotPasswordForm.email)
+      
+      if (result.status === "success") {
+        setForgotPasswordStep("reset")
+        alert("Reset code sent to your email!")
+      } else {
+        setForgotPasswordError(result.message || "Failed to send reset code")
+      }
+    } catch (error) {
+      console.error("Error sending reset code:", error)
+      setForgotPasswordError("Failed to send reset code. Please try again.")
+    } finally {
+      setForgotPasswordLoading(false)
+    }
+  }
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setForgotPasswordError("")
+    
+    if (!forgotPasswordForm.code || !forgotPasswordForm.newPassword || !forgotPasswordForm.confirmPassword) {
+      setForgotPasswordError("Please fill in all fields")
+      return
+    }
+    
+    if (forgotPasswordForm.newPassword.length < 6) {
+      setForgotPasswordError("New password must be at least 6 characters long")
+      return
+    }
+    
+    if (forgotPasswordForm.newPassword !== forgotPasswordForm.confirmPassword) {
+      setForgotPasswordError("Passwords do not match")
+      return
+    }
+    
+    setForgotPasswordLoading(true)
+    
+    try {
+      const result = await authService.resetPassword(
+        forgotPasswordForm.email,
+        forgotPasswordForm.code,
+        forgotPasswordForm.newPassword
+      )
+      
+      if (result.status === "success") {
+        alert("Password reset successfully! You are now logged in with your new password.")
+        setIsForgotPasswordOpen(false)
+        setForgotPasswordForm({
+          email: "",
+          code: "",
+          newPassword: "",
+          confirmPassword: "",
+        })
+        setForgotPasswordStep("email")
+        // Refresh user data if available
+        if (result.data?.user && dispatch) {
+          dispatch({ type: "SET_USER", payload: result.data.user })
+        }
+        // Reload user from API to get latest data
+        const updatedUser = await authService.getMe()
+        if (updatedUser && dispatch) {
+          dispatch({ type: "SET_USER", payload: updatedUser })
+        }
+      } else {
+        setForgotPasswordError(result.message || "Failed to reset password")
+      }
+    } catch (error) {
+      console.error("Error resetting password:", error)
+      setForgotPasswordError("Failed to reset password. Please try again.")
+    } finally {
+      setForgotPasswordLoading(false)
+    }
   }
 
   if (loading) {
@@ -113,24 +317,6 @@ export function AdminProfile() {
               </CardContent>
             </Card>
 
-            {/* Permissions */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Key className="w-5 h-5" />
-                  <span>Permissions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {profile.permissions.map((permission, index) => (
-                    <Badge key={index} variant="outline" className="mr-2 mb-2">
-                      {permission}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Profile Details */}
@@ -144,8 +330,14 @@ export function AdminProfile() {
                 <Button
                   variant={isEditing ? "default" : "outline"}
                   onClick={isEditing ? handleSave : () => setIsEditing(true)}
+                  disabled={saving}
                 >
-                  {isEditing ? (
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : isEditing ? (
                     <>
                       <Save className="w-4 h-4 mr-2" />
                       Save Changes
@@ -179,11 +371,11 @@ export function AdminProfile() {
                         id="email"
                         type="email"
                         value={profile.email}
-                        onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                        disabled={!isEditing}
-                        className="pl-10"
+                        disabled={true}
+                        className="pl-10 bg-gray-50"
                       />
                     </div>
+                    <p className="text-xs text-gray-500">Email cannot be changed</p>
                   </div>
 
                   <div className="space-y-2">
@@ -245,18 +437,225 @@ export function AdminProfile() {
                 <CardTitle>Security Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <Key className="w-4 h-4 mr-2" />
-                  Change Password
-                </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <Shield className="w-4 h-4 mr-2" />
-                  Two-Factor Authentication
-                </Button>
-                <Button variant="outline" className="w-full justify-start bg-transparent">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Admin Preferences
-                </Button>
+                <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start bg-transparent">
+                      <Key className="w-4 h-4 mr-2" />
+                      Change Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Change Password</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleChangePassword} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          value={passwordForm.currentPassword}
+                          onChange={(e) =>
+                            setPasswordForm({ ...passwordForm, currentPassword: e.target.value })
+                          }
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={passwordForm.newPassword}
+                          onChange={(e) =>
+                            setPasswordForm({ ...passwordForm, newPassword: e.target.value })
+                          }
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={passwordForm.confirmPassword}
+                          onChange={(e) =>
+                            setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })
+                          }
+                          required
+                          minLength={6}
+                        />
+                      </div>
+                      {passwordError && (
+                        <p className="text-sm text-red-600">{passwordError}</p>
+                      )}
+                      <div className="flex justify-end space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setIsChangePasswordOpen(false)
+                            setPasswordForm({
+                              currentPassword: "",
+                              newPassword: "",
+                              confirmPassword: "",
+                            })
+                            setPasswordError("")
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button type="submit" disabled={passwordLoading}>
+                          {passwordLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Changing...
+                            </>
+                          ) : (
+                            "Change Password"
+                          )}
+                        </Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
+                <Dialog open={isForgotPasswordOpen} onOpenChange={setIsForgotPasswordOpen}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="w-full justify-start bg-transparent">
+                      <Lock className="w-4 h-4 mr-2" />
+                      Forgot Password
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Reset Password</DialogTitle>
+                    </DialogHeader>
+                    {forgotPasswordStep === "email" ? (
+                      <form onSubmit={handleForgotPasswordEmail} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="forgotEmail">Email Address</Label>
+                          <Input
+                            id="forgotEmail"
+                            type="email"
+                            value={forgotPasswordForm.email}
+                            onChange={(e) =>
+                              setForgotPasswordForm({ ...forgotPasswordForm, email: e.target.value })
+                            }
+                            required
+                            placeholder={user?.email || "Enter your email"}
+                          />
+                        </div>
+                        {forgotPasswordError && (
+                          <p className="text-sm text-red-600">{forgotPasswordError}</p>
+                        )}
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setIsForgotPasswordOpen(false)
+                              setForgotPasswordForm({
+                                email: "",
+                                code: "",
+                                newPassword: "",
+                                confirmPassword: "",
+                              })
+                              setForgotPasswordError("")
+                              setForgotPasswordStep("email")
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit" disabled={forgotPasswordLoading}>
+                            {forgotPasswordLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Sending...
+                              </>
+                            ) : (
+                              "Send Reset Code"
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <form onSubmit={handleResetPassword} className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="resetCode">Verification Code</Label>
+                          <Input
+                            id="resetCode"
+                            type="text"
+                            value={forgotPasswordForm.code}
+                            onChange={(e) =>
+                              setForgotPasswordForm({ ...forgotPasswordForm, code: e.target.value })
+                            }
+                            required
+                            placeholder="Enter code from email"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="resetNewPassword">New Password</Label>
+                          <Input
+                            id="resetNewPassword"
+                            type="password"
+                            value={forgotPasswordForm.newPassword}
+                            onChange={(e) =>
+                              setForgotPasswordForm({ ...forgotPasswordForm, newPassword: e.target.value })
+                            }
+                            required
+                            minLength={6}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="resetConfirmPassword">Confirm New Password</Label>
+                          <Input
+                            id="resetConfirmPassword"
+                            type="password"
+                            value={forgotPasswordForm.confirmPassword}
+                            onChange={(e) =>
+                              setForgotPasswordForm({ ...forgotPasswordForm, confirmPassword: e.target.value })
+                            }
+                            required
+                            minLength={6}
+                          />
+                        </div>
+                        {forgotPasswordError && (
+                          <p className="text-sm text-red-600">{forgotPasswordError}</p>
+                        )}
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setForgotPasswordStep("email")
+                              setForgotPasswordForm({
+                                ...forgotPasswordForm,
+                                code: "",
+                                newPassword: "",
+                                confirmPassword: "",
+                              })
+                              setForgotPasswordError("")
+                            }}
+                          >
+                            Back
+                          </Button>
+                          <Button type="submit" disabled={forgotPasswordLoading}>
+                            {forgotPasswordLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Resetting...
+                              </>
+                            ) : (
+                              "Reset Password"
+                            )}
+                          </Button>
+                        </div>
+                      </form>
+                    )}
+                  </DialogContent>
+                </Dialog>
               </CardContent>
             </Card>
           </div>

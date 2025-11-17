@@ -202,6 +202,14 @@ useEffect(() => {
     }
   }, [activeTab, fetchConsultations]);
 
+  // Close deal detail dialog when switching away from history tab
+  useEffect(() => {
+    if (activeTab !== "history") {
+      setIsDealDetailOpen(false);
+      setSelectedDeal(null);
+    }
+  }, [activeTab]);
+
 
   const fetchOwners = async () => {
     setIsLoadingOwners(true)
@@ -1472,18 +1480,33 @@ const handleView = async (item: any) => {
   }
  const handleViewDeal = async (deal: Deal) => {
   try {
+    console.log('handleViewDeal called with deal:', deal);
+    
     // Set the deal immediately for UI response
     setSelectedDeal(deal);
     setIsDealDetailOpen(true);
+    
+    console.log('Dialog state set to open, isDealDetailOpen should be true');
 
     // Fetch complete deal details from API
     const token = authService.getStoredToken();
     if (!token) {
       console.error("No authentication token found");
+      // Still show the dialog with basic deal data
       return;
     }
 
-    const response = await fetch(`https://car-house-land.onrender.com/api/deals/${deal.id}`, {
+    // Use _id if available, otherwise fall back to id
+    const dealId = deal._id || deal.id;
+    if (!dealId) {
+      console.error("No deal ID found, deal:", deal);
+      // Still show the dialog with basic deal data
+      return;
+    }
+
+    console.log('Fetching deal details for ID:', dealId);
+
+    const response = await fetch(`https://car-house-land.onrender.com/api/deals/${dealId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -1492,7 +1515,9 @@ const handleView = async (item: any) => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to fetch deal details');
+      console.warn('Failed to fetch deal details from API, using local data');
+      // Keep the basic deal data even if API fetch fails
+      return;
     }
 
     const result = await response.json();
@@ -1503,17 +1528,20 @@ const handleView = async (item: any) => {
         ...prevDeal,
         ...result.data.deal,
         // Preserve critical properties that might be missing in API response
-        id: prevDeal.id,
-        item: { ...prevDeal.item, ...(result.data.deal?.item || {}) },
-        buyer: { ...prevDeal.buyer, ...(result.data.deal?.buyer || {}) },
-        seller: { ...prevDeal.seller, ...(result.data.deal?.seller || {}) },
+        id: prevDeal?.id || prevDeal?._id || result.data.deal?._id || result.data.deal?.id,
+        _id: prevDeal?._id || prevDeal?.id || result.data.deal?._id || result.data.deal?.id,
+        item: { ...prevDeal?.item, ...(result.data.deal?.item || {}) },
+        buyer: { ...prevDeal?.buyer, ...(result.data.deal?.buyer || {}) },
+        seller: { ...prevDeal?.seller, ...(result.data.deal?.seller || {}) },
         // Ensure we have the dealId
-        dealId: result.data.deal?.dealId || prevDeal.dealId
+        dealId: result.data.deal?.dealId || prevDeal?.dealId
       }));
+      console.log('Deal details updated from API');
     }
   } catch (error) {
     console.error('Error fetching deal details:', error);
     // Keep the basic deal data even if detailed fetch fails
+    // Dialog should still be open with the initial deal data
   }
 };
   const handleAcceptDeal = async (dealId: string) => {
@@ -3876,263 +3904,6 @@ const handleRefreshAll = async () => {
                 </Table>
               </CardContent>
             </Card>
-
-            {/* Deal Detail Dialog */}
-           <Dialog open={isDealDetailOpen} onOpenChange={setIsDealDetailOpen}>
-  <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-    <DialogHeader>
-      <DialogTitle className="text-sm sm:text-base">
-        Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
-      </DialogTitle>
-    </DialogHeader>
-    {selectedDeal && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-3 sm:space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
-            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-              {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-center space-x-2 mb-2">
-                {getItemIcon(selectedDeal.itemType)}
-                <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Type:</span>
-                <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
-
-                <span>Price:</span>
-                <span className="font-medium">
-                  ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
-                </span>
-
-                {selectedDeal.item?.make && (
-                  <>
-                    <span>Make:</span>
-                    <span className="font-medium">{selectedDeal.item.make}</span>
-                  </>
-                )}
-
-                {selectedDeal.item?.model && (
-                  <>
-                    <span>Model:</span>
-                    <span className="font-medium">{selectedDeal.item.model}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <p className="font-medium text-sm">
-                {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                <span>Email:</span>
-                <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
-
-                <span>Phone:</span>
-                <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
-
-                {selectedDeal.buyer?.address && (
-                  <>
-                    <span>Address:</span>
-                    <span className="font-medium">
-                      {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <p className="font-medium text-sm">
-                {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                <span>Email:</span>
-                <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
-
-                <span>Phone:</span>
-                <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3 sm:space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
-                {getStatusIcon(selectedDeal.status)}
-                <span className="capitalize">{selectedDeal.status}</span>
-              </Badge>
-
-              {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
-                <div className="mt-3">
-                  <Label className="text-xs font-medium">Status History</Label>
-                  <div className="space-y-1 mt-1">
-                    {selectedDeal.statusHistory.map((history: any, index: number) => (
-                      <div key={index} className="flex justify-between text-xs">
-                        <span className="capitalize">{history.status}</span>
-                        <span className="text-gray-500">
-                          {new Date(history.timestamp).toLocaleDateString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Original Price:</span>
-                <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
-
-                <span>Final Price:</span>
-                <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
-
-                <span>Commission:</span>
-                <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
-
-                <span>Platform Fee:</span>
-                <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
-
-                <span>Payment Method:</span>
-                <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
-
-                {selectedDeal.paymentStatus && (
-                  <>
-                    <span>Payment Status:</span>
-                    <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Created:</span>
-                <span className="font-medium">
-                  {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                  {new Date(selectedDeal.createdAt).toLocaleTimeString()}
-                </span>
-
-                <span>Last Updated:</span>
-                <span className="font-medium">
-                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
-                </span>
-
-                {selectedDeal.approvedAt && (
-                  <>
-                    <span>Approved:</span>
-                    <span className="font-medium">
-                      {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
-                      {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
-                    </span>
-                  </>
-                )}
-
-                {selectedDeal.completedAt && (
-                  <>
-                    <span>Completed:</span>
-                    <span className="font-medium">
-                      {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
-                      {new Date(selectedDeal.completedAt).toLocaleTimeString()}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              {selectedDeal.notes ? (
-                <p className="text-xs">{selectedDeal.notes}</p>
-              ) : (
-                <p className="text-xs text-gray-500">No notes available</p>
-              )}
-
-              {selectedDeal.messages && selectedDeal.messages.length > 0 && (
-                <div className="mt-3">
-                  <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
-                  <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
-                    {selectedDeal.messages.map((message: any, index: number) => (
-                      <div key={index} className="text-xs p-2 bg-white rounded border">
-                        <div className="flex justify-between">
-                          <span className="font-medium">{message.sender}</span>
-                          <span className="text-gray-500">
-                            {new Date(message.timestamp).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="mt-1">{message.content}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-    <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
-      <Button
-        variant="outline"
-        className="text-xs sm:text-sm bg-transparent"
-        onClick={() => setIsDealDetailOpen(false)}
-      >
-        Close
-      </Button>
-      {selectedDeal?.status === "pending" && (
-        <>
-          <Button
-            className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
-            onClick={() => handleAcceptDeal(selectedDeal.id)}
-          >
-            Accept Deal
-          </Button>
-          <Button
-            variant="destructive"
-            className="text-xs sm:text-sm"
-            onClick={() => handleRejectDeal(selectedDeal.id)}
-          >
-            Reject Deal
-          </Button>
-        </>
-      )}
-      {selectedDeal?.status === "approved" && (
-        <Button
-          className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-          onClick={() => handleCompleteDeal(selectedDeal.id)}
-        >
-          Mark as Completed
-        </Button>
-      )}
-    </div>
-  </DialogContent>
-</Dialog>
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
 
@@ -4146,7 +3917,7 @@ const handleRefreshAll = async () => {
                   Sales History
                 </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">
-                  Completed deals and sales history
+                  Completed and rejected deals history
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-0">
@@ -4157,14 +3928,14 @@ const handleRefreshAll = async () => {
                       <TableHead className="text-xs sm:text-sm">Buyer</TableHead>
                       <TableHead className="text-xs sm:text-sm">Seller</TableHead>
                       <TableHead className="text-xs sm:text-sm">Price</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Completed Date</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Status</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {deals
-                      .filter((deal) => deal.status === "completed")
+                      .filter((deal) => deal.status === "completed" || deal.status === "rejected")
                       .map((deal) => (
                         <TableRow key={deal.id}>
                           <TableCell className="font-medium text-xs sm:text-sm">
@@ -4184,11 +3955,14 @@ const handleRefreshAll = async () => {
                               ? new Date(deal.completedAt).toLocaleDateString()
                               : deal.updatedAt
                               ? new Date(deal.updatedAt).toLocaleDateString()
+                              : deal.createdAt
+                              ? new Date(deal.createdAt).toLocaleDateString()
                               : "N/A"}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm">
-                            <Badge variant="default" className="bg-green-500">
-                              Completed
+                            <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                              {getStatusIcon(deal.status)}
+                              <span className="capitalize">{deal.status}</span>
                             </Badge>
                           </TableCell>
                           <TableCell>
@@ -4203,10 +3977,10 @@ const handleRefreshAll = async () => {
                           </TableCell>
                         </TableRow>
                       ))}
-                    {deals.filter((deal) => deal.status === "completed").length === 0 && (
+                    {deals.filter((deal) => deal.status === "completed" || deal.status === "rejected").length === 0 && (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center text-xs sm:text-sm text-gray-500 py-8">
-                          No completed deals found
+                          No completed or rejected deals found
                         </TableCell>
                       </TableRow>
                     )}
@@ -4362,6 +4136,272 @@ const handleRefreshAll = async () => {
   </Dialog>
 </TabsContent>
         </Tabs> 
+
+        {/* Deal Detail Dialog - Moved outside TabsContent so it's always available */}
+        <Dialog 
+          open={isDealDetailOpen} 
+          onOpenChange={(open) => {
+            setIsDealDetailOpen(open);
+            if (!open) {
+              // Reset selected deal when dialog closes
+              setSelectedDeal(null);
+            }
+          }}
+        >
+          <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">
+                Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedDeal && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-center space-x-2 mb-2">
+                        {getItemIcon(selectedDeal.itemType)}
+                        <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Type:</span>
+                        <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
+
+                        <span>Price:</span>
+                        <span className="font-medium">
+                          ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
+                        </span>
+
+                        {selectedDeal.item?.make && (
+                          <>
+                            <span>Make:</span>
+                            <span className="font-medium">{selectedDeal.item.make}</span>
+                          </>
+                        )}
+
+                        {selectedDeal.item?.model && (
+                          <>
+                            <span>Model:</span>
+                            <span className="font-medium">{selectedDeal.item.model}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <p className="font-medium text-sm">
+                        {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                        <span>Email:</span>
+                        <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
+
+                        <span>Phone:</span>
+                        <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
+
+                        {selectedDeal.buyer?.address && (
+                          <>
+                            <span>Address:</span>
+                            <span className="font-medium">
+                              {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <p className="font-medium text-sm">
+                        {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                        <span>Email:</span>
+                        <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
+
+                        <span>Phone:</span>
+                        <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                        {getStatusIcon(selectedDeal.status)}
+                        <span className="capitalize">{selectedDeal.status}</span>
+                      </Badge>
+
+                      {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
+                        <div className="mt-3">
+                          <Label className="text-xs font-medium">Status History</Label>
+                          <div className="space-y-1 mt-1">
+                            {selectedDeal.statusHistory.map((history: any, index: number) => (
+                              <div key={index} className="flex justify-between text-xs">
+                                <span className="capitalize">{history.status}</span>
+                                <span className="text-gray-500">
+                                  {new Date(history.timestamp).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Original Price:</span>
+                        <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                        <span>Final Price:</span>
+                        <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                        <span>Commission:</span>
+                        <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
+
+                        <span>Platform Fee:</span>
+                        <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
+
+                        <span>Payment Method:</span>
+                        <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
+
+                        {selectedDeal.paymentStatus && (
+                          <>
+                            <span>Payment Status:</span>
+                            <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Created:</span>
+                        <span className="font-medium">
+                          {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(selectedDeal.createdAt).toLocaleTimeString()}
+                        </span>
+
+                        <span>Last Updated:</span>
+                        <span className="font-medium">
+                          {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
+                        </span>
+
+                        {selectedDeal.approvedAt && (
+                          <>
+                            <span>Approved:</span>
+                            <span className="font-medium">
+                              {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
+                              {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
+                            </span>
+                          </>
+                        )}
+
+                        {selectedDeal.completedAt && (
+                          <>
+                            <span>Completed:</span>
+                            <span className="font-medium">
+                              {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
+                              {new Date(selectedDeal.completedAt).toLocaleTimeString()}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      {selectedDeal.notes ? (
+                        <p className="text-xs">{selectedDeal.notes}</p>
+                      ) : (
+                        <p className="text-xs text-gray-500">No notes available</p>
+                      )}
+
+                      {selectedDeal.messages && selectedDeal.messages.length > 0 && (
+                        <div className="mt-3">
+                          <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
+                          <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
+                            {selectedDeal.messages.map((message: any, index: number) => (
+                              <div key={index} className="text-xs p-2 bg-white rounded border">
+                                <div className="flex justify-between">
+                                  <span className="font-medium">{message.sender}</span>
+                                  <span className="text-gray-500">
+                                    {new Date(message.timestamp).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="mt-1">{message.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+              <Button
+                variant="outline"
+                className="text-xs sm:text-sm bg-transparent"
+                onClick={() => setIsDealDetailOpen(false)}
+              >
+                Close
+              </Button>
+              {selectedDeal?.status === "pending" && (
+                <>
+                  <Button
+                    className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+                    onClick={() => handleAcceptDeal(selectedDeal.id)}
+                  >
+                    Accept Deal
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="text-xs sm:text-sm"
+                    onClick={() => handleRejectDeal(selectedDeal.id)}
+                  >
+                    Reject Deal
+                  </Button>
+                </>
+              )}
+              {selectedDeal?.status === "approved" && (
+                <Button
+                  className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleCompleteDeal(selectedDeal.id)}
+                >
+                  Mark as Completed
+                </Button>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
         
       </div>
     </div>
