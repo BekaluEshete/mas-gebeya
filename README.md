@@ -12,7 +12,7 @@ It provides a modern, localized, and secure platform for individuals and busines
 | **Frontend** | Next.js (React) + Redux + Tailwind CSS |
 | **Backend** | Node.js + Express |
 | **Database** | MongoDB (hosted on MongoDB Atlas) |
-| **Hosting** | Vercel (Frontend), AWS / Render (Backend) |
+| **Hosting** | Vercel (Frontend), Render (Backend) |
 | **Charts & UI** | Recharts, Radix UI, Lucide-React |
 | **Authentication** | JWT (JSON Web Token) |
 
