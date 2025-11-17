@@ -36,6 +36,36 @@ router.get('/owner/list', async (req, res) => {
   }
 });
 
+// Public endpoint to get admin contact information
+router.get('/admin/contact', async (req, res) => {
+  try {
+    const admin = await User.findOne({ role: 'admin' })
+      .select('fullName email phone'); // only include contact info
+
+    if (!admin) {
+      return res.status(404).json({
+        status: 'error',
+        message: 'Admin not found'
+      });
+    }
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        name: admin.fullName,
+        email: admin.email,
+        phone: admin.phone
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Server error'
+    });
+  }
+});
+
 // All routes require authentication
 router.use(protect);
 

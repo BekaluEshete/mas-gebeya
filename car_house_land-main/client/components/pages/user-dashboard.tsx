@@ -221,24 +221,67 @@ export function UserDashboard() {
                 <CardContent>
                   {favorites && favorites.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {favorites.map((favorite) => (
-                        <div
-                          key={favorite.id}
-                          className="border border-gray-200 rounded-xl p-4 hover:border-blue-200 transition-colors"
-                        >
-                          <div className="w-full h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-3"></div>
-                          <h3 className="font-semibold text-gray-900 capitalize">{favorite.type}</h3>
-                          <p className="text-sm text-gray-600">{favorite.item.title || favorite.item.name}</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => removeFromFavorites(favorite.id)}
+                      {favorites.map((favorite) => {
+                        // Get the correct URL based on item type
+                        const getItemUrl = (type: string, itemId: string) => {
+                          switch (type) {
+                            case "car":
+                              return `/cars/${itemId}`
+                            case "house":
+                              return `/houses/${itemId}`
+                            case "land":
+                              return `/lands/${itemId}`
+                            case "machine":
+                              return `/machines/${itemId}`
+                            default:
+                              return "#"
+                          }
+                        }
+                        
+                        const itemUrl = getItemUrl(favorite.type, favorite.item.id)
+                        const itemImage = favorite.item.images?.[0] || favorite.item.image || "/placeholder.svg"
+                        const itemTitle = favorite.item.title || favorite.item.name || "Untitled"
+                        const itemPrice = favorite.item.price ? `${favorite.item.price.toLocaleString()} ብር` : "Price not available"
+                        
+                        return (
+                          <div
+                            key={favorite.id}
+                            className="border border-gray-200 rounded-xl overflow-hidden hover:border-blue-200 hover:shadow-lg transition-all"
                           >
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
+                            <Link href={itemUrl} className="block">
+                              <div className="relative w-full h-48 overflow-hidden bg-gray-100">
+                                <img
+                                  src={itemImage}
+                                  alt={itemTitle}
+                                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement
+                                    target.src = "/placeholder.svg"
+                                  }}
+                                />
+                              </div>
+                              <div className="p-4">
+                                <h3 className="font-semibold text-gray-900 capitalize mb-1">{favorite.type}</h3>
+                                <p className="text-sm text-gray-900 font-medium mb-1 line-clamp-2">{itemTitle}</p>
+                                <p className="text-sm text-blue-600 font-semibold mb-3">{itemPrice}</p>
+                              </div>
+                            </Link>
+                            <div className="px-4 pb-4">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full"
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  removeFromFavorites(favorite.id)
+                                }}
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
                   ) : (
                     <div className="text-center py-8">
