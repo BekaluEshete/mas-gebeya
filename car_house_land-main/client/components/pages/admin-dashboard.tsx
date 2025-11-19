@@ -3166,7 +3166,6 @@ const handleRefreshAll = async () => {
                       <TableHead className="text-xs sm:text-sm">Price</TableHead>
                       <TableHead className="text-xs sm:text-sm">Location</TableHead>
                       <TableHead className="text-xs sm:text-sm">Type</TableHead>
-                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
                       <TableHead className="text-xs sm:text-sm">Posted Date</TableHead>
                       <TableHead className="text-xs sm:text-sm">Actions</TableHead>
                     </TableRow>
@@ -3183,15 +3182,6 @@ const handleRefreshAll = async () => {
                             <Badge variant={item.listingType === "sale" ? "default" : "secondary"}>
                               {item.listingType === "sale" ? "For Sale" : "For Rent"}
                             </Badge>
-                          </TableCell>
-                          <TableCell className="text-xs sm:text-sm">
-                            {item.approved === true ? (
-                              <Badge variant="default" className="bg-green-500">Approved</Badge>
-                            ) : item.approved === false ? (
-                              <Badge variant="destructive">Rejected</Badge>
-                            ) : (
-                              <Badge variant="secondary" className="bg-yellow-500">Pending</Badge>
-                            )}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm">
                             {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "N/A"}
@@ -3214,26 +3204,6 @@ const handleRefreshAll = async () => {
                               >
                                 <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
-                              {item.approved !== true && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs sm:text-sm bg-green-500 text-white hover:bg-green-600"
-                                  onClick={() => handleApproveItem(item)}
-                                >
-                                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </Button>
-                              )}
-                              {item.approved !== false && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="text-xs sm:text-sm bg-red-500 text-white hover:bg-red-600"
-                                  onClick={() => handleRejectItem(item)}
-                                >
-                                  <XCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                                </Button>
-                              )}
                               <Button
                                 size="sm"
                                 variant="outline"
