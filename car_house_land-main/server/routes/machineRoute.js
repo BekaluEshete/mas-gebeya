@@ -49,15 +49,15 @@ router.post(
    toggleFavorite
 );
 
-// Admin only routes
+// User routes (authenticated users can create)
 router.post(
   '/',
-  adminOnly,
- 
   upload.array('images', 3),
-     validateRequest,
+  validateRequest,
   createMachine
 );
+
+// Admin only routes
 
 router.put(
   '/:id',
