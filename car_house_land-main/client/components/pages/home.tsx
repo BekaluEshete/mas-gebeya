@@ -97,72 +97,87 @@ export function Home() {
   ]
 
   // Filter to show only approved items (or all items if approved field doesn't exist for backward compatibility)
+  // Always display exactly 4 items: one from each category (car, house, land, machine)
+  // Prioritize featured items, otherwise take the top approved item
+  
+  const getTopItem = (items: any[], category: string) => {
+    if (!items || items.length === 0) return null;
+    
+    // First try to find a featured and approved item
+    const featuredItem = items.find((item) => item.featured && (item.approved !== false));
+    if (featuredItem) {
+      return featuredItem;
+    }
+    
+    // If no featured item, take the first approved item
+    const approvedItem = items.find((item) => item.approved !== false);
+    if (approvedItem) {
+      return approvedItem;
+    }
+    
+    // If no approved item, take the first item (for backward compatibility)
+    return items[0];
+  };
+
+  const topCar = getTopItem(cars || [], 'car');
+  const topHouse = getTopItem(houses || [], 'house');
+  const topLand = getTopItem(lands || [], 'land');
+  const topMachine = getTopItem(machines || [], 'machine');
+
   const featuredListings = [
-    ...(cars || [])
-      .filter((car) => car.featured && (car.approved !== false)) // Show if approved is true or undefined
-      .slice(0, 2)
-      .map((car) => ({
-        id: `car-${car.id}`,
-        title: car.title,
-        price: car.price || 0,
-        image: car.images?.[0] || "/placeholder.svg",
-        status: car.condition === "used" ? "used" : "new",
-        location: car.location || "",
-        category: "car",
-        href: `/cars/${car.id}`,
-        applicationCount: deals?.filter(
-          (deal) => deal.itemId === car.id || deal.item?._id === car.id || deal.item?.id === car.id
-        ).length || 0,
-      })),
-    ...(houses || [])
-      .filter((house) => house.featured && (house.approved !== false))
-      .slice(0, 2)
-      .map((house) => ({
-        id: `house-${house.id}`,
-        title: house.title,
-        price: house.price || 0,
-        image: house.images?.[0] || "/placeholder.svg",
-        status: house.status,
-        location: house.location || "",
-        category: "house",
-        href: `/houses/${house.id}`,
-        applicationCount: deals?.filter(
-          (deal) => deal.itemId === house.id || deal.item?._id === house.id || deal.item?.id === house.id
-        ).length || 0,
-      })),
-    ...(lands || [])
-      .filter((land) => land.featured && (land.approved !== false))
-      .slice(0, 1)
-      .map((land) => ({
-        id: `land-${land.id}`,
-        title: land.title,
-        price: land.price || 0,
-        image: land.images?.[0] || "/placeholder.svg",
-        status: land.status,
-        location: land.location || "",
-        category: "land",
-        href: `/lands/${land.id}`,
-        applicationCount: deals?.filter(
-          (deal) => deal.itemId === land.id || deal.item?._id === land.id || deal.item?.id === land.id
-        ).length || 0,
-      })),
-    ...(machines || [])
-      .filter((machine) => machine.featured && (machine.approved !== false))
-      .slice(0, 1)
-      .map((machine) => ({
-        id: `machine-${machine.id}`,
-        title: machine.title,
-        price: machine.price || 0,
-        image: machine.images?.[0] || "/placeholder.svg",
-        status: machine.condition,
-        location: machine.location || "",
-        category: "machine",
-        href: `/machines/${machine.id}`,
-        applicationCount: deals?.filter(
-          (deal) => deal.itemId === machine.id || deal.item?._id === machine.id || deal.item?.id === machine.id
-        ).length || 0,
-      })),
-  ]
+    topCar && {
+      id: `car-${topCar.id || topCar._id}`,
+      title: topCar.title,
+      price: topCar.price || 0,
+      image: topCar.images?.[0] || "/placeholder.svg",
+      status: topCar.condition === "used" ? "used" : "new",
+      location: topCar.location || "",
+      category: "car",
+      href: `/cars/${topCar.id || topCar._id}`,
+      applicationCount: deals?.filter(
+        (deal) => deal.itemId === (topCar.id || topCar._id) || deal.item?._id === (topCar.id || topCar._id) || deal.item?.id === (topCar.id || topCar._id)
+      ).length || 0,
+    },
+    topHouse && {
+      id: `house-${topHouse.id || topHouse._id}`,
+      title: topHouse.title,
+      price: topHouse.price || 0,
+      image: topHouse.images?.[0] || "/placeholder.svg",
+      status: topHouse.status,
+      location: topHouse.location || "",
+      category: "house",
+      href: `/houses/${topHouse.id || topHouse._id}`,
+      applicationCount: deals?.filter(
+        (deal) => deal.itemId === (topHouse.id || topHouse._id) || deal.item?._id === (topHouse.id || topHouse._id) || deal.item?.id === (topHouse.id || topHouse._id)
+      ).length || 0,
+    },
+    topLand && {
+      id: `land-${topLand.id || topLand._id}`,
+      title: topLand.title,
+      price: topLand.price || 0,
+      image: topLand.images?.[0] || "/placeholder.svg",
+      status: topLand.status,
+      location: topLand.location || "",
+      category: "land",
+      href: `/lands/${topLand.id || topLand._id}`,
+      applicationCount: deals?.filter(
+        (deal) => deal.itemId === (topLand.id || topLand._id) || deal.item?._id === (topLand.id || topLand._id) || deal.item?.id === (topLand.id || topLand._id)
+      ).length || 0,
+    },
+    topMachine && {
+      id: `machine-${topMachine.id || topMachine._id}`,
+      title: topMachine.title,
+      price: topMachine.price || 0,
+      image: topMachine.images?.[0] || "/placeholder.svg",
+      status: topMachine.condition,
+      location: topMachine.location || "",
+      category: "machine",
+      href: `/machines/${topMachine.id || topMachine._id}`,
+      applicationCount: deals?.filter(
+        (deal) => deal.itemId === (topMachine.id || topMachine._id) || deal.item?._id === (topMachine.id || topMachine._id) || deal.item?.id === (topMachine.id || topMachine._id)
+      ).length || 0,
+    },
+  ].filter(Boolean) // Remove any null/undefined entries
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -186,7 +201,7 @@ export function Home() {
                   variant="secondary"
                   className="bg-white/20 text-white border-white/30 hover:bg-white/30 animate-bounce-in text-xs sm:text-sm"
                 >
-                  🚗 🏠 መስገበያ - የኢትዮጵያ መድረክ
+                  🚗 🏠 ማስገበያ - የኢትዮጵያ መድረክ
                 </Badge>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">
                   የህልምዎ መኪና፣ ቤት እና መሬት
@@ -283,6 +298,68 @@ export function Home() {
               </div>
             </div>
           </div>
+          
+          {/* Category Navigation - Small Size at Bottom of Hero */}
+          <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/20">
+            <div className="text-center mb-4 sm:mb-6">
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
+                የምርት ምድቦች
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
+              <Link href="/lands" className="group">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+                  <img
+                    src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=400&fit=crop"
+                    alt="Lands"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Lands</h4>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/houses" className="group">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+                  <img
+                    src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=400&fit=crop"
+                    alt="House"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">House</h4>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/machines" className="group">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+                  <img
+                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop"
+                    alt="Machines"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Machines</h4>
+                  </div>
+                </div>
+              </Link>
+
+              <Link href="/cars" className="group">
+                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
+                  <img
+                    src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop"
+                    alt="Vehicle"
+                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Vehicle</h4>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -347,86 +424,6 @@ export function Home() {
         </div>
       </section>
 
-      {/* Category Navigation Section */}
-      <section className="py-12 sm:py-16 md:py-20 bg-gradient-to-br from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-12 md:mb-16 animate-fade-in">
-            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 text-gray-900">
-              የምርት ምድቦች
-            </h2>
-            <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 px-4">
-              የሚፈልጉትን ምድብ ይምረጡ
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 mb-12">
-            <Link href="/lands" className="group">
-              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 animate-scale-in">
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=800&fit=crop"
-                    alt="Lands"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white font-bold text-lg sm:text-xl">Lands</h3>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-
-            <Link href="/houses" className="group">
-              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 animate-scale-in">
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=800&fit=crop"
-                    alt="House"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white font-bold text-lg sm:text-xl">House</h3>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-
-            <Link href="/machines" className="group">
-              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 animate-scale-in">
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=800&fit=crop"
-                    alt="Machines"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white font-bold text-lg sm:text-xl">Machines</h3>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-
-            <Link href="/cars" className="group">
-              <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-0 animate-scale-in">
-                <div className="relative aspect-square overflow-hidden">
-                  <img
-                    src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=800&h=800&fit=crop"
-                    alt="Vehicle"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <h3 className="text-white font-bold text-lg sm:text-xl">Vehicle</h3>
-                  </div>
-                </div>
-              </Card>
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Featured Listings Section */}
       <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -439,7 +436,7 @@ export function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {featuredListings.map((listing, index) => {
               const getCategoryColor = (category: string) => {
                 switch (category) {
