@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield } from "lucide-react"
+import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield, Package } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
@@ -27,6 +27,7 @@ export function Navigation() {
     { href: "/houses", label: "House" },
     { href: "/lands", label: "Lands" },
     { href: "/machines", label: "Machines" },
+    { href: "/post-items", label: "Post Items", icon: Package },
     { href: "/consult", label: "Consult"},
   ]
 
