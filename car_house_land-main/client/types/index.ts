@@ -171,6 +171,7 @@ export interface House {
   listingType: "sale" | "rent"
   yearBuilt: number
   parking: number
+  floors?: number
   amenities: string[]
   agentName: string
   agentPhone: string

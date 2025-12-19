@@ -180,10 +180,10 @@ export function HouseListings() {
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder="Purpose" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">Purpose</SelectItem>
                 <SelectItem value="sale">For Sale</SelectItem>
                 <SelectItem value="rent">For Rent</SelectItem>
               </SelectContent>
@@ -191,10 +191,10 @@ export function HouseListings() {
 
             <Select value={filters.propertyType} onValueChange={(value) => handleFilterChange("propertyType", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Property" />
+                <SelectValue placeholder="Building Types" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Properties</SelectItem>
+                <SelectItem value="all">Building Types</SelectItem>
                 <SelectItem value="house">House</SelectItem>
                 <SelectItem value="apartment">Apartment</SelectItem>
                 <SelectItem value="condo">Condo</SelectItem>
@@ -208,9 +208,10 @@ export function HouseListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Conditions</SelectItem>
-                <SelectItem value="new">New Construction</SelectItem>
-                <SelectItem value="used">Existing Property</SelectItem>
-                <SelectItem value="renovated">Recently Renovated</SelectItem>
+                <SelectItem value="new">Newly constructed</SelectItem>
+                <SelectItem value="used">Old building</SelectItem>
+                <SelectItem value="on-construction">On construction</SelectItem>
+                <SelectItem value="renovated">Reconstructed</SelectItem>
               </SelectContent>
             </Select>
 
@@ -227,10 +228,10 @@ export function HouseListings() {
 
             <Select value={filters.bedrooms} onValueChange={(value) => handleFilterChange("bedrooms", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Bedrooms" />
+                <SelectValue placeholder="No of bed Room" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="all">No of bed Room</SelectItem>
                 <SelectItem value="1">1+ Bedrooms</SelectItem>
                 <SelectItem value="2">2+ Bedrooms</SelectItem>
                 <SelectItem value="3">3+ Bedrooms</SelectItem>
@@ -240,10 +241,10 @@ export function HouseListings() {
 
             <Select value={filters.bathrooms} onValueChange={(value) => handleFilterChange("bathrooms", value)}>
               <SelectTrigger className="text-sm">
-                <SelectValue placeholder="Bathrooms" />
+                <SelectValue placeholder="No of Bath room" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="all">No of Bath room</SelectItem>
                 <SelectItem value="1">1+ Bathrooms</SelectItem>
                 <SelectItem value="2">2+ Bathrooms</SelectItem>
                 <SelectItem value="3">3+ Bathrooms</SelectItem>
@@ -256,7 +257,7 @@ export function HouseListings() {
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-new">Newest First</SelectItem>
+                <SelectItem value="date-new">Recent First</SelectItem>
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>

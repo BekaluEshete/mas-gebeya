@@ -21,6 +21,9 @@ import {
   Heart,
   ShoppingCart,
   Users,
+  Building,
+  Car,
+  User,
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { ImageSlider } from "@/components/ui/image-slider"
@@ -161,8 +164,22 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
                   <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                     <Calendar className="w-6 h-6 text-green-600" />
                     <div>
-                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Built</p>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Year Built</p>
                       <p className="text-lg font-bold text-gray-900">{house.yearBuilt || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Building className="w-6 h-6 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Floors</p>
+                      <p className="text-lg font-bold text-gray-900">{house.floors || "N/A"}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                    <Car className="w-6 h-6 text-green-600" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-500 uppercase tracking-wide">Parking</p>
+                      <p className="text-lg font-bold text-gray-900">{house.parking || "N/A"} spaces</p>
                     </div>
                   </div>
                 </div>
@@ -265,33 +282,26 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
               </CardContent>
             </Card>
 
-            {/* Agent Information */}
+            {/* Owner Information */}
             <Card>
               <CardHeader className="pb-2 sm:pb-4">
-                <CardTitle className="text-base sm:text-lg">Real Estate Agent</CardTitle>
+                <CardTitle className="text-base sm:text-lg">Owner Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="font-semibold text-green-600 text-sm sm:text-base">
-                      {house.agentName
-                        ? house.agentName
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                        : "NA"}
-                    </span>
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                    <User className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-sm sm:text-base">{house.agentName || "No Agent Assigned"}</p>
-                    <p className="text-xs sm:text-sm text-gray-600">Licensed Real Estate Agent</p>
+                    <p className="font-semibold text-sm sm:text-base">{house.sellerName || "Owner"}</p>
+                    <p className="text-xs sm:text-sm text-gray-600">Property Owner</p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center space-x-2">
                     <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
-                    <span className="text-xs sm:text-sm">{house.agentPhone || "No phone available"}</span>
+                    <span className="text-xs sm:text-sm">{house.sellerPhone || "No phone available"}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
@@ -301,10 +311,49 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
 
                 <Button variant="outline" className="w-full bg-transparent text-sm sm:text-base">
                   <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                  Contact Agent
+                  Contact Owner
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Agent Information */}
+            {house.agentName && (
+              <Card>
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="text-base sm:text-lg">Real Estate Agent</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 sm:space-y-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <span className="font-semibold text-green-600 text-sm sm:text-base">
+                        {house.agentName
+                          ? house.agentName
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                          : "NA"}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-sm sm:text-base">{house.agentName || "No Agent Assigned"}</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Licensed Real Estate Agent</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
+                      <span className="text-xs sm:text-sm">{house.agentPhone || "No phone available"}</span>
+                    </div>
+                  </div>
+
+                  <Button variant="outline" className="w-full bg-transparent text-sm sm:text-base">
+                    <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                    Contact Agent
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

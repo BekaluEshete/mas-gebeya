@@ -110,6 +110,7 @@ function mapPropertyToHouse(property: PropertyAPIResponse): House {
     listingType: property.type,
     yearBuilt: property.yearBuilt || new Date().getFullYear() - 5,
     parking: property.parkingSpaces || 1,
+    floors: property.floors || 1,
     amenities: property.amenities,
     agentName: "Property Agent", // Default since not in API
     agentPhone: "+251 911 123 456", // Default since not in API

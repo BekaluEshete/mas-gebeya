@@ -201,11 +201,11 @@ export function Home() {
                   variant="secondary"
                   className="bg-white/20 text-white border-white/30 hover:bg-white/30 animate-bounce-in text-xs sm:text-sm"
                 >
-                  🚗 🏠 ማስገበያ - የኢትዮጵያ መድረክ
+                  🚗 🏠 ማስገበያ - የመገበያያ መድረክ
                 </Badge>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">
                   የህልምዎ መኪና፣ ቤት እና መሬት
-                  <span className="block gradient-text-brand text-white">እዚህ ይጠብቅዎታል</span>
+                  <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">እዚህ ይጠብቅዎታል</span>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed animate-slide-in-left animate-stagger-1 max-w-2xl mx-auto lg:mx-0">
                   በሺዎች የሚቆጠሩ ጥራት ያላቸው ተሽከርካሪዎች፣ ፕሪሚየም ንብረቶች እና ዋና የመሬት እድሎችን ያግኙ። በቀጥታ ከአከፋፋዮች እና ወኪሎች ጋር ይገናኙ፣ ስምምነቶችን

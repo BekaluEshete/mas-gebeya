@@ -36,6 +36,7 @@ export function CarListings() {
     cars,
     carsLoading,
     refreshCars,
+    deals,
   } = useApp()
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
@@ -56,6 +57,12 @@ export function CarListings() {
   const allPrices = cars.map(car => car.price).sort((a, b) => a - b)
   const medianPrice = allPrices.length > 0 ? allPrices[Math.floor(allPrices.length / 2)] : 0
 
+  // Get unique makes/brands from cars
+  const uniqueMakes = Array.from(new Set(cars.map(car => car.make).filter(Boolean))).sort()
+  
+  // Get unique years from cars
+  const uniqueYears = Array.from(new Set(cars.map(car => car.year).filter(Boolean))).sort((a, b) => b - a)
+
   // Filter to show only approved items (or all if approved field doesn't exist)
   const filteredCars = cars
     .filter((car) => car.approved !== false) // Show if approved is true or undefined
@@ -66,6 +73,7 @@ export function CarListings() {
         (car.title?.toLowerCase() || "").includes(searchTerm.toLowerCase())
       const matchesCondition = filters.condition === "all" || car.condition === filters.condition
       const matchesMake = filters.make === "all" || car.make === filters.make
+      const matchesYear = filters.year === "all" || car.year?.toString() === filters.year
       const matchesFuelType = filters.fuelType === "all" || car.fuelType === filters.fuelType
       const matchesTransmission = filters.transmission === "all" || car.transmission === filters.transmission
       const matchesLocation =
@@ -80,6 +88,7 @@ export function CarListings() {
         matchesSearch &&
         matchesCondition &&
         matchesMake &&
+        matchesYear &&
         matchesFuelType &&
         matchesTransmission &&
         matchesLocation &&
@@ -191,10 +200,10 @@ export function CarListings() {
               onValueChange={(value) => setFilters((prev) => ({ ...prev, listingType: value }))}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder="Purpose" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">For Sale & Rent</SelectItem>
+                <SelectItem value="all">Purpose</SelectItem>
                 <SelectItem value="sale">For Sale</SelectItem>
                 <SelectItem value="rent">For Rent</SelectItem>
               </SelectContent>
@@ -216,14 +225,15 @@ export function CarListings() {
 
             <Select value={filters.make} onValueChange={(value) => setFilters((prev) => ({ ...prev, make: value }))}>
               <SelectTrigger>
-                <SelectValue placeholder="Make" />
+                <SelectValue placeholder="Brand" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Makes</SelectItem>
-                <SelectItem value="Toyota">Toyota</SelectItem>
-                <SelectItem value="BMW">BMW</SelectItem>
-                <SelectItem value="Mercedes-Benz">Mercedes-Benz</SelectItem>
-                <SelectItem value="Hyundai">Hyundai</SelectItem>
+                <SelectItem value="all">All Brands</SelectItem>
+                {uniqueMakes.map((make) => (
+                  <SelectItem key={make} value={make}>
+                    {make}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -247,9 +257,11 @@ export function CarListings() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Years</SelectItem>
-                <SelectItem value="2023">2023</SelectItem>
-                <SelectItem value="2022">2022</SelectItem>
-                <SelectItem value="2021">2021</SelectItem>
+                {uniqueYears.map((year) => (
+                  <SelectItem key={year} value={year.toString()}>
+                    {year}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -296,7 +308,7 @@ export function CarListings() {
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-new">Newest First</SelectItem>
+                <SelectItem value="date-new">Recent First</SelectItem>
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -326,6 +338,10 @@ export function CarListings() {
             <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
               {filteredCars.map((car) => {
                 const isSold = soldItems.has(car.id)
+                // Count applications/deals for this car
+                const applicationCount = deals?.filter(
+                  (deal) => deal.itemId === car.id || deal.item?._id === car.id || deal.item?.id === car.id
+                ).length || 0
 
                 return (
                   <Card
@@ -400,6 +416,13 @@ export function CarListings() {
                           <Calendar className="w-4 h-4 mr-1" />
                           Posted: {new Date(car.createdAt).toLocaleDateString()}
                         </div>
+
+                        {applicationCount > 0 && (
+                          <div className="flex items-center text-sm text-muted-foreground">
+                            <MessageCircle className="w-4 h-4 mr-1" />
+                            {applicationCount} {applicationCount === 1 ? 'Application' : 'Applications'}
+                          </div>
+                        )}
 
                         <div className="flex gap-2 pt-2" onClick={(e) => e.stopPropagation()}>
                           {!isSold && (

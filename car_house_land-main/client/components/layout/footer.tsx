@@ -49,6 +49,9 @@ export function Footer() {
               <Link href="/support" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Help Center
               </Link>
+              <Link href="/post-items" className="block text-gray-300 hover:text-white transition-colors text-sm">
+                Post Items
+              </Link>
               <Link href="/consult" className="block text-gray-300 hover:text-white transition-colors text-sm">
                 Consult
               </Link>

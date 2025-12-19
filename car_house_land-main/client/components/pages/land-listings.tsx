@@ -12,7 +12,7 @@ import { useApp } from "@/context/app-context"
 import type { Land } from "@/types"
 
 export function LandListings() {
-  const { lands, landsLoading } = useApp() // Added landsLoading from context
+  const { lands, landsLoading, deals } = useApp() // Added landsLoading and deals from context
   const [filteredLands, setFilteredLands] = React.useState<Land[]>(lands)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [showMobileFilters, setShowMobileFilters] = React.useState(false)
@@ -168,10 +168,10 @@ export function LandListings() {
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder="Purpose" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">Purpose</SelectItem>
                 <SelectItem value="sale">For Sale</SelectItem>
                 <SelectItem value="rent">For Rent</SelectItem>
                 <SelectItem value="lease">For Lease</SelectItem>
@@ -204,23 +204,23 @@ export function LandListings() {
 
             <Select value={filters.sizeRange} onValueChange={(value) => handleFilterChange("sizeRange", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Size (Acres)" />
+                <SelectValue placeholder="Metre Square" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Sizes</SelectItem>
-                <SelectItem value="0-1">Under 1 Acre</SelectItem>
-                <SelectItem value="1-5">1 - 5 Acres</SelectItem>
-                <SelectItem value="5-10">5 - 10 Acres</SelectItem>
-                <SelectItem value="10-999">Over 10 Acres</SelectItem>
+                <SelectItem value="0-4047">Under 4,047 m²</SelectItem>
+                <SelectItem value="4047-20234">4,047 - 20,234 m²</SelectItem>
+                <SelectItem value="20235-40469">20,235 - 40,469 m²</SelectItem>
+                <SelectItem value="40470-999999">Over 40,470 m²</SelectItem>
               </SelectContent>
             </Select>
 
             <Select value={filters.ownershipType} onValueChange={(value) => handleFilterChange("ownershipType", value)}>
               <SelectTrigger>
-                <SelectValue placeholder="Ownership Type" />
+                <SelectValue placeholder="Ownership" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="all">All Ownership</SelectItem>
                 <SelectItem value="private">Private</SelectItem>
                 <SelectItem value="lease">Lease</SelectItem>
                 <SelectItem value="government">Government</SelectItem>
@@ -233,7 +233,7 @@ export function LandListings() {
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="date-new">Newest First</SelectItem>
+                <SelectItem value="date-new">Recent First</SelectItem>
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
@@ -292,6 +292,7 @@ export function LandListings() {
                       priceRange: "all",
                       sizeRange: "all",
                       utilities: "all",
+                      ownershipType: "all",
                       sortBy: "date-new",
                     })
                   }}
