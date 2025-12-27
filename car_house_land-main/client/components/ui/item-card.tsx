@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users } from "lucide-react"
+import { MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users, Star } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Car, House, Land, Machine } from "@/types"
 import { cn, getApplicationCount } from "@/lib/utils"
@@ -71,28 +71,28 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
   const getCategoryColor = (type: string) => {
     switch (type) {
       case "car":
-        return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
+        return "text-[#0046FF] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
       case "house":
-        return "text-green-600 bg-green-50 border-green-200 dark:text-green-400 dark:bg-green-950 dark:border-green-800"
+        return "text-[#0046FF] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
       case "land":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200 dark:text-yellow-400 dark:bg-yellow-950 dark:border-yellow-800"
+        return "text-[#0046FF] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
       case "machine":
-        return "text-orange-600 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950 dark:border-orange-800"
+        return "text-[#0046FF] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
       default:
-        return "text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-950 dark:border-gray-800"
+        return "text-[#0046FF] bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800"
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "available":
-        return "bg-green-500 hover:bg-green-600"
+        return "bg-[#0046FF] hover:bg-[#0038CC]"
       case "sold":
         return "bg-red-500 hover:bg-red-600"
       case "pending":
-        return "bg-yellow-500 hover:bg-yellow-600"
+        return "bg-[#0046FF] hover:bg-[#0038CC]"
       default:
-        return "bg-gray-500 hover:bg-gray-600"
+        return "bg-[#0046FF] hover:bg-[#0038CC]"
     }
   }
 
@@ -264,29 +264,36 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
                 <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
                 <span className="line-clamp-1 font-medium text-xs sm:text-sm">{item.location}</span>
               </div>
-            </div>
+              <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-1.5 sm:px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800 flex-shrink-0">
+                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
+                <span className="font-bold text-yellow-700 dark:text-yellow-300 text-xs">{item.rating}</span>
+                <span className="text-yellow-600 dark:text-yellow-400 text-xs hidden sm:inline">({item.reviews})</span>
+              </div>
+            </div >
 
             {/* Posted date display */}
-            <div className="flex items-center space-x-1 text-muted-foreground text-xs">
-              <Calendar className="w-3 h-3 text-blue-500 flex-shrink-0" />
+            < div className="flex items-center space-x-1 text-muted-foreground text-xs" >
+              <Calendar className="w-3 h-3 text-[#0046FF] flex-shrink-0" />
               <span className="font-medium">Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
-            </div>
+            </div >
 
             {/* Application count */}
-            {applicationCount > 0 && (
-              <div className="flex items-center space-x-1 text-blue-600 text-xs bg-blue-50 px-2 py-1 rounded-full">
-                <Users className="w-3 h-3" />
-                <span className="font-medium">{applicationCount} {applicationCount === 1 ? "application" : "applications"}</span>
-              </div>
-            )}
-          </div>
-        </Link>
+            {
+              applicationCount > 0 && (
+                <div className="flex items-center space-x-1 text-[#0046FF] text-xs bg-blue-50 px-2 py-1 rounded-full">
+                  <Users className="w-3 h-3" />
+                  <span className="font-medium">{applicationCount} {applicationCount === 1 ? "application" : "applications"}</span>
+                </div>
+              )
+            }
+          </div >
+        </Link >
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3 border-t border-border/50">
+        < div className="flex items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3 border-t border-border/50" >
           <Button
             size="sm"
-            className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs sm:text-sm py-1.5 sm:py-2 px-2 sm:px-3"
+            className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md bg-[#0046FF] hover:bg-[#0038CC] text-white font-medium text-xs sm:text-sm py-1.5 sm:py-2 px-2 sm:px-3"
             onClick={handleAddToCart}
             disabled={!user}
           >
@@ -307,7 +314,7 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
           <Button
             variant="outline"
             size="sm"
-            className="transition-all duration-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 bg-transparent border p-1.5 sm:p-2"
+            className="transition-all duration-300 hover:bg-blue-50 hover:border-blue-300 hover:text-[#0046FF] bg-transparent border p-1.5 sm:p-2"
             onClick={handleContactSeller}
             disabled={!user}
           >
@@ -327,8 +334,8 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
           >
             <Heart className={cn("w-3 h-3", isItemFavorite && "fill-current")} />
           </Button>
-        </div>
-      </CardContent>
-    </Card>
+        </div >
+      </CardContent >
+    </Card >
   )
 }

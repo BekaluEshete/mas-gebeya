@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
 import { useState, useEffect } from "react"
+import { RecentTransactionsCarousel } from "@/components/shared/RecentTransactionsCarousel"
 import { getApplicationCount } from "@/lib/utils"
 
 export function Home() {
@@ -39,7 +40,7 @@ export function Home() {
 
   // Calculate stats from actual data - use reasonable estimates for public stats
   const totalListings = (cars?.length || 0) + (houses?.length || 0) + (lands?.length || 0) + (machines?.length || 0)
-  
+
   // Use a reasonable default for active users
   const ActiveUsers = 1250
 
@@ -47,23 +48,23 @@ export function Home() {
 
   // Dynamic stats based on actual data where available, estimates for private data
   const stats = [
-    { 
-      label: "ንቁ ዝርዝሮች", 
-      value: `${totalListings}+`, 
-      icon: Car, 
-      color: "brand-green" 
+    {
+      label: "ንቁ ዝርዝሮች",
+      value: `${totalListings}+`,
+      icon: Car,
+      color: "brand-green"
     },
-    { 
-      label: "ደስተኛ ደንበኞች", 
-      value: `${ActiveUsers.toLocaleString()}+`, 
-      icon: Users, 
-      color: "brand-red" 
+    {
+      label: "ደስተኛ ደንበኞች",
+      value: `${ActiveUsers.toLocaleString()}+`,
+      icon: Users,
+      color: "brand-red"
     },
-    { 
-      label: "የተሳካ ስምምነቶች", 
-      value: `${completedDeals}+`, 
-      icon: TrendingUp, 
-      color: "brand-yellow" 
+    {
+      label: "የተሳካ ስምምነቶች",
+      value: `${completedDeals}+`,
+      icon: TrendingUp,
+      color: "brand-yellow"
     },
   ]
 
@@ -91,22 +92,22 @@ export function Home() {
   // Filter to show only approved items (or all items if approved field doesn't exist for backward compatibility)
   // Always display exactly 4 items: one from each category (car, house, land, machine)
   // Prioritize featured items, otherwise take the top approved item
-  
+
   const getTopItem = (items: any[], category: string) => {
     if (!items || items.length === 0) return null;
-    
+
     // First try to find a featured and approved item
     const featuredItem = items.find((item) => item.featured && (item.approved !== false));
     if (featuredItem) {
       return featuredItem;
     }
-    
+
     // If no featured item, take the first approved item
     const approvedItem = items.find((item) => item.approved !== false);
     if (approvedItem) {
       return approvedItem;
     }
-    
+
     // If no approved item, take the first item (for backward compatibility)
     return items[0];
   };
@@ -175,7 +176,7 @@ export function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-emerald-600 via-green-600 to-teal-500 text-white overflow-hidden">
+      <section className="relative bg-[#0046FF] text-white overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/20" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop&crop=center')] opacity-20 bg-cover bg-center" />
         <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-32">
@@ -190,7 +191,7 @@ export function Home() {
                 </Badge>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">
                   የህልምዎ መኪና፣ ቤት እና መሬት
-                   <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">እዚህ ይጠብቅዎታል</span>
+                  <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">እዚህ ይጠብቅዎታል</span>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed animate-slide-in-left animate-stagger-1 max-w-2xl mx-auto lg:mx-0">
                   በሺዎች የሚቆጠሩ ጥራት ያላቸው ተሽከርካሪዎች፣ ፕሪሚየም ንብረቶች እና ዋና የመሬት እድሎችን ያግኙ። በቀጥታ ከአከፋፋዮች እና ወኪሎች ጋር ይገናኙ፣ ስምምነቶችን
@@ -204,7 +205,7 @@ export function Home() {
                     <Link href="/cars" className="w-full sm:w-auto">
                       <Button
                         size="lg"
-                        className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                        className="w-full sm:w-auto bg-[#0046FF] text-white hover:bg-[#0038CC] shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                       >
                         ዝርዝሮችን ይመልከቱ
                         <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
@@ -214,7 +215,7 @@ export function Home() {
                       size="lg"
                       variant="outline"
                       onClick={() => setIsAuthModalOpen(true)}
-                      className="w-full sm:w-auto text-white hover:bg-white  bg-blue-400 hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                      className="w-full sm:w-auto text-white hover:bg-white border-white hover:text-[#0046FF] transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ግባ
                     </Button>
@@ -226,7 +227,7 @@ export function Home() {
                   >
                     <Button
                       size="lg"
-                      className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                      className="w-full sm:w-auto bg-[#0046FF] text-white hover:bg-[#0038CC] shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ወደ ዳሽቦርድ ይሂዱ
                       <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
@@ -237,15 +238,14 @@ export function Home() {
             </div>
 
             <div className="relative animate-slide-in-right order-first lg:order-last">
-              <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-lg blur opacity-30 animate-pulse-slow"></div>
+              <div className="absolute -inset-2 sm:-inset-4 bg-[#0046FF] rounded-lg blur opacity-30 animate-pulse-slow"></div>
               <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] rounded-lg shadow-2xl overflow-hidden">
                 {videos.map((video, index) => (
                   <video
                     key={index}
                     src={video.src}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                      index === currentVideoIndex ? "opacity-100" : "opacity-0"
-                    }`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${index === currentVideoIndex ? "opacity-100" : "opacity-0"
+                      }`}
                     autoPlay
                     muted
                     loop
@@ -266,9 +266,8 @@ export function Home() {
                     <button
                       key={index}
                       onClick={() => setCurrentVideoIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        index === currentVideoIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
-                      }`}
+                      className={`w-2 h-2 rounded-full transition-all duration-300 ${index === currentVideoIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
+                        }`}
                       aria-label={`View ${videos[index].category} video`}
                     />
                   ))}
@@ -283,9 +282,9 @@ export function Home() {
               </div>
             </div>
           </div>
-          
+
         </div>
-        
+
         {/* Category Navigation - Full Width at Bottom of Hero */}
         <div className="relative w-full px-3 sm:px-4 md:px-6 lg:px-8 pb-12">
           <div className="pt-6 sm:pt-8 border-t border-white/20">
@@ -301,9 +300,9 @@ export function Home() {
                 { href: "/machines", label: "Machines", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop", alt: "Machines" },
                 { href: "/cars", label: "Vehicle", image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop", alt: "Vehicle" }
               ].map((category, index) => (
-                <Link 
-                  key={category.href} 
-                  href={category.href} 
+                <Link
+                  key={category.href}
+                  href={category.href}
                   className="group animate-scale-in"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
@@ -311,13 +310,13 @@ export function Home() {
                     <img
                       src={category.image}
                       alt={category.alt}
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
+                      className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
                       <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base group-hover:scale-110 transition-transform duration-300">{category.label}</h4>
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
               ))}
             </div>
           </div>
@@ -451,15 +450,14 @@ export function Home() {
                       </div>
                       <p className="text-gray-500 text-xs sm:text-sm line-clamp-1">{listing.location}</p>
                       {listing.applicationCount > 0 && (
-                        <div className="flex items-center text-xs text-blue-600">
+                        <div className="flex items-center text-xs text-[#0046FF]">
                           <Users className="w-3 h-3 mr-1" />
                           {listing.applicationCount} {listing.applicationCount === 1 ? "application" : "applications"}
                         </div>
                       )}
                       <Link href={listing.href}>
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 text-xs sm:text-sm py-2">
+                        <Button className="w-full bg-[#0046FF] hover:bg-[#0038CC] text-white transition-all duration-300 text-xs sm:text-sm py-2">
                           ዝርዝሮችን ይመልከቱ
-                          <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </Link>
                     </div>
@@ -515,6 +513,9 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Recent Transactions Section */}
+      <RecentTransactionsCarousel />
     </div>
   )
 }

@@ -98,13 +98,13 @@ export function LandListings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-16">
+      <section className="bg-[#0046FF] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold">Invest in Prime Land</h1>
-            <p className="text-xl text-orange-100 mb-8">Discover development opportunities and agricultural land</p>
+            <p className="text-xl text-white/90 mb-8">Discover development opportunities and agricultural land</p>
 
             <div className="max-w-2xl mx-auto">
               <div className="relative">
@@ -119,7 +119,7 @@ export function LandListings() {
             </div>
 
             <div className="flex justify-center">
-              <Badge variant="secondary" className="bg-orange-500 text-white">
+              <Badge variant="secondary" className="bg-white/30 text-white">
                 {lands.length} Land Plots Available
               </Badge>
             </div>

@@ -7,13 +7,13 @@ const { validateRequest } = require('../middlewares/validation');
 const router = express.Router();
 
 router.use(protect);
- 
+
 
 const getDealByIdValidation = [
   param('id').isMongoId().withMessage('Invalid deal ID'),
 ];
- 
- 
+
+
 
 const deleteDealValidation = [
   param('id').isMongoId().withMessage('Invalid deal ID'),

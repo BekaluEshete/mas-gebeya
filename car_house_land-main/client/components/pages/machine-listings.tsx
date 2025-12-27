@@ -110,13 +110,15 @@ export function MachineListings() {
   const machineTypes = Array.from(new Set(machines.map((m) => m.machineType)))
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-slate-700 to-slate-800 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold">Industrial Machinery & Equipment</h1>
-            <p className="text-xl text-slate-200 mb-8">Find the right tools for your business</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <section className="bg-[#0046FF] text-white py-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="text-center space-y-6 animate-fade-in">
+            <h1 className="text-3xl md:text-4xl font-bold leading-tight">Heavy Equipment & Machinery</h1>
+            <p className="text-lg text-white/90 max-w-3xl mx-auto">
+              Buy or rent industrial equipment and machinery for your business needs
+            </p>
 
             <div className="max-w-2xl mx-auto">
               <div className="relative">
@@ -130,9 +132,12 @@ export function MachineListings() {
               </div>
             </div>
 
-            <div className="flex justify-center">
-              <Badge variant="secondary" className="bg-slate-600 text-white">
-                {machines.length} Machines Available
+            <div className="flex justify-center space-x-4">
+              <Badge variant="secondary" className="bg-white/30 text-white px-3 py-1 text-sm">
+                {machinesLoading ? "Loading..." : `${machines.length} Machines Available`}
+              </Badge>
+              <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1 text-sm">
+                Certified Equipment
               </Badge>
             </div>
           </div>
@@ -313,18 +318,18 @@ export function MachineListings() {
             )}
           </>
         ) : (
-          <Card className="text-center py-12">
+          <Card className="text-center py-12 border-blue-600/20 shadow-lg animate-fade-in">
             <CardContent>
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
-                  <Search className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">
+                  <Search className="w-8 h-8 text-[#0046FF]" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">No machines found</h3>
                   <p className="text-gray-600">Try adjusting your search criteria</p>
                 </div>
                 <Button
-                  variant="outline"
+                  className="bg-[#0046FF] hover:bg-[#0038CC] text-white text-sm"
                   onClick={() => {
                     setSearchQuery("")
                     setFilters({
