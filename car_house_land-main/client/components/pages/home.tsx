@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
 import { useState, useEffect } from "react"
+import { RecentTransactionsCarousel } from "@/components/shared/RecentTransactionsCarousel"
 
 export function Home() {
   const { user, setIsAuthModalOpen, cars, houses, lands, machines, deals,users } = useApp()
@@ -498,7 +499,6 @@ export function Home() {
                       <Link href={listing.href}>
                         <Button className="w-full bg-[#0046FF] hover:bg-[#0038CC] text-white transition-all duration-300 text-xs sm:text-sm py-2">
                           ዝርዝሮችን ይመልከቱ
-                          <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>
                       </Link>
                     </div>
@@ -554,6 +554,9 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {/* Recent Transactions Section */}
+      <RecentTransactionsCarousel />
     </div>
   )
 }
