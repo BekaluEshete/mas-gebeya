@@ -99,7 +99,7 @@ const createDeal = async (req, res) => {
     const validItemTypes = ['Car', 'Property', 'Land', 'Machine'];
     if (!validItemTypes.includes(itemType)) {
       return res.status(400).json({
-        status: 'error',  
+        status: 'error',
         message: 'Invalid item type',
       });
     }
@@ -158,29 +158,29 @@ const createDeal = async (req, res) => {
       itemType,
       dealType, // Include dealType if it's part of your schema
     });
-try {
-  await sendEmail({
-    email: "tommr2323@gmail.com", // Admin email
-    ...emailTemplates.adminNotification(
-      `A new deal has been created on Massgebeya. <br><br>
+    try {
+      await sendEmail({
+        email: "tommr2323@gmail.com", // Admin email
+        ...emailTemplates.adminNotification(
+          `A new deal has been created on Massgebeya. <br><br>
        <strong>Item:</strong> ${itemExists.title || itemExists.name || "Unnamed"} <br>
        <strong>Type:</strong> ${itemType} <br>
        <strong>Deal Type:</strong> ${dealType} <br>
        <strong>Deal ID:</strong> ${deal._id} <br>
        <a href="${process.env.CLIENT_URL}/deals/${deal._id}" target="_blank">View Deal</a>`,
-      {
-        fullName: buyerExists.fullName,
-        email: buyerExists.email,
-        phoneNumber: buyerExists.phone,
-        location: buyerExists.address,
-      }
-    )
-  });
+          {
+            fullName: buyerExists.fullName,
+            email: buyerExists.email,
+            phoneNumber: buyerExists.phone,
+            location: buyerExists.address,
+          }
+        )
+      });
 
-  console.log("✅ Admin notified about new deal");
-} catch (emailErr) {
-  console.error("❌ Failed to notify admin:", emailErr);
-}
+      console.log("✅ Admin notified about new deal");
+    } catch (emailErr) {
+      console.error("❌ Failed to notify admin:", emailErr);
+    }
 
 
 

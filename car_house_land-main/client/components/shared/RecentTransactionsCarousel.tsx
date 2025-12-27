@@ -28,7 +28,7 @@ export function RecentTransactionsCarousel() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const responseData = await response.json();
-        
+
         // Check if responseData has a 'data' field and if 'data.deals' is an array
         if (responseData && responseData.data && Array.isArray(responseData.data.deals)) {
           setDeals(responseData.data.deals.slice(0, 5)); // Limit to 5 deals
@@ -69,10 +69,11 @@ export function RecentTransactionsCarousel() {
           </p>
         </div>
 
-        <div className="relative">
-          <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 space-x-4 hides-scrollbar">
-            {deals.map((deal) => (
-              <Card key={deal._id} className="min-w-[300px] md:min-w-[350px] snap-center bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+        <div className="relative overflow-hidden">
+          <div className="flex w-max animate-marquee space-x-4 pause-on-hover">
+            {/* Duplicate deals for seamless loop */}
+            {[...deals, ...deals].map((deal, index) => (
+              <Card key={`${deal._id}-${index}`} className="min-w-[300px] md:min-w-[350px] bg-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg md:text-xl text-gray-900">
                     {deal.item?.title}
@@ -90,8 +91,6 @@ export function RecentTransactionsCarousel() {
               </Card>
             ))}
           </div>
-
-          {/* Scroll indicators/buttons could be added here if needed */}
         </div>
 
         <div className="text-center mt-8 sm:mt-12">
