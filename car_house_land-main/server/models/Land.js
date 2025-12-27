@@ -12,7 +12,7 @@ const landSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-   
+
   size: {
     value: { type: Number, required: true, min: [0.1, 'Size must be positive'] },
     unit: { type: String, enum: ['hectare', 'acre', 'sqm'], default: 'hectare' }
@@ -32,13 +32,13 @@ const landSchema = new mongoose.Schema({
     enum: ['flat', 'hilly', 'mountainous', 'rolling', 'desert', 'sloped'],
     required: [true, 'Topography is required']
   },
- 
+
   waterAccess: {
     type: String,
     enum: ['none', 'well', 'river', 'lake', 'municipal', 'borehole'],
     default: 'none'
   },
- 
+
   utilities: {
     electricity: { type: Boolean, default: false },
     water: { type: Boolean, default: false },
@@ -46,7 +46,7 @@ const landSchema = new mongoose.Schema({
     gas: { type: Boolean, default: false },
     internet: { type: Boolean, default: false }
   },
-   
+
   description: {
     type: String,
     required: [true, 'Description is required'],
@@ -58,17 +58,21 @@ const landSchema = new mongoose.Schema({
     isPrimary: { type: Boolean, default: false },
     description: { type: String, trim: true }
   }],
-   
-    city: { type: String, required: true },
-    region: { type: String, required: true },
-    zone: { type: String, trim: true },
-    kebele: { type: String, trim: true },
+
+  city: { type: String, required: true },
+  region: { type: String, required: true },
+  zone: { type: String, trim: true },
+  kebele: { type: String, trim: true },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Land owner is required']
   },
-  
+
+  approved: {
+    type: Boolean,
+    default: false
+  },
   status: {
     type: String,
     enum: ['available', 'sold', 'pending', 'reserved'],
@@ -82,7 +86,7 @@ const landSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-    
+
   nearbyAmenities: [{
     name: { type: String, required: true },
     distance: { type: Number, required: true }, // in km
@@ -90,7 +94,7 @@ const landSchema = new mongoose.Schema({
   }]
 }, {
   timestamps: true,
-  
+
 });
 
 // Indexes
@@ -101,12 +105,12 @@ landSchema.index({ location: '2dsphere' });
 landSchema.index({ createdAt: -1 });
 
 // Virtual for price per unit
-landSchema.virtual('pricePerUnit').get(function() {
+landSchema.virtual('pricePerUnit').get(function () {
   return this.size.value > 0 ? Math.round(this.price / this.size.value) : 0;
 });
 
 // Virtual for primary image
-landSchema.virtual('primaryImage').get(function() {
+landSchema.virtual('primaryImage').get(function () {
   const primary = this.images.find(img => img.isPrimary);
   return primary || this.images[0];
 });

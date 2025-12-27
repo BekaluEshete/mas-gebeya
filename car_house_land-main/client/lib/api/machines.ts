@@ -79,3 +79,20 @@ export async function fetchMachineById(id: string): Promise<Machine | null> {
     return null
   }
 }
+
+export async function deleteMachine(id: string, token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/machines/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error("Error deleting machine:", error)
+    return false
+  }
+}

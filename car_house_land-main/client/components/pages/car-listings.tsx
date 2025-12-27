@@ -6,7 +6,6 @@ import {
   Filter,
   Grid,
   List,
-  Star,
   MapPin,
   Fuel,
   Settings,
@@ -16,6 +15,7 @@ import {
   Heart,
   Loader2,
   RefreshCw,
+  ChevronDown,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,6 +23,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useApp } from "@/context/app-context"
+import { getApplicationCount } from "@/lib/utils"
 
 export function CarListings() {
   const {
@@ -41,6 +42,7 @@ export function CarListings() {
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [visibleItems, setVisibleItems] = useState(6)
   const [filters, setFilters] = useState({
     condition: "all",
     make: "all",
@@ -106,8 +108,6 @@ export function CarListings() {
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         case "date-old":
           return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-        case "rating":
-          return b.rating - a.rating
         default:
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       }
@@ -312,7 +312,6 @@ export function CarListings() {
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -336,12 +335,9 @@ export function CarListings() {
           <>
             {/* Car Listings */}
             <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-              {filteredCars.map((car) => {
+              {filteredCars.slice(0, visibleItems).map((car) => {
                 const isSold = soldItems.has(car.id)
-                // Count applications/deals for this car
-                const applicationCount = deals?.filter(
-                  (deal) => deal.itemId === car.id || deal.item?._id === car.id || deal.item?.id === car.id
-                ).length || 0
+                const applicationCount = getApplicationCount(car.id, deals)
 
                 return (
                   <Card
@@ -356,6 +352,9 @@ export function CarListings() {
                         className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <div className="absolute top-3 left-3 flex gap-2">
+                        <Badge variant={car.status === "available" ? "default" : "destructive"} className={`shadow-md ${car.status === "available" ? "bg-green-600" : "bg-red-600"}`}>
+                          {car.status === "available" ? "Available" : "Not Available"}
+                        </Badge>
                         <Badge variant={car.listingType === "sale" ? "default" : "secondary"} className="shadow-md">
                           {car.listingType === "sale" ? "For Sale" : "For Rent"}
                         </Badge>
@@ -367,12 +366,6 @@ export function CarListings() {
                             SOLD
                           </Badge>
                         )}
-                      </div>
-                      <div className="absolute top-3 right-3">
-                        <div className="flex items-center bg-black/70 text-white px-2 py-1 rounded text-sm">
-                          <Star className="w-3 h-3 mr-1 fill-current" />
-                          {car.rating}
-                        </div>
                       </div>
                     </div>
 
@@ -475,6 +468,24 @@ export function CarListings() {
                 )
               })}
             </div>
+
+            {/* Load More Button */}
+            {visibleItems < filteredCars.length && (
+              <div className="mt-12 text-center animate-fade-in">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setVisibleItems((prev) => prev + 6)}
+                  className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 font-semibold transition-all duration-300 group px-8"
+                >
+                  Show More Cars
+                  <ChevronDown className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing {visibleItems} of {filteredCars.length} cars
+                </p>
+              </div>
+            )}
 
             {filteredCars.length === 0 && !carsLoading && (
               <div className="text-center py-12">

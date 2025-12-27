@@ -22,10 +22,10 @@ const propertySchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-   
+
   size: {
-     type:String,
-     required: [true, 'Size is required'],
+    type: String,
+    required: [true, 'Size is required'],
   },
   bedrooms: {
     type: Number,
@@ -71,18 +71,22 @@ const propertySchema = new mongoose.Schema({
     isPrimary: { type: Boolean, default: false },
     room: { type: String, trim: true } // bedroom, bathroom, kitchen, etc.
   }],
-  
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    region: { type: String, required: true },
-    
- 
+
+  address: { type: String, required: true },
+  city: { type: String, required: true },
+  region: { type: String, required: true },
+
+
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Property owner is required']
   },
-   
+
+  approved: {
+    type: Boolean,
+    default: false
+  },
   status: {
     type: String,
     enum: ['available', 'sold', 'rented', 'pending', 'maintenance'],
@@ -96,13 +100,13 @@ const propertySchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-   
+
 }, {
   timestamps: true,
-   
+
 });
- 
- 
- 
+
+
+
 
 module.exports = mongoose.model('Property', propertySchema);

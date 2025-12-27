@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
-  Star,
   MapPin,
   Calendar,
   Gauge,
@@ -23,6 +22,7 @@ import {
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { getApplicationCount } from "@/lib/utils"
 
 interface MachineDetailProps {
   machineId: string
@@ -35,9 +35,7 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
   const machine = machines?.find((m) => m.id === machineId || m.id === String(machineId) || String(m.id) === machineId)
 
   // Count applications/deals for this machine
-  const applicationCount = deals?.filter(
-    (deal) => deal.itemId === machineId || deal.item?._id === machineId || deal.item?.id === machineId
-  ).length || 0
+  const applicationCount = getApplicationCount(machineId, deals)
 
   if (machinesLoading) {
     return (
@@ -230,11 +228,6 @@ export function MachineDetail({ machineId }: MachineDetailProps) {
               <CardContent className="p-6 space-y-4">
                 <div className="text-center space-y-2">
                   <div className="text-3xl font-bold text-gray-900">{(machine.price || 0).toLocaleString()} ETB</div>
-                  <div className="flex items-center justify-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{machine.rating || "0"}</span>
-                    <span className="text-gray-500">({machine.reviews || 0} reviews)</span>
-                  </div>
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-4 h-4" />
                     <span>

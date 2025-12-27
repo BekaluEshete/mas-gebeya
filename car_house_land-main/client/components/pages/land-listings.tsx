@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ItemCard } from "@/components/ui/item-card"
-import { Search, Filter, Grid, List } from "lucide-react"
+import { Search, Filter, Grid, List, ChevronDown } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Land } from "@/types"
 
@@ -17,6 +17,7 @@ export function LandListings() {
   const [searchQuery, setSearchQuery] = React.useState("")
   const [showMobileFilters, setShowMobileFilters] = React.useState(false)
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
+  const [visibleItems, setVisibleItems] = React.useState(6)
   const [filters, setFilters] = React.useState({
     listingType: "all",
     zoning: "all",
@@ -86,9 +87,6 @@ export function LandListings() {
         break
       case "date-old":
         filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-        break
-      case "rating":
-        filtered.sort((a, b) => b.rating - a.rating)
         break
     }
 
@@ -237,7 +235,6 @@ export function LandListings() {
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -266,11 +263,31 @@ export function LandListings() {
             ))}
           </div>
         ) : filteredLands.length > 0 ? (
-          <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
-            {filteredLands.map((land) => (
-              <ItemCard key={land.id} item={land} type="land" />
-            ))}
-          </div>
+          <>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+              {filteredLands.slice(0, visibleItems).map((land) => (
+                <ItemCard key={land.id} item={land} type="land" />
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {visibleItems < filteredLands.length && (
+              <div className="mt-12 text-center animate-fade-in">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setVisibleItems((prev) => prev + 6)}
+                  className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 font-semibold transition-all duration-300 group px-8"
+                >
+                  Show More Land
+                  <ChevronDown className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing {visibleItems} of {filteredLands.length} land listings
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           <Card className="text-center py-12">
             <CardContent>

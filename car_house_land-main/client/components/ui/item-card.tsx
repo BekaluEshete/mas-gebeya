@@ -6,10 +6,10 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users } from "lucide-react"
+import { MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Car, House, Land, Machine } from "@/types"
-import { cn } from "@/lib/utils"
+import { cn, getApplicationCount } from "@/lib/utils"
 
 interface ItemCardProps {
   item: Car | House | Land | Machine
@@ -21,9 +21,7 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
   const { addToCart, toggleFavorite, isFavorite, user, setIsAuthModalOpen, createDeal, deals } = useApp()
 
   // Count applications/deals for this item
-  const applicationCount = deals?.filter(
-    (deal) => deal.itemId === item.id || deal.item?._id === item.id || deal.item?.id === item.id
-  ).length || 0
+  const applicationCount = getApplicationCount(item.id, deals)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -173,17 +171,27 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
 
-          {/* Status badge */}
-          <div className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 animate-slide-in-left">
+          {/* Status and Rental badges */}
+          <div className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 flex flex-wrap gap-1.5 sm:gap-2 animate-slide-in-left">
             <Badge
               variant="secondary"
               className={cn(
                 "text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs px-1.5 py-0.5 sm:px-2 sm:py-1",
-                getStatusColor(item.status),
+                item.status === "available" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600",
               )}
             >
-              {item.status}
+              {item.status === "available" ? "Available" : "Not Available"}
             </Badge>
+
+            {isRentalItem() && (
+              <Badge
+                variant="secondary"
+                className="bg-purple-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs px-1.5 py-0.5 sm:px-2 sm:py-1"
+              >
+                <span className="hidden sm:inline">For Rent</span>
+                <span className="sm:hidden">Rent</span>
+              </Badge>
+            )}
           </div>
 
           {/* Featured badge */}
@@ -195,19 +203,6 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
               >
                 <span className="hidden sm:inline">⭐ Featured</span>
                 <span className="sm:hidden">⭐</span>
-              </Badge>
-            </div>
-          )}
-
-          {/* Rental/Sale badge */}
-          {isRentalItem() && (
-            <div className="absolute top-1.5 sm:top-2 left-12 sm:left-16 animate-slide-in-left">
-              <Badge
-                variant="secondary"
-                className="bg-purple-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs px-1.5 py-0.5 sm:px-2 sm:py-1"
-              >
-                <span className="hidden sm:inline">For Rent</span>
-                <span className="sm:hidden">Rent</span>
               </Badge>
             </div>
           )}
@@ -263,16 +258,11 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
               {getItemDetails()}
             </p>
 
-            {/* Location and Rating */}
+            {/* Location */}
             <div className="flex items-center justify-between text-xs gap-2">
               <div className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors duration-300 min-w-0 flex-1">
                 <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
                 <span className="line-clamp-1 font-medium text-xs sm:text-sm">{item.location}</span>
-              </div>
-              <div className="flex items-center space-x-1 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950 dark:to-orange-950 px-1.5 sm:px-2 py-1 rounded-full border border-yellow-200 dark:border-yellow-800 flex-shrink-0">
-                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-yellow-700 dark:text-yellow-300 text-xs">{item.rating}</span>
-                <span className="text-yellow-600 dark:text-yellow-400 text-xs hidden sm:inline">({item.reviews})</span>
               </div>
             </div>
 

@@ -120,3 +120,20 @@ function mapPropertyToHouse(property: PropertyAPIResponse): House {
     address: property.address,
   }
 }
+
+export async function deleteHouse(id: string, token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/properties/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error("Error deleting property:", error)
+    return false
+  }
+}

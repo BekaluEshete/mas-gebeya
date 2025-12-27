@@ -6,14 +6,15 @@ const connectDB = require('./config/db');
 const { verifyRefreshToken, generateAccessToken } = require('./utils/token');
 const User = require('./models/User');
 const authRoutes = require("./routes/authRoute");
-const CarRoutes=require("./routes/carRoute");
-const LandRoutes=require("./routes/landRoute");
-const MachineRoutes=require("./routes/machineRoute")
+const CarRoutes = require("./routes/carRoute");
+const LandRoutes = require("./routes/landRoute");
+const MachineRoutes = require("./routes/machineRoute")
 const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
 const PropertyRoute = require("./routes/propertyRoute");
 const ConsultationRoutes = require("./routes/consultationRoute");
 const AnalyticsRoutes = require("./routes/analyticsRoute");
+const AdminRoutes = require("./routes/adminRoute");
 const app = express();
 app.set("trust proxy", 1);
 
@@ -40,6 +41,7 @@ app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
 app.use('/api/consultations', ConsultationRoutes);
 app.use('/api/analytics', AnalyticsRoutes);
+app.use('/api/admin', AdminRoutes);
 
 app.post('/api/auth/refresh-token', async (req, res) => {
   try {

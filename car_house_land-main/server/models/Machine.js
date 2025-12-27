@@ -14,7 +14,7 @@ const machineSchema = new mongoose.Schema({
   },
   subcategory: {
     type: String,
-     trim: true
+    trim: true
   },
   brand: {
     type: String,
@@ -25,7 +25,7 @@ const machineSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-   type: {
+  type: {
     type: String,
     enum: ['sale', 'rent'],
     required: [true, 'machine type (sale/rent) is required']
@@ -45,12 +45,12 @@ const machineSchema = new mongoose.Schema({
     min: [1990, 'Year cannot be before 1990'],
     max: [new Date().getFullYear(), 'Year cannot be in the future']
   },
-   
+
   features: [{
     type: String,
     trim: true
   }],
-  
+
   description: {
     type: String,
     required: [true, 'Description is required'],
@@ -73,17 +73,21 @@ const machineSchema = new mongoose.Schema({
     trim: true
   },
   zone: {
-  type: String,
-  trim: true,
-},
+    type: String,
+    trim: true,
+  },
   region: {
     type: String,
-    trim: true  
+    trim: true
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Machine owner is required']
+  },
+  approved: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,
@@ -98,7 +102,7 @@ const machineSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-   
+
 }, {
   timestamps: true,
 });
@@ -111,7 +115,7 @@ machineSchema.index({ condition: 1 });
 machineSchema.index({ createdAt: -1 });
 
 // Virtual for primary image
-machineSchema.virtual('primaryImage').get(function() {
+machineSchema.virtual('primaryImage').get(function () {
   const primary = this.images.find(img => img.isPrimary);
   return primary || this.images[0];
 });

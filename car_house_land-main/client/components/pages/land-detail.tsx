@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
-  Star,
   MapPin,
   Square,
   Droplets,
@@ -23,6 +22,7 @@ import {
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { getApplicationCount } from "@/lib/utils"
 
 interface LandDetailProps {
   landId: string
@@ -35,9 +35,7 @@ export function LandDetail({ landId }: LandDetailProps) {
   const land = lands?.find((l) => l.id === landId || l.id === String(landId) || String(l.id) === landId)
 
   // Count applications/deals for this land
-  const applicationCount = deals?.filter(
-    (deal) => deal.itemId === landId || deal.item?._id === landId || deal.item?.id === landId
-  ).length || 0
+  const applicationCount = getApplicationCount(landId, deals)
 
   if (landsLoading || !lands) {
     // Updated loading condition
@@ -215,11 +213,6 @@ export function LandDetail({ landId }: LandDetailProps) {
               <CardContent className="p-6 space-y-4">
                 <div className="text-center space-y-2">
                   <div className="text-3xl font-bold text-gray-900">{formatPrice(land.price)}</div>
-                  <div className="flex items-center justify-center space-x-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{land.rating}</span>
-                    <span className="text-gray-500">({land.reviews} reviews)</span>
-                  </div>
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-4 h-4" />
                     <span>{land.location}</span>

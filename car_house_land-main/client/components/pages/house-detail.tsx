@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import {
   ArrowLeft,
-  Star,
   MapPin,
   Bed,
   Bath,
@@ -27,6 +26,7 @@ import {
 } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { ImageSlider } from "@/components/ui/image-slider"
+import { getApplicationCount } from "@/lib/utils"
 
 interface HouseDetailProps {
   houseId: string
@@ -39,9 +39,7 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
   const house = houses?.find((h) => h.id === houseId || h.id === String(houseId) || String(h.id) === houseId)
 
   // Count applications/deals for this house
-  const applicationCount = deals?.filter(
-    (deal) => deal.itemId === houseId || deal.item?._id === houseId || deal.item?.id === houseId
-  ).length || 0
+  const applicationCount = getApplicationCount(houseId, deals)
 
   if (housesLoading) {
     return (
@@ -250,11 +248,6 @@ export function HouseDetail({ houseId }: HouseDetailProps) {
               <CardContent className="p-4 sm:p-6 space-y-3 sm:space-y-4">
                 <div className="text-center space-y-2">
                   <div className="text-2xl sm:text-3xl font-bold text-gray-900">{formatPrice(house.price)}</div>
-                  <div className="flex items-center justify-center space-x-1">
-                    <Star className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium text-sm sm:text-base">{house.rating}</span>
-                    <span className="text-gray-500 text-xs sm:text-sm">({house.reviews} reviews)</span>
-                  </div>
                   <div className="flex items-center justify-center space-x-1 text-gray-600">
                     <MapPin className="w-3 h-3 sm:w-4 sm:h-4" />
                     <span className="text-sm sm:text-base">

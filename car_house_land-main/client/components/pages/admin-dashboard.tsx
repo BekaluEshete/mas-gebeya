@@ -78,6 +78,9 @@ import { useState, useEffect } from "react"
 import RecentActivities from "./RecentActivities"
 import { analyticsAPI } from "@/lib/api/analytics";
 
+import { PendingItemCard } from "@/components/ui/pending-item-card"
+import { CheckSquare } from "lucide-react"
+
 export function AdminDashboard() {
   const {
     user,
@@ -110,6 +113,8 @@ export function AdminDashboard() {
 
   } = useApp()
   const [activeTab, setActiveTab] = useState("overview")
+  const [pendingItems, setPendingItems] = useState<{ cars: any[], properties: any[], lands: any[], machines: any[] }>({ cars: [], properties: [], lands: [], machines: [] })
+  const [loadingPending, setLoadingPending] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState("cars")
   const [editingItem, setEditingItem] = useState<any>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -135,10 +140,10 @@ export function AdminDashboard() {
   const [deletingUser, setDeletingUser] = useState<any>(null)
   const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false)
   // FIXED: Reschedule consultation handler with proper state management
-const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
+  const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
   const [rescheduleConsultId, setRescheduleConsultId] = useState<string | null>(null);
   const [isLoadingConsultations, setIsLoadingConsultations] = useState(false);
-  
+
 
 
   const [owners, setOwners] = useState([])
@@ -146,61 +151,131 @@ const [rescheduleDateTime, setRescheduleDateTime] = useState<string>("");
 
 
   const [analyticsData, setAnalyticsData] = useState({
-  userGrowth: [],
-  dealCompletion: [],
-  dailyTraffic: [],
-});
-const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
-const [analyticsError, setAnalyticsError] = useState(null);
+    userGrowth: [],
+    dealCompletion: [],
+    dailyTraffic: [],
+  });
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState(null);
   // NEW: Fetch consultations when tab changes
 
   // Add this useEffect to fetch analytics data
-useEffect(() => {
-  const fetchAnalyticsData = async () => {
-    if (activeTab === "analytics") {
-      setIsLoadingAnalytics(true);
-      setAnalyticsError(null);
-      
-      try {
-        const [userGrowth, dealCompletion, dailyTraffic] = await Promise.all([
-          analyticsAPI.getUserGrowth(),
-          analyticsAPI.getDealCompletion(),
-          analyticsAPI.getDailyTraffic(),
-        ]);
+  useEffect(() => {
+    const fetchAnalyticsData = async () => {
+      if (activeTab === "analytics") {
+        setIsLoadingAnalytics(true);
+        setAnalyticsError(null);
 
-        setAnalyticsData({
-          userGrowth,
-          dealCompletion,
-          dailyTraffic,
-        });
-      } catch (error) {
-        console.error("Error fetching analytics data:", error);
-        setAnalyticsError("Failed to load analytics data");
-      } finally {
-        setIsLoadingAnalytics(false);
+        try {
+          const [userGrowth, dealCompletion, dailyTraffic] = await Promise.all([
+            analyticsAPI.getUserGrowth(),
+            analyticsAPI.getDealCompletion(),
+            analyticsAPI.getDailyTraffic(),
+          ]);
+
+          setAnalyticsData({
+            userGrowth,
+            dealCompletion,
+            dailyTraffic,
+          });
+        } catch (error) {
+          console.error("Error fetching analytics data:", error);
+          setAnalyticsError("Failed to load analytics data");
+        } finally {
+          setIsLoadingAnalytics(false);
+        }
       }
-    }
-  };
+    };
 
-  fetchAnalyticsData();
-}, [activeTab]);
+    fetchAnalyticsData();
+  }, [activeTab]);
 
 
   // Add this useEffect for auto-refresh
-useEffect(() => {
-  const loadInitialData = async () => {
-    setIsLoadingConsultations(true);
-    await fetchConsultations();
-    setIsLoadingConsultations(false);
-  };
+  useEffect(() => {
+    const loadInitialData = async () => {
+      setIsLoadingConsultations(true);
+      await fetchConsultations();
+      setIsLoadingConsultations(false);
+    };
 
-  loadInitialData();
-}, [fetchConsultations]);
+    loadInitialData();
+  }, [fetchConsultations]);
   useEffect(() => {
     if (activeTab === "consult") {
       fetchConsultations();
     }
   }, [activeTab, fetchConsultations]);
+
+  // Fetch pending items when approvals tab is active
+  useEffect(() => {
+    if (activeTab === "approvals") {
+      fetchPendingItems()
+    }
+  }, [activeTab])
+
+  const fetchPendingItems = async () => {
+    setLoadingPending(true)
+    try {
+      const token = authService.getStoredToken()
+      if (!token) return
+
+      const response = await fetch("https://car-house-land.onrender.com/api/admin/pending", {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPendingItems(data)
+      }
+    } catch (error) {
+      console.error("Error fetching pending items:", error)
+    } finally {
+      setLoadingPending(false)
+    }
+  }
+
+  const handleApprove = async (type: string, id: string) => {
+    try {
+      const token = authService.getStoredToken()
+      const response = await fetch(`https://car-house-land.onrender.com/api/admin/approve/${type}/${id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        // Refresh list
+        fetchPendingItems()
+        // Also refresh the main lists in context
+        if (type === 'car') refreshCars();
+        // properties, lands, machines refresh functions might need to be exposed from context or we rely on SWR/re-fetch
+      }
+    } catch (error) {
+      console.error("Error approving item:", error)
+    }
+  }
+
+  const handleReject = async (type: string, id: string) => {
+    if (!confirm("Are you sure you want to reject and delete this item?")) return
+
+    try {
+      const token = authService.getStoredToken()
+      const response = await fetch(`https://car-house-land.onrender.com/api/admin/reject/${type}/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      if (response.ok) {
+        fetchPendingItems()
+      }
+    } catch (error) {
+      console.error("Error rejecting item:", error)
+    }
+  }
+
+  const getPendingItemsCount = () => {
+    return pendingItems.cars.length + pendingItems.properties.length + pendingItems.lands.length + pendingItems.machines.length
+  }
 
   // Close deal detail dialog when switching away from history tab
   useEffect(() => {
@@ -326,14 +401,14 @@ useEffect(() => {
   const totalListings = cars.length + houses.length + lands.length + machines.length
   const totalRevenue = 2450000
   // Calculate active users from actual data
-const activeUsers = users.filter(user => user.status === "active").length;
+  const activeUsers = users.filter(user => user.status === "active").length;
 
-// You can also calculate total users
-const totalUsers = users.length;
+  // You can also calculate total users
+  const totalUsers = users.length;
 
-// Calculate user growth percentage (example logic)
+  // Calculate user growth percentage (example logic)
   const userGrowthPercentage = 8; // You can calculate this based on previous data
-  
+
   const pendingDeals = getPendingDealsCount()
   const pendingConsultations = getPendingConsultationsCount()
 
@@ -859,9 +934,9 @@ const totalUsers = users.length;
 
       // Update local state
       const updateFunction = selectedCategory === 'cars' ? updateCar :
-                            selectedCategory === 'machines' ? updateMachine :
-                            selectedCategory === 'lands' ? updateLand : updateHouse;
-      
+        selectedCategory === 'machines' ? updateMachine :
+          selectedCategory === 'lands' ? updateLand : updateHouse;
+
       updateFunction({ ...item, approved: true, approvedAt: new Date().toISOString() });
       alert('Item approved successfully!');
       setDataVersion(prev => prev + 1);
@@ -915,9 +990,9 @@ const totalUsers = users.length;
 
       // Update local state
       const updateFunction = selectedCategory === 'cars' ? updateCar :
-                            selectedCategory === 'machines' ? updateMachine :
-                            selectedCategory === 'lands' ? updateLand : updateHouse;
-      
+        selectedCategory === 'machines' ? updateMachine :
+          selectedCategory === 'lands' ? updateLand : updateHouse;
+
       updateFunction({ ...item, approved: false });
       alert('Item rejected successfully!');
       setDataVersion(prev => prev + 1);
@@ -927,84 +1002,84 @@ const totalUsers = users.length;
     }
   }
 
-const handleView = async (item: any) => {
-  const baseUrl = "https://car-house-land.onrender.com"
-  try {
-    let endpoint = '';
+  const handleView = async (item: any) => {
+    const baseUrl = "https://car-house-land.onrender.com"
+    try {
+      let endpoint = '';
 
-    switch (selectedCategory) {
-      case 'cars':
-        endpoint = `${baseUrl}/api/cars/${item.id}`;
-        break;
-      case 'machines':
-        endpoint = `${baseUrl}/api/machines/${item.id}`;
-        break;
-      case 'lands':
-        endpoint = `${baseUrl}/api/lands/${item.id}`;
-        break;
-      case 'houses':
-        endpoint = `${baseUrl}/api/properties/${item.id}`;
-        break;
-      default:
-        console.error('Invalid category');
-        return;
-    }
+      switch (selectedCategory) {
+        case 'cars':
+          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          break;
+        case 'machines':
+          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          break;
+        case 'lands':
+          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          break;
+        case 'houses':
+          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          break;
+        default:
+          console.error('Invalid category');
+          return;
+      }
 
-    const response = await fetch(endpoint, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch item details');
-    }
+      if (!response.ok) {
+        throw new Error('Failed to fetch item details');
+      }
 
-    const itemDetails = await response.json();
-    
-    // Process images to ensure they have proper URLs - FIXED VERSION
-    let processedImages: string[] = [];
-    
-    if (itemDetails.data && itemDetails.data.images) {
-      processedImages = itemDetails.data.images.map((img: string) => {
+      const itemDetails = await response.json();
+
+      // Process images to ensure they have proper URLs - FIXED VERSION
+      let processedImages: string[] = [];
+
+      if (itemDetails.data && itemDetails.data.images) {
+        processedImages = itemDetails.data.images.map((img: string) => {
+          if (img.startsWith('http')) return img;
+          // Handle both absolute and relative paths
+          if (img.startsWith('/')) {
+            return `${baseUrl}${img}`;
+          } else {
+            return `${baseUrl}/${img}`;
+          }
+        });
+      }
+
+      // Create the viewing item with processed images
+      const viewingItemData = {
+        ...(itemDetails.data || itemDetails),
+        images: processedImages.length > 0 ? processedImages : (item.images || [])
+      };
+
+      setViewingItem(viewingItemData);
+      setIsViewDialogOpen(true);
+    } catch (error) {
+      console.error('Error fetching item details:', error);
+      // Fallback to local item data with processed images
+      const processedImages = (item.images || []).map((img: string) => {
         if (img.startsWith('http')) return img;
-        // Handle both absolute and relative paths
         if (img.startsWith('/')) {
-          return `${baseUrl}${img}`;
+          return `https://car-house-land.onrender.com${img}`;
         } else {
-          return `${baseUrl}/${img}`;
+          return `https://car-house-land.onrender.com/${img}`;
         }
       });
+
+      setViewingItem({
+        ...item,
+        images: processedImages
+      });
+      setIsViewDialogOpen(true);
     }
-    
-    // Create the viewing item with processed images
-    const viewingItemData = {
-      ...(itemDetails.data || itemDetails),
-      images: processedImages.length > 0 ? processedImages : (item.images || [])
-    };
-    
-    setViewingItem(viewingItemData);
-    setIsViewDialogOpen(true);
-  } catch (error) {
-    console.error('Error fetching item details:', error);
-    // Fallback to local item data with processed images
-    const processedImages = (item.images || []).map((img: string) => {
-      if (img.startsWith('http')) return img;
-      if (img.startsWith('/')) {
-        return `https://car-house-land.onrender.com${img}`;
-      } else {
-        return `https://car-house-land.onrender.com/${img}`;
-      }
-    });
-    
-    setViewingItem({
-      ...item,
-      images: processedImages
-    });
-    setIsViewDialogOpen(true);
   }
-}
 
 
   const handleImageUpload = (e) => {
@@ -1085,19 +1160,19 @@ const handleView = async (item: any) => {
         const carTitle = editingItem.title?.trim() || "Vehicle"
         const carDescription = editingItem.description?.trim() || "This is a quality vehicle available for sale or rent."
         const carOwner = editingItem.owner || user?._id || ""
-        
+
         // Ensure title meets minimum length (5 chars)
         const finalTitle = carTitle.length >= 5 ? carTitle : carTitle + " Vehicle"
         // Ensure description meets minimum length (20 chars)
-        const finalDescription = carDescription.length >= 20 
-          ? carDescription 
+        const finalDescription = carDescription.length >= 20
+          ? carDescription
           : carDescription + " Quality vehicle with great features and excellent condition."
-        
+
         if (!carOwner) {
           alert("Owner is required. Please select an owner from the dropdown.")
           return
         }
-        
+
         formData.append("title", finalTitle)
         formData.append("make", editingItem.make?.trim() || "Unknown")
         formData.append("model", editingItem.model?.trim() || "Unknown")
@@ -1117,7 +1192,7 @@ const handleView = async (item: any) => {
         formData.append("kebele", editingItem.kebele?.trim() || "")
         formData.append("owner", carOwner)
         formData.append("status", editingItem.status || "available")
-        
+
         // Add reference location if provided
         if (editingItem.referenceLocation) {
           formData.append("referenceLocation", editingItem.referenceLocation.trim())
@@ -1125,11 +1200,11 @@ const handleView = async (item: any) => {
 
         // Add features - backend expects comma-separated string, not JSON
         if (editingItem.features && editingItem.features.length > 0) {
-          const featuresString = Array.isArray(editingItem.features) 
-            ? editingItem.features.join(",") 
-            : typeof editingItem.features === 'string' 
-            ? editingItem.features 
-            : JSON.stringify(editingItem.features)
+          const featuresString = Array.isArray(editingItem.features)
+            ? editingItem.features.join(",")
+            : typeof editingItem.features === 'string'
+              ? editingItem.features
+              : JSON.stringify(editingItem.features)
           formData.append("features", featuresString)
         }
       } else if (selectedCategory === "houses") {
@@ -1137,19 +1212,19 @@ const handleView = async (item: any) => {
         const houseTitle = editingItem.title?.trim() || "House"
         const houseDescription = editingItem.description?.trim() || "This is a quality house available for sale or rent."
         const houseOwner = editingItem.owner || user?._id || ""
-        
+
         // Ensure title meets minimum length
         const finalHouseTitle = houseTitle.length >= 5 ? houseTitle : houseTitle + " Property"
         // Ensure description meets minimum length
-        const finalHouseDescription = houseDescription.length >= 20 
-          ? houseDescription 
+        const finalHouseDescription = houseDescription.length >= 20
+          ? houseDescription
           : houseDescription + " Quality property with great features and excellent condition."
-        
+
         if (!houseOwner) {
           alert("Owner is required. Please select an owner from the dropdown.")
           return
         }
-        
+
         formData.append("title", finalHouseTitle)
         formData.append("propertyType", editingItem.propertyType?.trim() || "apartment")
         formData.append("price", editingItem.price?.toString() || "0")
@@ -1168,7 +1243,7 @@ const handleView = async (item: any) => {
         formData.append("kebele", editingItem.kebele?.trim() || "")
         formData.append("owner", houseOwner)
         formData.append("status", editingItem.status || "available")
-        
+
         // Add reference location if provided
         if (editingItem.referenceLocation) {
           formData.append("referenceLocation", editingItem.referenceLocation.trim())
@@ -1176,11 +1251,11 @@ const handleView = async (item: any) => {
 
         // Add amenities - backend expects comma-separated string or array
         if (editingItem.amenities && editingItem.amenities.length > 0) {
-          const amenitiesString = Array.isArray(editingItem.amenities) 
-            ? editingItem.amenities.join(",") 
-            : typeof editingItem.amenities === 'string' 
-            ? editingItem.amenities 
-            : JSON.stringify(editingItem.amenities)
+          const amenitiesString = Array.isArray(editingItem.amenities)
+            ? editingItem.amenities.join(",")
+            : typeof editingItem.amenities === 'string'
+              ? editingItem.amenities
+              : JSON.stringify(editingItem.amenities)
           formData.append("amenities", amenitiesString)
         }
       } else if (selectedCategory === "lands") {
@@ -1188,19 +1263,19 @@ const handleView = async (item: any) => {
         const landTitle = editingItem.title?.trim() || "Land"
         const landDescription = editingItem.description?.trim() || "This is a quality land plot available for sale or rent."
         const landOwner = editingItem.owner || user?._id || ""
-        
+
         // Ensure title meets minimum length
         const finalLandTitle = landTitle.length >= 5 ? landTitle : landTitle + " Plot"
         // Ensure description meets minimum length
-        const finalLandDescription = landDescription.length >= 20 
-          ? landDescription 
+        const finalLandDescription = landDescription.length >= 20
+          ? landDescription
           : landDescription + " Quality land plot with great potential and excellent location."
-        
+
         if (!landOwner) {
           alert("Owner is required. Please select an owner from the dropdown.")
           return
         }
-        
+
         formData.append("title", finalLandTitle)
         const sizeValue = editingItem.sizeValue || editingItem.size || "0"
         const sizeData = {
@@ -1225,12 +1300,12 @@ const handleView = async (item: any) => {
         formData.append("kebele", editingItem.kebele?.trim() || "")
         formData.append("owner", landOwner)
         formData.append("status", editingItem.status || "available")
-        
+
         // Add ownership type if provided
         if (editingItem.ownershipType) {
           formData.append("ownershipType", editingItem.ownershipType)
         }
-        
+
         // Add reference location if provided
         if (editingItem.referenceLocation) {
           formData.append("referenceLocation", editingItem.referenceLocation.trim())
@@ -1240,19 +1315,19 @@ const handleView = async (item: any) => {
         const machineTitle = editingItem.title?.trim() || "Machine"
         const machineDescription = editingItem.description?.trim() || "This is a quality machine available for sale or rent."
         const machineOwner = editingItem.owner || user?._id || ""
-        
+
         // Ensure title meets minimum length
         const finalMachineTitle = machineTitle.length >= 5 ? machineTitle : machineTitle + " Equipment"
         // Ensure description meets minimum length
-        const finalMachineDescription = machineDescription.length >= 20 
-          ? machineDescription 
+        const finalMachineDescription = machineDescription.length >= 20
+          ? machineDescription
           : machineDescription + " Quality machine with great features and excellent condition."
-        
+
         if (!machineOwner) {
           alert("Owner is required. Please select an owner from the dropdown.")
           return
         }
-        
+
         formData.append("title", finalMachineTitle)
         formData.append("category", editingItem.category?.trim() || "construction")
         formData.append("brand", editingItem.brand?.trim() || "Unknown")
@@ -1269,12 +1344,12 @@ const handleView = async (item: any) => {
         formData.append("kebele", editingItem.kebele?.trim() || "")
         formData.append("owner", machineOwner)
         formData.append("status", editingItem.status || "available")
-        
+
         // Add machine type if provided
         if (editingItem.machineType) {
           formData.append("machineType", editingItem.machineType)
         }
-        
+
         // Add reference location if provided
         if (editingItem.referenceLocation) {
           formData.append("referenceLocation", editingItem.referenceLocation.trim())
@@ -1282,19 +1357,19 @@ const handleView = async (item: any) => {
 
         // Add specifications - backend expects comma-separated string or array
         if (editingItem.specifications && editingItem.specifications.length > 0) {
-          const specsString = Array.isArray(editingItem.specifications) 
-            ? editingItem.specifications.join(",") 
-            : typeof editingItem.specifications === 'string' 
-            ? editingItem.specifications 
-            : JSON.stringify(editingItem.specifications)
+          const specsString = Array.isArray(editingItem.specifications)
+            ? editingItem.specifications.join(",")
+            : typeof editingItem.specifications === 'string'
+              ? editingItem.specifications
+              : JSON.stringify(editingItem.specifications)
           formData.append("specifications", specsString)
         } else if (editingItem.features && editingItem.features.length > 0) {
           // Fallback to features if specifications not provided
-          const featuresString = Array.isArray(editingItem.features) 
-            ? editingItem.features.join(",") 
-            : typeof editingItem.features === 'string' 
-            ? editingItem.features 
-            : JSON.stringify(editingItem.features)
+          const featuresString = Array.isArray(editingItem.features)
+            ? editingItem.features.join(",")
+            : typeof editingItem.features === 'string'
+              ? editingItem.features
+              : JSON.stringify(editingItem.features)
           formData.append("specifications", featuresString)
         }
       }
@@ -1361,16 +1436,16 @@ const handleView = async (item: any) => {
         if (result.data || result) {
           const savedItem = result.data || result
           const itemId = savedItem._id || savedItem.id
-          
+
           if (itemId && savedItem) {
             const mappedItem = {
               ...savedItem,
               id: itemId,
             }
-            
+
             // Determine if this is a new item or an update
             const isNewItem = !editingItem?.id
-            
+
             if (isNewItem) {
               // Add new item to local state
               if (selectedCategory === 'cars') {
@@ -1385,28 +1460,28 @@ const handleView = async (item: any) => {
             } else {
               // Update existing item in local state
               const updateItemId = mappedItem.id || itemId
-              
+
               if (!updateItemId) {
                 console.error("Cannot update: missing item ID")
                 return
               }
-              
+
               // Create updates object without the id field
               const updates: any = { ...mappedItem }
               delete updates.id
               delete updates._id
-              
+
               // Ensure updates object exists and has data
               if (!updates || Object.keys(updates).length === 0) {
                 console.error("Cannot update: no update data provided")
                 return
               }
-              
+
               // Ensure title exists for logging (required by logActivity)
               if (!updates.title) {
                 updates.title = mappedItem.title || editingItem?.title || savedItem?.title || selectedCategory.slice(0, -1) || 'item'
               }
-              
+
               // Call appropriate update function
               if (selectedCategory === 'cars') {
                 updateCar(updateItemId, updates as Partial<Car>)
@@ -1436,12 +1511,12 @@ const handleView = async (item: any) => {
         try {
           const responseText = await responseClone.text()
           console.log(`[v0] Error response text:`, responseText)
-          
+
           if (responseText) {
             try {
               errorDetails = JSON.parse(responseText)
               console.log(`[v0] Parsed error data:`, errorDetails)
-              
+
               // Extract error message from various possible formats
               if (errorDetails.errors && Array.isArray(errorDetails.errors)) {
                 errorMessage = errorDetails.errors
@@ -1478,80 +1553,80 @@ const handleView = async (item: any) => {
       alert(`Failed to save ${selectedCategory}. Please try again.`)
     }
   }
- const handleViewDeal = async (deal: Deal) => {
-  try {
-    console.log('handleViewDeal called with deal:', deal);
-    
-    // Set the deal immediately for UI response
-    setSelectedDeal(deal);
-    setIsDealDetailOpen(true);
-    
-    console.log('Dialog state set to open, isDealDetailOpen should be true');
+  const handleViewDeal = async (deal: Deal) => {
+    try {
+      console.log('handleViewDeal called with deal:', deal);
 
-    // Fetch complete deal details from API
-    const token = authService.getStoredToken();
-    if (!token) {
-      console.error("No authentication token found");
-      // Still show the dialog with basic deal data
-      return;
+      // Set the deal immediately for UI response
+      setSelectedDeal(deal);
+      setIsDealDetailOpen(true);
+
+      console.log('Dialog state set to open, isDealDetailOpen should be true');
+
+      // Fetch complete deal details from API
+      const token = authService.getStoredToken();
+      if (!token) {
+        console.error("No authentication token found");
+        // Still show the dialog with basic deal data
+        return;
+      }
+
+      // Use _id if available, otherwise fall back to id
+      const dealId = deal._id || deal.id;
+      if (!dealId) {
+        console.error("No deal ID found, deal:", deal);
+        // Still show the dialog with basic deal data
+        return;
+      }
+
+      console.log('Fetching deal details for ID:', dealId);
+
+      const response = await fetch(`https://car-house-land.onrender.com/api/deals/${dealId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to fetch deal details from API, using local data');
+        // Keep the basic deal data even if API fetch fails
+        return;
+      }
+
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // Merge API data with existing deal data to preserve all properties
+        setSelectedDeal(prevDeal => ({
+          ...prevDeal,
+          ...result.data.deal,
+          // Preserve critical properties that might be missing in API response
+          id: prevDeal?.id || prevDeal?._id || result.data.deal?._id || result.data.deal?.id,
+          _id: prevDeal?._id || prevDeal?.id || result.data.deal?._id || result.data.deal?.id,
+          item: { ...prevDeal?.item, ...(result.data.deal?.item || {}) },
+          buyer: { ...prevDeal?.buyer, ...(result.data.deal?.buyer || {}) },
+          seller: { ...prevDeal?.seller, ...(result.data.deal?.seller || {}) },
+          // Ensure we have the dealId
+          dealId: result.data.deal?.dealId || prevDeal?.dealId
+        }));
+        console.log('Deal details updated from API');
+      }
+    } catch (error) {
+      console.error('Error fetching deal details:', error);
+      // Keep the basic deal data even if detailed fetch fails
+      // Dialog should still be open with the initial deal data
     }
-
-    // Use _id if available, otherwise fall back to id
-    const dealId = deal._id || deal.id;
-    if (!dealId) {
-      console.error("No deal ID found, deal:", deal);
-      // Still show the dialog with basic deal data
-      return;
-    }
-
-    console.log('Fetching deal details for ID:', dealId);
-
-    const response = await fetch(`https://car-house-land.onrender.com/api/deals/${dealId}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-
-    if (!response.ok) {
-      console.warn('Failed to fetch deal details from API, using local data');
-      // Keep the basic deal data even if API fetch fails
-      return;
-    }
-
-    const result = await response.json();
-
-    if (result.status === 'success') {
-      // Merge API data with existing deal data to preserve all properties
-      setSelectedDeal(prevDeal => ({
-        ...prevDeal,
-        ...result.data.deal,
-        // Preserve critical properties that might be missing in API response
-        id: prevDeal?.id || prevDeal?._id || result.data.deal?._id || result.data.deal?.id,
-        _id: prevDeal?._id || prevDeal?.id || result.data.deal?._id || result.data.deal?.id,
-        item: { ...prevDeal?.item, ...(result.data.deal?.item || {}) },
-        buyer: { ...prevDeal?.buyer, ...(result.data.deal?.buyer || {}) },
-        seller: { ...prevDeal?.seller, ...(result.data.deal?.seller || {}) },
-        // Ensure we have the dealId
-        dealId: result.data.deal?.dealId || prevDeal?.dealId
-      }));
-      console.log('Deal details updated from API');
-    }
-  } catch (error) {
-    console.error('Error fetching deal details:', error);
-    // Keep the basic deal data even if detailed fetch fails
-    // Dialog should still be open with the initial deal data
-  }
-};
+  };
   const handleAcceptDeal = async (dealId: string) => {
-     setIsDealDetailOpen(false);
+    setIsDealDetailOpen(false);
     try {
       await updateDealStatus(dealId, "approved")
       // Refresh deals to get updated data
       await refreshDeals()
       // Close the deal detail dialog
-  
+
     } catch (error) {
       console.error("Error accepting deal:", error)
     }
@@ -1563,7 +1638,7 @@ const handleView = async (item: any) => {
     try {
       await updateDealStatus(dealId, "rejected")
       await refreshDeals()
-        // Close the deal detail dialog
+      // Close the deal detail dialog
 
     } catch (error) {
       console.error("Error rejecting deal:", error)
@@ -1575,7 +1650,7 @@ const handleView = async (item: any) => {
     try {
       await updateDealStatus(dealId, "completed")
       await refreshDeals()
-        // Close the deal detail dialog
+      // Close the deal detail dialog
     } catch (error) {
       console.error("Error completing deal:", error)
     }
@@ -1587,7 +1662,7 @@ const handleView = async (item: any) => {
     try {
       await updateDealStatus(dealId, "cancelled", reason)
       await refreshDeals()
-        // Close the deal detail dialog
+      // Close the deal detail dialog
     } catch (error) {
       console.error("Error cancelling deal:", error)
     }
@@ -1648,7 +1723,7 @@ const handleView = async (item: any) => {
     }
   }
 
- // NEW: Consultation helpers
+  // NEW: Consultation helpers
   const getModeIcon = (mode: Consultation["mode"]) => {
     switch (mode) {
       case "Online video call": return <Video className="w-4 h-4" />;
@@ -1670,185 +1745,185 @@ const handleView = async (item: any) => {
   };
 
   // ... (previous imports and state declarations remain unchanged)
-// FIXED: Proper consultation ID resolution
-const getConsultationId = (consult: Consultation) => {
-  return consult.id || consult._id || consult.consultationId;
-};
+  // FIXED: Proper consultation ID resolution
+  const getConsultationId = (consult: Consultation) => {
+    return consult.id || consult._id || consult.consultationId;
+  };
 
-// FIXED: Accept consultation handler
-const handleAcceptConsult = async (consult: Consultation) => {
-  const id = getConsultationId(consult);
-  if (!id) {
-    alert("Invalid consultation ID. Please refresh the page.");
-    return;
-  }
-  
-  const newStatus = "accepted";
-  // Optimistic update FIRST
-  dispatch({
-    type: "UPDATE_CONSULTATION",
-    payload: {
-      id,
-      updates: { 
-        status: newStatus, 
-        updatedAt: new Date().toISOString() 
+  // FIXED: Accept consultation handler
+  const handleAcceptConsult = async (consult: Consultation) => {
+    const id = getConsultationId(consult);
+    if (!id) {
+      alert("Invalid consultation ID. Please refresh the page.");
+      return;
+    }
+
+    const newStatus = "accepted";
+    // Optimistic update FIRST
+    dispatch({
+      type: "UPDATE_CONSULTATION",
+      payload: {
+        id,
+        updates: {
+          status: newStatus,
+          updatedAt: new Date().toISOString()
+        },
       },
-    },
-  });
+    });
 
-  try {
-    await updateConsultationStatus(id, newStatus);
-    console.log("Accept API success");
-    await fetchConsultations(); // Sync with server
-  } catch (error) {
-    console.error("Accept API failed:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    alert(`Updated locally only. Sync failed: ${errorMsg}`);
-  }
-};
+    try {
+      await updateConsultationStatus(id, newStatus);
+      console.log("Accept API success");
+      await fetchConsultations(); // Sync with server
+    } catch (error) {
+      console.error("Accept API failed:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      alert(`Updated locally only. Sync failed: ${errorMsg}`);
+    }
+  };
 
-// FIXED: Complete consultation handler
-const handleCompleteConsult = async (consult: Consultation) => {
-  const id = getConsultationId(consult);
-  if (!id) {
-    alert("Invalid consultation ID. Please refresh the page.");
-    return;
-  }
-  
-  const newStatus = "completed";
-  // Optimistic update FIRST
-  dispatch({
-    type: "UPDATE_CONSULTATION",
-    payload: {
-      id,
-      updates: { 
-        status: newStatus,
-        completedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+  // FIXED: Complete consultation handler
+  const handleCompleteConsult = async (consult: Consultation) => {
+    const id = getConsultationId(consult);
+    if (!id) {
+      alert("Invalid consultation ID. Please refresh the page.");
+      return;
+    }
+
+    const newStatus = "completed";
+    // Optimistic update FIRST
+    dispatch({
+      type: "UPDATE_CONSULTATION",
+      payload: {
+        id,
+        updates: {
+          status: newStatus,
+          completedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
       },
-    },
-  });
+    });
 
-  try {
-    await updateConsultationStatus(id, newStatus);
-    console.log("Complete API success");
-    await fetchConsultations(); // Sync with server
-  } catch (error) {
-    console.error("Complete API failed:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    alert(`Updated locally only. Sync failed: ${errorMsg}`);
-  }
-};
-
+    try {
+      await updateConsultationStatus(id, newStatus);
+      console.log("Complete API success");
+      await fetchConsultations(); // Sync with server
+    } catch (error) {
+      console.error("Complete API failed:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      alert(`Updated locally only. Sync failed: ${errorMsg}`);
+    }
+  };
 
 
-const handleOpenReschedule = (consult: Consultation) => {
-  const id = getConsultationId(consult);
-  setRescheduleConsultId(id);
-  // Set default value to current datetime
-  setRescheduleDateTime(new Date(consult.dateTime).toISOString().slice(0, 16));
-};
 
-const handleRescheduleConsult = async () => {
-  if (!rescheduleConsultId || !rescheduleDateTime) {
-    alert("Please select a new date/time.");
-    return;
-  }
+  const handleOpenReschedule = (consult: Consultation) => {
+    const id = getConsultationId(consult);
+    setRescheduleConsultId(id);
+    // Set default value to current datetime
+    setRescheduleDateTime(new Date(consult.dateTime).toISOString().slice(0, 16));
+  };
 
-  // Optimistic update FIRST
-  dispatch({
-    type: "UPDATE_CONSULTATION",
-    payload: {
-      id: rescheduleConsultId,
-      updates: {
-        status: "rescheduled",
-        dateTime: new Date(rescheduleDateTime).toISOString(),
-        agentNotes: `Rescheduled by admin to ${new Date(rescheduleDateTime).toLocaleString()}`,
-        updatedAt: new Date().toISOString(),
+  const handleRescheduleConsult = async () => {
+    if (!rescheduleConsultId || !rescheduleDateTime) {
+      alert("Please select a new date/time.");
+      return;
+    }
+
+    // Optimistic update FIRST
+    dispatch({
+      type: "UPDATE_CONSULTATION",
+      payload: {
+        id: rescheduleConsultId,
+        updates: {
+          status: "rescheduled",
+          dateTime: new Date(rescheduleDateTime).toISOString(),
+          agentNotes: `Rescheduled by admin to ${new Date(rescheduleDateTime).toLocaleString()}`,
+          updatedAt: new Date().toISOString(),
+        },
       },
-    },
-  });
+    });
 
-  try {
-    await updateConsultationStatus(
-      rescheduleConsultId, 
-      "rescheduled", 
-      `Rescheduled to ${new Date(rescheduleDateTime).toLocaleString()}`
-    );
-    console.log("Reschedule API success");
-    await fetchConsultations(); // Sync with server
-    setRescheduleConsultId(null);
-    setRescheduleDateTime("");
-  } catch (error) {
-    console.error("Reschedule API failed:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    alert(`Updated locally only. Sync failed: ${errorMsg}`);
-  }
-};
+    try {
+      await updateConsultationStatus(
+        rescheduleConsultId,
+        "rescheduled",
+        `Rescheduled to ${new Date(rescheduleDateTime).toLocaleString()}`
+      );
+      console.log("Reschedule API success");
+      await fetchConsultations(); // Sync with server
+      setRescheduleConsultId(null);
+      setRescheduleDateTime("");
+    } catch (error) {
+      console.error("Reschedule API failed:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      alert(`Updated locally only. Sync failed: ${errorMsg}`);
+    }
+  };
 
-// FIXED: Cancel consultation handler
-const handleCancelConsult = async (consult: Consultation) => {
-  const id = getConsultationId(consult);
-  if (!id) {
-    alert("Invalid consultation ID. Please refresh the page.");
-    return;
-  }
-  
-  if (!confirm("Cancel this consultation? This cannot be undone.")) return;
-  
-  // Optimistic update FIRST
-  dispatch({
-    type: "UPDATE_CONSULTATION",
-    payload: {
-      id,
-      updates: {
-        status: "cancelled",
-        agentNotes: "Cancelled by admin",
-        cancelledAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+  // FIXED: Cancel consultation handler
+  const handleCancelConsult = async (consult: Consultation) => {
+    const id = getConsultationId(consult);
+    if (!id) {
+      alert("Invalid consultation ID. Please refresh the page.");
+      return;
+    }
+
+    if (!confirm("Cancel this consultation? This cannot be undone.")) return;
+
+    // Optimistic update FIRST
+    dispatch({
+      type: "UPDATE_CONSULTATION",
+      payload: {
+        id,
+        updates: {
+          status: "cancelled",
+          agentNotes: "Cancelled by admin",
+          cancelledAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
       },
-    },
-  });
+    });
 
-  try {
-    await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
-    console.log("Cancel API success");
-    await fetchConsultations(); // Sync with server
-  } catch (error) {
-    console.error("Cancel API failed:", error);
-    const errorMsg = error instanceof Error ? error.message : "Unknown error";
-    alert(`Updated locally only. Sync failed: ${errorMsg}`);
-  }
-};
-// Add this function near your other handlers
-const handleRefreshAll = async () => {
-  try {
-    setIsLoadingUsers(true);
-    setIsLoadingAnalytics(true);
-    
-    await Promise.all([
-      fetchConsultations(),
-      // Refresh analytics when on analytics tab
-      activeTab === "analytics" && analyticsAPI.getUserGrowth().then(data => 
-        setAnalyticsData(prev => ({ ...prev, userGrowth: data }))
-      ),
-      activeTab === "analytics" && analyticsAPI.getDealCompletion().then(data => 
-        setAnalyticsData(prev => ({ ...prev, dealCompletion: data }))
-      ),
-      activeTab === "analytics" && analyticsAPI.getDailyTraffic().then(data => 
-        setAnalyticsData(prev => ({ ...prev, dailyTraffic: data }))
-      ),
-      new Promise(resolve => setTimeout(resolve, 1000))
-    ]);
-  } catch (error) {
-    console.error("Error refreshing data:", error);
-  } finally {
-    setIsLoadingUsers(false);
-    setIsLoadingAnalytics(false);
-  }
-};
+    try {
+      await updateConsultationStatus(id, "cancelled", "Cancelled by admin");
+      console.log("Cancel API success");
+      await fetchConsultations(); // Sync with server
+    } catch (error) {
+      console.error("Cancel API failed:", error);
+      const errorMsg = error instanceof Error ? error.message : "Unknown error";
+      alert(`Updated locally only. Sync failed: ${errorMsg}`);
+    }
+  };
+  // Add this function near your other handlers
+  const handleRefreshAll = async () => {
+    try {
+      setIsLoadingUsers(true);
+      setIsLoadingAnalytics(true);
 
-// ... (rest of the component, including the JSX, remains unchanged)
+      await Promise.all([
+        fetchConsultations(),
+        // Refresh analytics when on analytics tab
+        activeTab === "analytics" && analyticsAPI.getUserGrowth().then(data =>
+          setAnalyticsData(prev => ({ ...prev, userGrowth: data }))
+        ),
+        activeTab === "analytics" && analyticsAPI.getDealCompletion().then(data =>
+          setAnalyticsData(prev => ({ ...prev, dealCompletion: data }))
+        ),
+        activeTab === "analytics" && analyticsAPI.getDailyTraffic().then(data =>
+          setAnalyticsData(prev => ({ ...prev, dailyTraffic: data }))
+        ),
+        new Promise(resolve => setTimeout(resolve, 1000))
+      ]);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsLoadingUsers(false);
+      setIsLoadingAnalytics(false);
+    }
+  };
+
+  // ... (rest of the component, including the JSX, remains unchanged)
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 py-4 sm:py-6 md:py-8">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -1879,19 +1954,19 @@ const handleRefreshAll = async () => {
                 </div>
               )}
               <div className="flex gap-2">
-               <Button
-  variant="outline"
-  size="sm"
-  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
-  onClick={handleRefreshAll}
-  disabled={isLoadingUsers}
->
-  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
-  <span className="hidden sm:inline">
-    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
-  </span>
-</Button>
-                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center space-x-2 bg-transparent text-xs sm:text-sm px-2 sm:px-3"
+                  onClick={handleRefreshAll}
+                  disabled={isLoadingUsers}
+                >
+                  <RefreshCw className={`w-3 h-3 sm:w-4 sm:h-4 ${isLoadingUsers ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline">
+                    {isLoadingUsers ? 'Refreshing...' : 'Refresh'}
+                  </span>
+                </Button>
+
               </div>
             </div>
           </div>
@@ -1908,7 +1983,7 @@ const handleRefreshAll = async () => {
                   <div className="text-xs sm:text-sm text-gray-600 font-medium">Total Listings</div>
                   <div className="flex items-center mt-2 text-green-600">
                     <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-                   
+
                   </div>
                 </div>
                 <div className="p-2 sm:p-3 bg-blue-100 rounded-full group-hover:bg-blue-200 transition-colors">
@@ -1917,41 +1992,41 @@ const handleRefreshAll = async () => {
               </div>
             </CardContent>
           </Card>
-<Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
-  <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
-    <div className="flex items-center justify-between">
-      <div>
-        <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
-          {isLoadingUsers ? (
-            <div className="animate-pulse bg-gray-200 rounded h-8 w-16"></div>
-          ) : (
-            activeUsers
-          )}
-        </div>
-        <div className="text-xs sm:text-sm text-gray-600 font-medium">
-          {isLoadingUsers ? "Loading..." : "Active Users"}
-        </div>
-        {!isLoadingUsers && (
-          <div className="flex items-center mt-2 text-green-600">
-            <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
-            <span className="text-xs font-medium">
-              {totalUsers} total users
-            </span>
-          </div>
-        )}
-      </div>
-      <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
-        {isLoadingUsers ? (
-          <div className="animate-pulse bg-gray-300 rounded-full w-8 h-8"></div>
-        ) : (
-          <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
-        )}
-      </div>
-    </div>
-  </CardContent>
-</Card>
+          <Card className="border-l-4 border-l-brand-purple hover:shadow-lg transition-all duration-300 group">
+            <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 group-hover:text-brand-purple transition-colors">
+                    {isLoadingUsers ? (
+                      <div className="animate-pulse bg-gray-200 rounded h-8 w-16"></div>
+                    ) : (
+                      activeUsers
+                    )}
+                  </div>
+                  <div className="text-xs sm:text-sm text-gray-600 font-medium">
+                    {isLoadingUsers ? "Loading..." : "Active Users"}
+                  </div>
+                  {!isLoadingUsers && (
+                    <div className="flex items-center mt-2 text-green-600">
+                      <ArrowUpRight className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                      <span className="text-xs font-medium">
+                        {totalUsers} total users
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-full group-hover:bg-purple-200 transition-colors">
+                  {isLoadingUsers ? (
+                    <div className="animate-pulse bg-gray-300 rounded-full w-8 h-8"></div>
+                  ) : (
+                    <Users className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-brand-purple" />
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-         
+
 
           <Card className="border-l-4 border-l-emerald-500 hover:shadow-lg transition-all duration-300 group">
             <CardContent className="p-3 sm:p-4 md:p-5 lg:p-6">
@@ -1991,7 +2066,7 @@ const handleRefreshAll = async () => {
                 </div>
               </div>
             </CardContent>
-          </Card> 
+          </Card>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -2066,294 +2141,377 @@ const handleRefreshAll = async () => {
                     </Badge>
                   )}
                 </TabsTrigger>
+                <TabsTrigger
+                  value="approvals"
+                  className="relative flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm px-2 sm:px-4"
+                >
+                  <CheckSquare className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">Approvals</span>
+                  <span className="sm:hidden">Approve</span>
+                  {getPendingItemsCount() > 0 && (
+                    <Badge className="absolute -top-1 -right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full p-0 text-xs flex items-center justify-center bg-red-500 text-white border-0">
+                      {getPendingItemsCount()}
+                    </Badge>
+                  )}
+                </TabsTrigger>
               </TabsList>
             </div>
           </div>
 
-       <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-    <Card className="lg:col-span-3">
-      <CardHeader className="pb-2 sm:pb-4">
-        <CardTitle className="flex items-center text-sm sm:text-base">
-          <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
-          Listings Distribution
-        </CardTitle>
-        <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer
-          config={{
-            cars: { label: "Cars", color: "var(--color-cars-primary)" },
-            houses: { label: "Houses", color: "var(--color-houses-primary)" },
-            lands: { label: "Lands", color: "var(--color-lands-primary)" },
-            machines: { label: "Machines", color: "var(--color-machines-primary)" },
-          }}
-          className="h-[200px] sm:h-[250px] md:h-[300px]"
-        >
-          <ResponsiveContainer width="100%" height="100%">
-            <RechartsPieChart>
-              <Pie
-                data={categoryData}
-                cx="50%"
-                cy="50%"
-                outerRadius="80%"
-                dataKey="value"
-                label={({ name, percentage }) => `${name}: ${percentage}%`}
-              >
-                {categoryData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <ChartTooltip content={<ChartTooltipContent />} />
-            </RechartsPieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
-      </CardContent>
-    </Card>
-  </div>
+          <TabsContent value="approvals" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Approvals</CardTitle>
+                <CardDescription>Review and approve user submissions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {loadingPending ? (
+                  <div className="text-center py-8">Loading pending items...</div>
+                ) : getPendingItemsCount() === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">No pending items to approve</div>
+                ) : (
+                  <div className="space-y-8">
+                    {pendingItems.cars.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Car className="w-5 h-5 text-blue-600" /> Cars ({pendingItems.cars.length})
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {pendingItems.cars.map((item: any) => (
+                            <PendingItemCard key={item._id} item={item} type="car" onApprove={handleApprove} onReject={handleReject} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-  <div className="grid grid-cols-1 gap-4 sm:gap-6">
-    <RecentActivities />
-  </div>
-</TabsContent>
+                    {pendingItems.properties.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Home className="w-5 h-5 text-green-600" /> Houses ({pendingItems.properties.length})
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {pendingItems.properties.map((item: any) => (
+                            <PendingItemCard key={item._id} item={item} type="property" onApprove={handleApprove} onReject={handleReject} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-        <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
-  {isLoadingAnalytics ? (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-center">
-        <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
-        <p className="text-sm text-gray-500">Loading analytics data...</p>
-      </div>
-    </div>
-  ) : analyticsError ? (
-    <div className="flex items-center justify-center py-12">
-      <div className="text-center">
-        <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
-        <p className="text-sm text-red-500">{analyticsError}</p>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="mt-2"
-          onClick={() => window.location.reload()}
-        >
-          Retry
-        </Button>
-      </div>
-    </div>
-  ) : (
-    <>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* Daily Traffic Chart - Updated with real data */}
-        <Card>
-          <CardHeader className="pb-2 sm:pb-4">
-            <CardTitle className="flex items-center text-sm sm:text-base">
-              <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
-              Daily Traffic
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Visitors and page views throughout the day
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                visitors: {
-                  label: "Visitors",
-                  color: "var(--color-brand-orange)",
-                },
-                pageViews: {
-                  label: "Page Views",
-                  color: "var(--color-brand-blue)",
-                },
-              }}
-              className="h-[200px] sm:h-[250px] md:h-[300px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analyticsData.dailyTraffic}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="timeInterval" 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
-                      />
-                    }
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="visitors" 
-                    stroke="var(--color-brand-orange)" 
-                    strokeWidth={3} 
-                    dot={{ r: 4 }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="pageViews" 
-                    stroke="var(--color-brand-blue)" 
-                    strokeWidth={3} 
-                    dot={{ r: 4 }}
-                  />
-                  <Legend />
-                </LineChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
+                    {pendingItems.lands.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-orange-600" /> Lands ({pendingItems.lands.length})
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {pendingItems.lands.map((item: any) => (
+                            <PendingItemCard key={item._id} item={item} type="land" onApprove={handleApprove} onReject={handleReject} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-        {/* User Growth Chart - Updated with real data */}
-        <Card>
-          <CardHeader className="pb-2 sm:pb-4">
-            <CardTitle className="flex items-center text-sm sm:text-base">
-              <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
-              User Growth
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Monthly new user registrations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                newUsers: {
-                  label: "New Users",
-                  color: "var(--color-brand-purple)",
-                },
-              }}
-              className="h-[200px] sm:h-[250px] md:h-[300px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analyticsData.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
-                      />
-                    }
-                  />
-                  <Bar 
-                    dataKey="newUsers" 
-                    fill="var(--color-brand-purple)" 
-                    radius={[4, 4, 0, 0]} 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
+                    {pendingItems.machines.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-4 flex items-center gap-2">
+                          <Wrench className="w-5 h-5 text-slate-600" /> Machines ({pendingItems.machines.length})
+                        </h3>
+                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                          {pendingItems.machines.map((item: any) => (
+                            <PendingItemCard key={item._id} item={item} type="machine" onApprove={handleApprove} onReject={handleReject} />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
-        {/* Deal Completion Chart - Updated with real data */}
-        <Card>
-          <CardHeader className="pb-2 sm:pb-4">
-            <CardTitle className="flex items-center text-sm sm:text-base">
-              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
-              Deal Completion Rate
-            </CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
-              Monthly completed deals
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ChartContainer
-              config={{
-                completedDeals: {
-                  label: "Completed Deals",
-                  color: "#10b981",
-                },
-              }}
-              className="h-[200px] sm:h-[250px] md:h-[300px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analyticsData.dealCompletion}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="month" 
-                    tick={{ fontSize: 12 }}
-                  />
-                  <YAxis />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
-                      />
-                    }
-                  />
-                  <Bar 
-                    dataKey="completedDeals" 
-                    fill="#10b981" 
-                    radius={[4, 4, 0, 0]} 
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Analytics Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Total Users This Month</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.userGrowth.length > 0 
-                    ? analyticsData.userGrowth[analyticsData.userGrowth.length - 1]?.newUsers || 0
-                    : 0
-                  }
-                </p>
-              </div>
-              <Users className="w-8 h-8 text-brand-purple" />
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <Card className="lg:col-span-3">
+                <CardHeader className="pb-2 sm:pb-4">
+                  <CardTitle className="flex items-center text-sm sm:text-base">
+                    <PieChart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-blue" />
+                    Listings Distribution
+                  </CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Breakdown by category</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <ChartContainer
+                    config={{
+                      cars: { label: "Cars", color: "var(--color-cars-primary)" },
+                      houses: { label: "Houses", color: "var(--color-houses-primary)" },
+                      lands: { label: "Lands", color: "var(--color-lands-primary)" },
+                      machines: { label: "Machines", color: "var(--color-machines-primary)" },
+                    }}
+                    className="h-[200px] sm:h-[250px] md:h-[300px]"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <RechartsPieChart>
+                        <Pie
+                          data={categoryData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius="80%"
+                          dataKey="value"
+                          label={({ name, percentage }) => `${name}: ${percentage}%`}
+                        >
+                          {categoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                      </RechartsPieChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Completed Deals This Month</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.dealCompletion.length > 0 
-                    ? analyticsData.dealCompletion[analyticsData.dealCompletion.length - 1]?.completedDeals || 0
-                    : 0
-                  }
-                </p>
-              </div>
-              <ShoppingCart className="w-8 h-8 text-emerald-600" />
+            <div className="grid grid-cols-1 gap-4 sm:gap-6">
+              <RecentActivities />
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Today's Visitors</p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {analyticsData.dailyTraffic.reduce((sum, item) => sum + (item.visitors || 0), 0)}
-                </p>
+          <TabsContent value="analytics" className="space-y-4 sm:space-y-6">
+            {isLoadingAnalytics ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-gray-400" />
+                  <p className="text-sm text-gray-500">Loading analytics data...</p>
+                </div>
               </div>
-              <Globe className="w-8 h-8 text-brand-orange" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </>
-  )}
-</TabsContent>
+            ) : analyticsError ? (
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center">
+                  <AlertCircle className="w-8 h-8 mx-auto mb-2 text-red-400" />
+                  <p className="text-sm text-red-500">{analyticsError}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => window.location.reload()}
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                  {/* Daily Traffic Chart - Updated with real data */}
+                  <Card>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="flex items-center text-sm sm:text-base">
+                        <Globe className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-orange" />
+                        Daily Traffic
+                      </CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">
+                        Visitors and page views throughout the day
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer
+                        config={{
+                          visitors: {
+                            label: "Visitors",
+                            color: "var(--color-brand-orange)",
+                          },
+                          pageViews: {
+                            label: "Page Views",
+                            color: "var(--color-brand-blue)",
+                          },
+                        }}
+                        className="h-[200px] sm:h-[250px] md:h-[300px]"
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={analyticsData.dailyTraffic}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="timeInterval"
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  formatter={(value, name) => [Number(value).toLocaleString(), name || "Count"]}
+                                />
+                              }
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="visitors"
+                              stroke="var(--color-brand-orange)"
+                              strokeWidth={3}
+                              dot={{ r: 4 }}
+                            />
+                            <Line
+                              type="monotone"
+                              dataKey="pageViews"
+                              stroke="var(--color-brand-blue)"
+                              strokeWidth={3}
+                              dot={{ r: 4 }}
+                            />
+                            <Legend />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  {/* User Growth Chart - Updated with real data */}
+                  <Card>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="flex items-center text-sm sm:text-base">
+                        <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
+                        User Growth
+                      </CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">
+                        Monthly new user registrations
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer
+                        config={{
+                          newUsers: {
+                            label: "New Users",
+                            color: "var(--color-brand-purple)",
+                          },
+                        }}
+                        className="h-[200px] sm:h-[250px] md:h-[300px]"
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analyticsData.userGrowth}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="month"
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  formatter={(value, name) => [Number(value).toLocaleString(), name || "Users"]}
+                                />
+                              }
+                            />
+                            <Bar
+                              dataKey="newUsers"
+                              fill="var(--color-brand-purple)"
+                              radius={[4, 4, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-1 gap-4 sm:gap-6">
+                  {/* Deal Completion Chart - Updated with real data */}
+                  <Card>
+                    <CardHeader className="pb-2 sm:pb-4">
+                      <CardTitle className="flex items-center text-sm sm:text-base">
+                        <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-600" />
+                        Deal Completion Rate
+                      </CardTitle>
+                      <CardDescription className="text-xs sm:text-sm">
+                        Monthly completed deals
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer
+                        config={{
+                          completedDeals: {
+                            label: "Completed Deals",
+                            color: "#10b981",
+                          },
+                        }}
+                        className="h-[200px] sm:h-[250px] md:h-[300px]"
+                      >
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analyticsData.dealCompletion}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis
+                              dataKey="month"
+                              tick={{ fontSize: 12 }}
+                            />
+                            <YAxis />
+                            <ChartTooltip
+                              content={
+                                <ChartTooltipContent
+                                  formatter={(value, name) => [Number(value).toLocaleString(), name || "Deals"]}
+                                />
+                              }
+                            />
+                            <Bar
+                              dataKey="completedDeals"
+                              fill="#10b981"
+                              radius={[4, 4, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Analytics Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Total Users This Month</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {analyticsData.userGrowth.length > 0
+                              ? analyticsData.userGrowth[analyticsData.userGrowth.length - 1]?.newUsers || 0
+                              : 0
+                            }
+                          </p>
+                        </div>
+                        <Users className="w-8 h-8 text-brand-purple" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Completed Deals This Month</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {analyticsData.dealCompletion.length > 0
+                              ? analyticsData.dealCompletion[analyticsData.dealCompletion.length - 1]?.completedDeals || 0
+                              : 0
+                            }
+                          </p>
+                        </div>
+                        <ShoppingCart className="w-8 h-8 text-emerald-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-600">Today's Visitors</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {analyticsData.dailyTraffic.reduce((sum, item) => sum + (item.visitors || 0), 0)}
+                          </p>
+                        </div>
+                        <Globe className="w-8 h-8 text-brand-orange" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            )}
+          </TabsContent>
 
 
           <TabsContent value="listings" className="space-y-4 sm:space-y-6">
@@ -3407,41 +3565,41 @@ const handleRefreshAll = async () => {
                       <div className="space-y-2">
                         <Label className="text-xs sm:text-sm font-medium">Images</Label>
                         {viewingItem.images && viewingItem.images.length > 0 ? (
-  <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
-    {viewingItem.images.map((image: string, index: number) => (
-      <div key={index} className="relative">
-        <div className="aspect-square relative overflow-hidden rounded-lg border">
-          <img
-            src={image || "/placeholder.svg"}
-            alt={`Image ${index + 1}`}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              // Fallback if image fails to load
-              (e.target as HTMLImageElement).src = "/placeholder.svg";
-            }}
-          />
-        </div>
-        {index === 0 && (
-          <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-            <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
-          </div>
-        )}
-      </div>
-    ))}
-  </div>
-) : (
-  <p className="text-sm text-gray-500">No images available</p>
-)}
+                          <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+                            {viewingItem.images.map((image: string, index: number) => (
+                              <div key={index} className="relative">
+                                <div className="aspect-square relative overflow-hidden rounded-lg border">
+                                  <img
+                                    src={image || "/placeholder.svg"}
+                                    alt={`Image ${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Fallback if image fails to load
+                                      (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                    }}
+                                  />
+                                </div>
+                                {index === 0 && (
+                                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                                    <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500">No images available</p>
+                        )}
                       </div>
-                   <div className="space-y-2">
-  <Label className="text-xs sm:text-sm font-medium">Owner</Label>
-  <p className="text-sm border rounded-lg p-2 bg-gray-50">
-    {viewingItem.owner 
-      ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner 
-      : "N/A"
-    }
-  </p>
-</div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Owner</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.owner
+                            ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner
+                            : "N/A"
+                          }
+                        </p>
+                      </div>
 
                     </div>
                   </div>
@@ -3877,8 +4035,8 @@ const handleRefreshAll = async () => {
           </TabsContent>
           {/* NEW: Consult tab content (add after deals TabsContent) */}
 
-{/* FIXED: Consult tab content , buttons with local fallback */}
-{/* NEW: Consult tab content */}
+          {/* FIXED: Consult tab content , buttons with local fallback */}
+          {/* NEW: Consult tab content */}
           <TabsContent value="history" className="space-y-4 sm:space-y-6">
             <Card>
               <CardHeader className="pb-2 sm:pb-4">
@@ -3924,10 +4082,10 @@ const handleRefreshAll = async () => {
                             {deal.completedAt
                               ? new Date(deal.completedAt).toLocaleDateString()
                               : deal.updatedAt
-                              ? new Date(deal.updatedAt).toLocaleDateString()
-                              : deal.createdAt
-                              ? new Date(deal.createdAt).toLocaleDateString()
-                              : "N/A"}
+                                ? new Date(deal.updatedAt).toLocaleDateString()
+                                : deal.createdAt
+                                  ? new Date(deal.createdAt).toLocaleDateString()
+                                  : "N/A"}
                           </TableCell>
                           <TableCell className="text-xs sm:text-sm">
                             <Badge className={`${getStatusColor(deal.status)} text-xs flex items-center space-x-1 w-fit`}>
@@ -3960,156 +4118,156 @@ const handleRefreshAll = async () => {
             </Card>
           </TabsContent>
 
-<TabsContent value="consult" className="space-y-4 sm:space-y-6">
-  <Card>
-    <CardHeader className="pb-2 sm:pb-4">
-      <CardTitle className="flex items-center text-sm sm:text-base">
-        <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
-        Consultation Management
-      </CardTitle>
-      <CardDescription className="text-xs sm:text-sm">
-        Review and manage booked consultations
-      </CardDescription>
-    </CardHeader>
-    <CardContent className="p-0">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="text-xs sm:text-sm">User</TableHead>
-            <TableHead className="text-xs sm:text-sm">Phone</TableHead>
-            <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
-            <TableHead className="text-xs sm:text-sm">Mode</TableHead>
-            <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
-            <TableHead className="text-xs sm:text-sm">Status</TableHead>
-            <TableHead className="text-xs sm:text-sm">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {consultations.slice(0, 10).map((consult) => (
-            <TableRow key={consult.id || consult._id}>
-              <TableCell className="text-xs sm:text-sm">
-                <div>
-                  <p className="font-medium">{consult.fullName}</p>
-                  <p className="text-gray-500">{consult.email}</p>
-                </div>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm text-gray-600">
-                {consult.phone || 'N/A'}
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                <Badge variant="secondary">
-                  {consult.category} / {consult.type}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                <div className="flex items-center space-x-1">
-                  {getModeIcon(consult.mode)}
-                  <span>{consult.mode}</span>
-                </div>
-              </TableCell>
-              <TableCell className="text-xs sm:text-sm">
-                {new Date(consult.dateTime).toLocaleString()}
-              </TableCell>
-              <TableCell>
-                <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
-                  {consult.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex space-x-1 flex-wrap gap-1">
-                  {/* Reschedule Button */}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-xs"
-                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
-                    onClick={() => handleOpenReschedule(consult)}
-                  >
-                    Reschedule
-                  </Button>
-                  
-                  {/* Accept/Complete Button */}
-                  <Button
-                    size="sm"
-                    variant={consult.status === 'pending' ? "default" : "outline"}
-                    className="text-xs"
-                    disabled={consult.status === 'cancelled' || consult.status === 'completed'}
-                    onClick={() => consult.status === 'pending' 
-                      ? handleAcceptConsult(consult) 
-                      : handleCompleteConsult(consult)
-                    }
-                  >
-                    {consult.status === 'pending' ? 'Accept' : 'Complete'}
-                  </Button>
-                  
-                  {/* Cancel Button */}
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="text-xs"
-                    disabled={consult.status === 'completed' || consult.status === 'cancelled'}
-                    onClick={() => handleCancelConsult(consult)}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </CardContent>
-  </Card>
+          <TabsContent value="consult" className="space-y-4 sm:space-y-6">
+            <Card>
+              <CardHeader className="pb-2 sm:pb-4">
+                <CardTitle className="flex items-center text-sm sm:text-base">
+                  <Headphones className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-blue-600" />
+                  Consultation Management
+                </CardTitle>
+                <CardDescription className="text-xs sm:text-sm">
+                  Review and manage booked consultations
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-xs sm:text-sm">User</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Phone</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Category/Type</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Mode</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Date/Time</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                      <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {consultations.slice(0, 10).map((consult) => (
+                      <TableRow key={consult.id || consult._id}>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div>
+                            <p className="font-medium">{consult.fullName}</p>
+                            <p className="text-gray-500">{consult.email}</p>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm text-gray-600">
+                          {consult.phone || 'N/A'}
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <Badge variant="secondary">
+                            {consult.category} / {consult.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          <div className="flex items-center space-x-1">
+                            {getModeIcon(consult.mode)}
+                            <span>{consult.mode}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-xs sm:text-sm">
+                          {new Date(consult.dateTime).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          <Badge className={`${getConsultStatusColor(consult.status)} text-xs`}>
+                            {consult.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-1 flex-wrap gap-1">
+                            {/* Reschedule Button */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-xs"
+                              disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                              onClick={() => handleOpenReschedule(consult)}
+                            >
+                              Reschedule
+                            </Button>
 
-  {/* Reschedule Dialog */}
-  <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
-    <DialogContent className="max-w-xs sm:max-w-md mx-4">
-      <DialogHeader>
-        <DialogTitle className="text-sm sm:text-base">
-          Reschedule Consultation
-        </DialogTitle>
-      </DialogHeader>
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
-            New Date & Time
-          </Label>
-          <Input
-            id="reschedule-datetime"
-            type="datetime-local"
-            value={rescheduleDateTime}
-            onChange={(e) => setRescheduleDateTime(e.target.value)}
-            className="text-sm"
-            min={new Date().toISOString().slice(0, 16)}
-          />
-        </div>
-        <div className="flex justify-end space-x-2">
-          <Button
-            variant="outline"
-            className="text-xs sm:text-sm"
-            onClick={() => {
-              setRescheduleConsultId(null);
-              setRescheduleDateTime("");
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleRescheduleConsult}
-            className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-          >
-            Confirm Reschedule
-          </Button>
-        </div>
-      </div>
-    </DialogContent>
-  </Dialog>
-</TabsContent>
-        </Tabs> 
+                            {/* Accept/Complete Button */}
+                            <Button
+                              size="sm"
+                              variant={consult.status === 'pending' ? "default" : "outline"}
+                              className="text-xs"
+                              disabled={consult.status === 'cancelled' || consult.status === 'completed'}
+                              onClick={() => consult.status === 'pending'
+                                ? handleAcceptConsult(consult)
+                                : handleCompleteConsult(consult)
+                              }
+                            >
+                              {consult.status === 'pending' ? 'Accept' : 'Complete'}
+                            </Button>
+
+                            {/* Cancel Button */}
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="text-xs"
+                              disabled={consult.status === 'completed' || consult.status === 'cancelled'}
+                              onClick={() => handleCancelConsult(consult)}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+
+            {/* Reschedule Dialog */}
+            <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
+              <DialogContent className="max-w-xs sm:max-w-md mx-4">
+                <DialogHeader>
+                  <DialogTitle className="text-sm sm:text-base">
+                    Reschedule Consultation
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
+                      New Date & Time
+                    </Label>
+                    <Input
+                      id="reschedule-datetime"
+                      type="datetime-local"
+                      value={rescheduleDateTime}
+                      onChange={(e) => setRescheduleDateTime(e.target.value)}
+                      className="text-sm"
+                      min={new Date().toISOString().slice(0, 16)}
+                    />
+                  </div>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      className="text-xs sm:text-sm"
+                      onClick={() => {
+                        setRescheduleConsultId(null);
+                        setRescheduleDateTime("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleRescheduleConsult}
+                      className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+                    >
+                      Confirm Reschedule
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </TabsContent>
+        </Tabs>
 
         {/* Deal Detail Dialog - Moved outside TabsContent so it's always available */}
-        <Dialog 
-          open={isDealDetailOpen} 
+        <Dialog
+          open={isDealDetailOpen}
           onOpenChange={(open) => {
             setIsDealDetailOpen(open);
             if (!open) {
@@ -4118,262 +4276,262 @@ const handleRefreshAll = async () => {
             }
           }}
         >
-  <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-    <DialogHeader>
-      <DialogTitle className="text-sm sm:text-base">
-        Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
-      </DialogTitle>
-    </DialogHeader>
-    {selectedDeal && (
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="space-y-3 sm:space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
-            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-              {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
-            </p>
-          </div>
+          <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">
+                Deal Details - {selectedDeal?.dealId || selectedDeal?.id?.slice(-8) || "N/A"}
+              </DialogTitle>
+            </DialogHeader>
+            {selectedDeal && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Deal ID</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {selectedDeal.dealId || selectedDeal.id?.slice(-8) || "N/A"}
+                    </p>
+                  </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="flex items-center space-x-2 mb-2">
-                {getItemIcon(selectedDeal.itemType)}
-                <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Type:</span>
-                <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Item Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="flex items-center space-x-2 mb-2">
+                        {getItemIcon(selectedDeal.itemType)}
+                        <span className="font-medium text-sm">{selectedDeal.item?.title || "N/A"}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Type:</span>
+                        <span className="font-medium capitalize">{selectedDeal.itemType || "N/A"}</span>
 
-                <span>Price:</span>
-                <span className="font-medium">
-                  ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
-                </span>
-
-                {selectedDeal.item?.make && (
-                  <>
-                    <span>Make:</span>
-                    <span className="font-medium">{selectedDeal.item.make}</span>
-                  </>
-                )}
-
-                {selectedDeal.item?.model && (
-                  <>
-                    <span>Model:</span>
-                    <span className="font-medium">{selectedDeal.item.model}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <p className="font-medium text-sm">
-                {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                <span>Email:</span>
-                <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
-
-                <span>Phone:</span>
-                <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
-
-                {selectedDeal.buyer?.address && (
-                  <>
-                    <span>Address:</span>
-                    <span className="font-medium">
-                      {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <p className="font-medium text-sm">
-                {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs mt-2">
-                <span>Email:</span>
-                <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
-
-                <span>Phone:</span>
-                <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-3 sm:space-y-4">
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
-                {getStatusIcon(selectedDeal.status)}
-                <span className="capitalize">{selectedDeal.status}</span>
-              </Badge>
-
-              {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
-                <div className="mt-3">
-                  <Label className="text-xs font-medium">Status History</Label>
-                  <div className="space-y-1 mt-1">
-                    {selectedDeal.statusHistory.map((history: any, index: number) => (
-                      <div key={index} className="flex justify-between text-xs">
-                        <span className="capitalize">{history.status}</span>
-                        <span className="text-gray-500">
-                          {new Date(history.timestamp).toLocaleDateString()}
+                        <span>Price:</span>
+                        <span className="font-medium">
+                          ETB {(selectedDeal.originalPrice || selectedDeal.item?.price || 0).toLocaleString()}
                         </span>
+
+                        {selectedDeal.item?.make && (
+                          <>
+                            <span>Make:</span>
+                            <span className="font-medium">{selectedDeal.item.make}</span>
+                          </>
+                        )}
+
+                        {selectedDeal.item?.model && (
+                          <>
+                            <span>Model:</span>
+                            <span className="font-medium">{selectedDeal.item.model}</span>
+                          </>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Buyer Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <p className="font-medium text-sm">
+                        {selectedDeal.buyer?.fullName || selectedDeal.buyerName || "N/A"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                        <span>Email:</span>
+                        <span className="font-medium">{selectedDeal.buyer?.email || selectedDeal.buyerEmail || "N/A"}</span>
+
+                        <span>Phone:</span>
+                        <span className="font-medium">{selectedDeal.buyer?.phone || selectedDeal.buyerPhone || "N/A"}</span>
+
+                        {selectedDeal.buyer?.address && (
+                          <>
+                            <span>Address:</span>
+                            <span className="font-medium">
+                              {selectedDeal.buyer.address.street || ""} {selectedDeal.buyer.address.city || ""}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Seller Information</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <p className="font-medium text-sm">
+                        {selectedDeal.seller?.fullName || selectedDeal.sellerName || "N/A"}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 text-xs mt-2">
+                        <span>Email:</span>
+                        <span className="font-medium">{selectedDeal.seller?.email || selectedDeal.sellerEmail || "N/A"}</span>
+
+                        <span>Phone:</span>
+                        <span className="font-medium">{selectedDeal.seller?.phone || selectedDeal.sellerPhone || "N/A"}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Original Price:</span>
-                <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Deal Status</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <Badge className={`${getStatusColor(selectedDeal.status)} text-xs flex items-center space-x-1 w-fit`}>
+                        {getStatusIcon(selectedDeal.status)}
+                        <span className="capitalize">{selectedDeal.status}</span>
+                      </Badge>
 
-                <span>Final Price:</span>
-                <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
-
-                <span>Commission:</span>
-                <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
-
-                <span>Platform Fee:</span>
-                <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
-
-                <span>Payment Method:</span>
-                <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
-
-                {selectedDeal.paymentStatus && (
-                  <>
-                    <span>Payment Status:</span>
-                    <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <span>Created:</span>
-                <span className="font-medium">
-                  {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                  {new Date(selectedDeal.createdAt).toLocaleTimeString()}
-                </span>
-
-                <span>Last Updated:</span>
-                <span className="font-medium">
-                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
-                  {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
-                </span>
-
-                {selectedDeal.approvedAt && (
-                  <>
-                    <span>Approved:</span>
-                    <span className="font-medium">
-                      {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
-                      {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
-                    </span>
-                  </>
-                )}
-
-                {selectedDeal.completedAt && (
-                  <>
-                    <span>Completed:</span>
-                    <span className="font-medium">
-                      {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
-                      {new Date(selectedDeal.completedAt).toLocaleTimeString()}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
-            <div className="border rounded-lg p-3 bg-gray-50">
-              {selectedDeal.notes ? (
-                <p className="text-xs">{selectedDeal.notes}</p>
-              ) : (
-                <p className="text-xs text-gray-500">No notes available</p>
-              )}
-
-              {selectedDeal.messages && selectedDeal.messages.length > 0 && (
-                <div className="mt-3">
-                  <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
-                  <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
-                    {selectedDeal.messages.map((message: any, index: number) => (
-                      <div key={index} className="text-xs p-2 bg-white rounded border">
-                        <div className="flex justify-between">
-                          <span className="font-medium">{message.sender}</span>
-                          <span className="text-gray-500">
-                            {new Date(message.timestamp).toLocaleDateString()}
-                          </span>
+                      {selectedDeal.statusHistory && selectedDeal.statusHistory.length > 0 && (
+                        <div className="mt-3">
+                          <Label className="text-xs font-medium">Status History</Label>
+                          <div className="space-y-1 mt-1">
+                            {selectedDeal.statusHistory.map((history: any, index: number) => (
+                              <div key={index} className="flex justify-between text-xs">
+                                <span className="capitalize">{history.status}</span>
+                                <span className="text-gray-500">
+                                  {new Date(history.timestamp).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                        <p className="mt-1">{message.content}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Financial Details</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Original Price:</span>
+                        <span className="font-medium">ETB {(selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                        <span>Final Price:</span>
+                        <span className="font-medium">ETB {(selectedDeal.finalPrice || selectedDeal.originalPrice || 0).toLocaleString()}</span>
+
+                        <span>Commission:</span>
+                        <span className="font-medium">ETB {(selectedDeal.commission || 0).toLocaleString()}</span>
+
+                        <span>Platform Fee:</span>
+                        <span className="font-medium">ETB {(selectedDeal.platformFee || 0).toLocaleString()}</span>
+
+                        <span>Payment Method:</span>
+                        <span className="font-medium capitalize">{selectedDeal.paymentMethod || "Not specified"}</span>
+
+                        {selectedDeal.paymentStatus && (
+                          <>
+                            <span>Payment Status:</span>
+                            <span className="font-medium capitalize">{selectedDeal.paymentStatus}</span>
+                          </>
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Timeline</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <span>Created:</span>
+                        <span className="font-medium">
+                          {new Date(selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(selectedDeal.createdAt).toLocaleTimeString()}
+                        </span>
+
+                        <span>Last Updated:</span>
+                        <span className="font-medium">
+                          {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(selectedDeal.updatedAt || selectedDeal.createdAt).toLocaleTimeString()}
+                        </span>
+
+                        {selectedDeal.approvedAt && (
+                          <>
+                            <span>Approved:</span>
+                            <span className="font-medium">
+                              {new Date(selectedDeal.approvedAt).toLocaleDateString()} at{" "}
+                              {new Date(selectedDeal.approvedAt).toLocaleTimeString()}
+                            </span>
+                          </>
+                        )}
+
+                        {selectedDeal.completedAt && (
+                          <>
+                            <span>Completed:</span>
+                            <span className="font-medium">
+                              {new Date(selectedDeal.completedAt).toLocaleDateString()} at{" "}
+                              {new Date(selectedDeal.completedAt).toLocaleTimeString()}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Notes & Messages</Label>
+                    <div className="border rounded-lg p-3 bg-gray-50">
+                      {selectedDeal.notes ? (
+                        <p className="text-xs">{selectedDeal.notes}</p>
+                      ) : (
+                        <p className="text-xs text-gray-500">No notes available</p>
+                      )}
+
+                      {selectedDeal.messages && selectedDeal.messages.length > 0 && (
+                        <div className="mt-3">
+                          <Label className="text-xs font-medium">Messages ({selectedDeal.messages.length})</Label>
+                          <div className="space-y-2 mt-1 max-h-32 overflow-y-auto">
+                            {selectedDeal.messages.map((message: any, index: number) => (
+                              <div key={index} className="text-xs p-2 bg-white rounded border">
+                                <div className="flex justify-between">
+                                  <span className="font-medium">{message.sender}</span>
+                                  <span className="text-gray-500">
+                                    {new Date(message.timestamp).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="mt-1">{message.content}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
+              </div>
+            )}
+            <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
+              <Button
+                variant="outline"
+                className="text-xs sm:text-sm bg-transparent"
+                onClick={() => setIsDealDetailOpen(false)}
+              >
+                Close
+              </Button>
+              {selectedDeal?.status === "pending" && (
+                <>
+                  <Button
+                    className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
+                    onClick={() => handleAcceptDeal(selectedDeal.id)}
+                  >
+                    Accept Deal
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="text-xs sm:text-sm"
+                    onClick={() => handleRejectDeal(selectedDeal.id)}
+                  >
+                    Reject Deal
+                  </Button>
+                </>
+              )}
+              {selectedDeal?.status === "approved" && (
+                <Button
+                  className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+                  onClick={() => handleCompleteDeal(selectedDeal.id)}
+                >
+                  Mark as Completed
+                </Button>
               )}
             </div>
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
-    )}
-    <div className="flex justify-end space-x-2 mt-4 sm:mt-6">
-      <Button
-        variant="outline"
-        className="text-xs sm:text-sm bg-transparent"
-        onClick={() => setIsDealDetailOpen(false)}
-      >
-        Close
-      </Button>
-      {selectedDeal?.status === "pending" && (
-        <>
-          <Button
-            className="text-xs sm:text-sm bg-green-600 hover:bg-green-700"
-            onClick={() => handleAcceptDeal(selectedDeal.id)}
-          >
-            Accept Deal
-          </Button>
-          <Button
-            variant="destructive"
-            className="text-xs sm:text-sm"
-            onClick={() => handleRejectDeal(selectedDeal.id)}
-          >
-            Reject Deal
-          </Button>
-        </>
-      )}
-      {selectedDeal?.status === "approved" && (
-        <Button
-          className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-          onClick={() => handleCompleteDeal(selectedDeal.id)}
-        >
-          Mark as Completed
-        </Button>
-      )}
-    </div>
-  </DialogContent>
-</Dialog>
-        
-                </div>
     </div>
 
   )

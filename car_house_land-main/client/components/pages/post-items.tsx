@@ -20,7 +20,7 @@ export function PostItems() {
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false)
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
   const [isPosting, setIsPosting] = useState(false)
-  
+
   const router = useRouter()
 
   if (!user) {
@@ -106,7 +106,7 @@ export function PostItems() {
         formData.append("address", postingItem.address.trim())
         formData.append("kebele", postingItem.kebele?.trim() || "")
         formData.append("status", "available")
-        
+
         if (postingItem.features && Array.isArray(postingItem.features) && postingItem.features.length > 0) {
           formData.append("features", postingItem.features.join(","))
         }
@@ -129,7 +129,7 @@ export function PostItems() {
         formData.append("address", postingItem.address.trim())
         formData.append("kebele", postingItem.kebele?.trim() || "")
         formData.append("status", "available")
-        
+
         if (postingItem.amenities && Array.isArray(postingItem.amenities) && postingItem.amenities.length > 0) {
           formData.append("amenities", postingItem.amenities.join(","))
         }
@@ -170,7 +170,7 @@ export function PostItems() {
         formData.append("address", postingItem.address.trim())
         formData.append("kebele", postingItem.kebele?.trim() || "")
         formData.append("status", "available")
-        
+
         if (postingItem.features && Array.isArray(postingItem.features) && postingItem.features.length > 0) {
           formData.append("features", postingItem.features.join(","))
         }
@@ -212,7 +212,7 @@ export function PostItems() {
         if (savedItem) addMachine(savedItem)
       }
 
-      alert("Item posted successfully!")
+      alert("Item posted successfully! It will appear after admin approval.")
       setIsPostDialogOpen(false)
       setPostingItem({})
       setUploadedImages([])

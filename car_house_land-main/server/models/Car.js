@@ -38,7 +38,7 @@ const carSchema = new mongoose.Schema({
     required: [true, 'Price is required'],
     min: [0, 'Price cannot be negative']
   },
-  
+
   mileage: {
     type: Number,
     min: [0, 'Mileage cannot be negative']
@@ -53,7 +53,7 @@ const carSchema = new mongoose.Schema({
     enum: ['manual', 'automatic'],
     required: [true, 'Transmission type is required']
   },
-  
+
   color: {
     type: String,
     required: [true, 'Car color is required'],
@@ -78,14 +78,18 @@ const carSchema = new mongoose.Schema({
     publicId: { type: String, required: true },
     isPrimary: { type: Boolean, default: false }
   }],
-    city: { type: String, required: true },
-    region: { type: String, required: true },
-    address: { type: String, required: true },
-    kebele: { type: String, trim: true },
+  city: { type: String, required: true },
+  region: { type: String, required: true },
+  address: { type: String, required: true },
+  kebele: { type: String, trim: true },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: [true, 'Car owner is required']
+  },
+  approved: {
+    type: Boolean,
+    default: false
   },
   status: {
     type: String,
@@ -100,8 +104,8 @@ const carSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  
-  
+
+
 }, {
   timestamps: true,
 });
@@ -113,13 +117,13 @@ carSchema.index({ price: 1 });
 carSchema.index({ createdAt: -1 });
 
 // Virtual for primary image
-carSchema.virtual('primaryImage').get(function() {
+carSchema.virtual('primaryImage').get(function () {
   const primary = this.images.find(img => img.isPrimary);
   return primary || this.images[0];
 });
 
 // Method to increment views
-carSchema.methods.incrementViews = function() {
+carSchema.methods.incrementViews = function () {
   this.views += 1;
   return this.save();
 };

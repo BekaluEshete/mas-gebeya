@@ -50,15 +50,15 @@ router.post(
    toggleFavorite
 );
 
-// User routes (authenticated users can create)
+// Admin only routes
 router.post(
   '/',
-  upload.array('images', 5),
+  protect,
+  adminOnly,
+   upload.array('images', 5),
   handleMulterError,
-  createProperty
+   createProperty
 );
-
-// Admin only routes
 
 router.put(
   '/:id',

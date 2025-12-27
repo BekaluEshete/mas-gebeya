@@ -102,9 +102,11 @@ router.post(
   toggleFavorite
 );
 
-// User routes (authenticated users can create)
+// Admin only routes
 router.post(
   '/',
+  protect,
+  adminOnly,
   createCarLimiter,
   upload.array('images', 3),
   handleMulterError,
@@ -112,8 +114,6 @@ router.post(
   validateRequest,
   createCar
 );
-
-// Admin only routes
 
 router.put(
   '/:id',

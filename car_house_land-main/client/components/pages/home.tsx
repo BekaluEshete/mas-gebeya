@@ -1,15 +1,16 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowRight, Car, HomeIcon, MessageCircle, Star, Users, TrendingUp, Shield, TreePine } from "lucide-react"
+import { ArrowRight, Car, HomeIcon, MessageCircle, Users, TrendingUp, Shield, TreePine } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
 import { useState, useEffect } from "react"
+import { getApplicationCount } from "@/lib/utils"
 
 export function Home() {
-  const { user, setIsAuthModalOpen, cars, houses, lands, machines, deals,users } = useApp()
+  const { user, setIsAuthModalOpen, cars, houses, lands, machines, deals } = useApp()
 
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0)
 
@@ -39,13 +40,10 @@ export function Home() {
   // Calculate stats from actual data - use reasonable estimates for public stats
   const totalListings = (cars?.length || 0) + (houses?.length || 0) + (lands?.length || 0) + (machines?.length || 0)
   
-  // For public home page, use a reasonable default since users aren't provided by context
-  const ActiveUsers =
-  users && users.length > 0
-    ? users.filter(u => u.status?.toLowerCase() === "active").length
-    : 7
+  // Use a reasonable default for active users
+  const ActiveUsers = 1250
 
-  const completedDeals = deals?.filter(deal => deal.status === "completed" || deal.status === "accepted").length || 850
+  const completedDeals = deals?.filter(deal => deal.status === "completed" || deal.status === "approved").length || 850
 
   // Dynamic stats based on actual data where available, estimates for private data
   const stats = [
@@ -66,12 +64,6 @@ export function Home() {
       value: `${completedDeals}+`, 
       icon: TrendingUp, 
       color: "brand-yellow" 
-    },
-    { 
-      label: "አማካይ ደረጃ", 
-      value: "4.9/5", 
-      icon: Star, 
-      color: "brand-green" 
     },
   ]
 
@@ -130,54 +122,47 @@ export function Home() {
       title: topCar.title,
       price: topCar.price || 0,
       image: topCar.images?.[0] || "/placeholder.svg",
-      status: topCar.condition === "used" ? "used" : "new",
+      status: topCar.status === "available" ? "Available" : "Not Available",
       location: topCar.location || "",
       category: "car",
       href: `/cars/${topCar.id || topCar._id}`,
-      applicationCount: deals?.filter(
-        (deal) => deal.itemId === (topCar.id || topCar._id) || deal.item?._id === (topCar.id || topCar._id) || deal.item?.id === (topCar.id || topCar._id)
-      ).length || 0,
+      applicationCount: getApplicationCount(topCar.id || topCar._id, deals),
     },
     topHouse && {
       id: `house-${topHouse.id || topHouse._id}`,
       title: topHouse.title,
       price: topHouse.price || 0,
       image: topHouse.images?.[0] || "/placeholder.svg",
-      status: topHouse.status,
+      status: topHouse.status === "available" ? "Available" : "Not Available",
       location: topHouse.location || "",
       category: "house",
       href: `/houses/${topHouse.id || topHouse._id}`,
-      applicationCount: deals?.filter(
-        (deal) => deal.itemId === (topHouse.id || topHouse._id) || deal.item?._id === (topHouse.id || topHouse._id) || deal.item?.id === (topHouse.id || topHouse._id)
-      ).length || 0,
+      applicationCount: getApplicationCount(topHouse.id || topHouse._id, deals),
     },
     topLand && {
       id: `land-${topLand.id || topLand._id}`,
       title: topLand.title,
       price: topLand.price || 0,
       image: topLand.images?.[0] || "/placeholder.svg",
-      status: topLand.status,
+      status: topLand.status === "available" ? "Available" : "Not Available",
       location: topLand.location || "",
       category: "land",
       href: `/lands/${topLand.id || topLand._id}`,
-      applicationCount: deals?.filter(
-        (deal) => deal.itemId === (topLand.id || topLand._id) || deal.item?._id === (topLand.id || topLand._id) || deal.item?.id === (topLand.id || topLand._id)
-      ).length || 0,
+      applicationCount: getApplicationCount(topLand.id || topLand._id, deals),
     },
     topMachine && {
       id: `machine-${topMachine.id || topMachine._id}`,
       title: topMachine.title,
       price: topMachine.price || 0,
       image: topMachine.images?.[0] || "/placeholder.svg",
-      status: topMachine.condition,
+      status: topMachine.status === "available" ? "Available" : "Not Available",
       location: topMachine.location || "",
       category: "machine",
       href: `/machines/${topMachine.id || topMachine._id}`,
-      applicationCount: deals?.filter(
-        (deal) => deal.itemId === (topMachine.id || topMachine._id) || deal.item?._id === (topMachine.id || topMachine._id) || deal.item?.id === (topMachine.id || topMachine._id)
-      ).length || 0,
+      applicationCount: getApplicationCount(topMachine.id || topMachine._id, deals),
     },
   ].filter(Boolean) // Remove any null/undefined entries
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -205,7 +190,7 @@ export function Home() {
                 </Badge>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">
                   የህልምዎ መኪና፣ ቤት እና መሬት
-                  <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">እዚህ ይጠብቅዎታል</span>
+                   <span className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight animate-slide-in-left">እዚህ ይጠብቅዎታል</span>
                 </h1>
                 <p className="text-sm sm:text-base md:text-lg lg:text-xl text-white/90 leading-relaxed animate-slide-in-left animate-stagger-1 max-w-2xl mx-auto lg:mx-0">
                   በሺዎች የሚቆጠሩ ጥራት ያላቸው ተሽከርካሪዎች፣ ፕሪሚየም ንብረቶች እና ዋና የመሬት እድሎችን ያግኙ። በቀጥታ ከአከፋፋዮች እና ወኪሎች ጋር ይገናኙ፣ ስምምነቶችን
@@ -299,65 +284,41 @@ export function Home() {
             </div>
           </div>
           
-          {/* Category Navigation - Small Size at Bottom of Hero */}
-          <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/20">
+        </div>
+        
+        {/* Category Navigation - Full Width at Bottom of Hero */}
+        <div className="relative w-full px-3 sm:px-4 md:px-6 lg:px-8 pb-12">
+          <div className="pt-6 sm:pt-8 border-t border-white/20">
             <div className="text-center mb-4 sm:mb-6">
               <h3 className="text-sm sm:text-base md:text-lg font-semibold text-white mb-2">
                 የምርት ምድቦች
               </h3>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
-              <Link href="/lands" className="group">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=400&fit=crop"
-                    alt="Lands"
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full">
+              {[
+                { href: "/lands", label: "Lands", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=400&fit=crop", alt: "Lands" },
+                { href: "/houses", label: "House", image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=400&fit=crop", alt: "House" },
+                { href: "/machines", label: "Machines", image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop", alt: "Machines" },
+                { href: "/cars", label: "Vehicle", image: "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop", alt: "Vehicle" }
+              ].map((category, index) => (
+                <Link 
+                  key={category.href} 
+                  href={category.href} 
+                  className="group animate-scale-in"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 transform hover:scale-105">
+                    <img
+                      src={category.image}
+                      alt={category.alt}
                     className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
                   />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Lands</h4>
+                      <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base group-hover:scale-110 transition-transform duration-300">{category.label}</h4>
                   </div>
                 </div>
               </Link>
-
-              <Link href="/houses" className="group">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=400&h=400&fit=crop"
-                    alt="House"
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">House</h4>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/machines" className="group">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop"
-                    alt="Machines"
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Machines</h4>
-                  </div>
-                </div>
-              </Link>
-
-              <Link href="/cars" className="group">
-                <div className="relative aspect-square overflow-hidden rounded-lg bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <img
-                    src="https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=400&h=400&fit=crop"
-                    alt="Vehicle"
-                    className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-300"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <h4 className="text-white font-semibold text-xs sm:text-sm md:text-base">Vehicle</h4>
-                  </div>
-                </div>
-              </Link>
+              ))}
             </div>
           </div>
         </div>
@@ -469,8 +430,8 @@ export function Home() {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute top-2 sm:top-3 left-2 sm:left-3">
                       <Badge
-                        variant={listing.status === "new" ? "default" : "secondary"}
-                        className={`shadow-md text-xs ${listing.status === "new" ? `bg-${categoryColor}` : "bg-gray-600"}`}
+                        variant={listing.status === "Available" ? "default" : "destructive"}
+                        className={`shadow-md text-xs ${listing.status === "Available" ? `bg-green-600` : "bg-red-600"}`}
                       >
                         {listing.status}
                       </Badge>

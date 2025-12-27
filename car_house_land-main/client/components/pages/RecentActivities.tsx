@@ -162,9 +162,9 @@ const RecentActivities = () => {
               </button>
             </div>
           ) : (
-            activities.slice(0, 6).map((activity) => (
+            activities.slice(0, 6).map((activity, index) => (
               <div
-                key={activity._id}
+                key={activity._id || `activity-${activity.entityType}-${activity.timestamp}-${index}`}
                 className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
               >
                 <div className={`w-2.5 h-2.5 rounded-full mt-2 flex-shrink-0 ${getActivityColor(activity.action)}`}></div>

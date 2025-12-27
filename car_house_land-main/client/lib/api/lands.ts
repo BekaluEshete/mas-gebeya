@@ -143,3 +143,20 @@ export async function fetchLandById(id: string): Promise<Land | null> {
     return null
   }
 }
+
+export async function deleteLand(id: string, token: string): Promise<boolean> {
+  try {
+    const response = await fetch(`https://car-house-land.onrender.com/api/lands/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error("Error deleting land:", error)
+    return false
+  }
+}
