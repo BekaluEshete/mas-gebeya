@@ -190,7 +190,7 @@ export function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-emerald-600 via-green-600 to-teal-500 text-white overflow-hidden">
+      <section className="relative bg-[#0046FF] text-white overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-black/20" />
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=1200&h=800&fit=crop&crop=center')] opacity-20 bg-cover bg-center" />
         <div className="relative max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-32">
@@ -219,7 +219,7 @@ export function Home() {
                     <Link href="/cars" className="w-full sm:w-auto">
                       <Button
                         size="lg"
-                        className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                        className="w-full sm:w-auto bg-[#0046FF] text-white hover:bg-[#0038CC] shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                       >
                         ዝርዝሮችን ይመልከቱ
                         <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
@@ -229,7 +229,7 @@ export function Home() {
                       size="lg"
                       variant="outline"
                       onClick={() => setIsAuthModalOpen(true)}
-                      className="w-full sm:w-auto text-white hover:bg-white  bg-blue-400 hover:text-emerald-600 transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                      className="w-full sm:w-auto text-white hover:bg-white border-white hover:text-[#0046FF] transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ግባ
                     </Button>
@@ -241,7 +241,7 @@ export function Home() {
                   >
                     <Button
                       size="lg"
-                      className="w-full sm:w-auto bg-blue-600 text-white hover:bg-blue-700 shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
+                      className="w-full sm:w-auto bg-[#0046FF] text-white hover:bg-[#0038CC] shadow-lg transition-all duration-300 text-sm sm:text-base px-4 sm:px-6 py-2.5 sm:py-3"
                     >
                       ወደ ዳሽቦርድ ይሂዱ
                       <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
@@ -252,7 +252,7 @@ export function Home() {
             </div>
 
             <div className="relative animate-slide-in-right order-first lg:order-last">
-              <div className="absolute -inset-2 sm:-inset-4 bg-gradient-to-r from-emerald-500 via-green-500 to-teal-500 rounded-lg blur opacity-30 animate-pulse-slow"></div>
+              <div className="absolute -inset-2 sm:-inset-4 bg-[#0046FF] rounded-lg blur opacity-30 animate-pulse-slow"></div>
               <div className="relative w-full h-48 sm:h-64 md:h-80 lg:h-96 xl:h-[500px] rounded-lg shadow-2xl overflow-hidden">
                 {videos.map((video, index) => (
                   <video
@@ -490,13 +490,13 @@ export function Home() {
                       </div>
                       <p className="text-gray-500 text-xs sm:text-sm line-clamp-1">{listing.location}</p>
                       {listing.applicationCount > 0 && (
-                        <div className="flex items-center text-xs text-blue-600">
+                        <div className="flex items-center text-xs text-[#0046FF]">
                           <Users className="w-3 h-3 mr-1" />
                           {listing.applicationCount} {listing.applicationCount === 1 ? "application" : "applications"}
                         </div>
                       )}
                       <Link href={listing.href}>
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-all duration-300 text-xs sm:text-sm py-2">
+                        <Button className="w-full bg-[#0046FF] hover:bg-[#0038CC] text-white transition-all duration-300 text-xs sm:text-sm py-2">
                           ዝርዝሮችን ይመልከቱ
                           <ArrowRight className="ml-2 w-3 h-3 sm:w-4 sm:h-4" />
                         </Button>

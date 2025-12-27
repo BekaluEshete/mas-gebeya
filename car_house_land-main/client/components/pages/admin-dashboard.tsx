@@ -710,10 +710,103 @@ const totalUsers = users.length;
     }
   }
 
-  const toggleUserStatus = (userId: string) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((u) => (u.id === userId ? { ...u, status: u.status === "active" ? "inactive" : "active" } : u)),
-    )
+  const handleDeleteUser = (user: any) => {
+    setDeletingUser(user)
+    setIsDeleteUserDialogOpen(true)
+  }
+
+  const confirmDeleteUser = async () => {
+    if (!deletingUser) return
+
+    const baseUrl = "https://car-house-land.onrender.com"
+    try {
+      const token = authService.getStoredToken()
+      if (!token) {
+        console.error("No authentication token found")
+        alert("Please log in again")
+        return
+      }
+
+      const response = await fetch(`${baseUrl}/api/users/${deletingUser.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (!response.ok) {
+        let errorMessage = `Server error: ${response.status}`
+        try {
+          const errorData = await response.json()
+          errorMessage = errorData.message || errorMessage
+          console.error("Error details:", errorData)
+        } catch (e) {
+          console.error("Could not parse error response")
+        }
+        throw new Error(errorMessage)
+      }
+
+      // Refresh the users list
+      const fetchUsers = async () => {
+        try {
+          setIsLoadingUsers(true)
+
+          const token = authService.getStoredToken()
+          if (!token) {
+            console.error("No authentication token found")
+            return
+          }
+
+          const response = await fetch("https://car-house-land.onrender.com/api/users", {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          })
+
+          if (response.status === 401) {
+            console.error("Authentication failed - token may be expired")
+            return
+          }
+
+          const data = await response.json()
+
+          if (data.status === "success" && data.data?.users) {
+            // Transform API data to match component structure
+            const transformedUsers = data.data.users.map((user: any) => ({
+              id: user._id,
+              name: user.fullName,
+              email: user.email,
+              role: user.role,
+              status: user.isActive ? "active" : "inactive",
+              joinedDate: user.createdAt,
+              lastActive: user.lastLogin || user.updatedAt,
+              totalDeals: 0,
+              avatar: user.avatar || "/placeholder.svg?height=40&width=40",
+              phone: user.phone,
+              isVerified: user.isVerified,
+            }))
+            setUsers(transformedUsers)
+          } else {
+            console.error("Failed to fetch users:", data)
+          }
+        } catch (error) {
+          console.error("Error fetching users:", error)
+        } finally {
+          setIsLoadingUsers(false)
+        }
+      }
+      await fetchUsers()
+
+      alert('User deleted successfully!')
+      setIsDeleteUserDialogOpen(false)
+      setDeletingUser(null)
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      alert(`Delete failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
   }
 
 
@@ -3747,10 +3840,10 @@ const handleRefreshAll = async () => {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="text-xs sm:text-sm bg-transparent"
-                                onClick={() => toggleUserStatus(user.id)}
+                                className="text-xs sm:text-sm bg-transparent text-red-600 hover:text-red-800"
+                                onClick={() => handleDeleteUser(user)}
                               >
-                                {user.status === "active" ? "Deactivate" : "Activate"}
+                                <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
                               </Button>
                             </div>
                           </TableCell>
@@ -3761,6 +3854,40 @@ const handleRefreshAll = async () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Delete User Confirmation Dialog */}
+            <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+              <DialogContent className="max-w-xs sm:max-w-md mx-4">
+                <DialogHeader>
+                  <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-xs sm:text-sm text-gray-600">
+                    Are you sure you want to delete user "
+                    <span className="font-medium">{deletingUser?.name || deletingUser?.email}</span>"? This action cannot be undone.
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      className="text-xs sm:text-sm bg-transparent"
+                      onClick={() => {
+                        setIsDeleteUserDialogOpen(false);
+                        setDeletingUser(null);
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      className="text-xs sm:text-sm"
+                      onClick={confirmDeleteUser}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
           <TabsContent value="deals" className="space-y-4 sm:space-y-6">
             <Card>

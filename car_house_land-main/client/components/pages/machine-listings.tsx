@@ -118,13 +118,13 @@ export function MachineListings() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100">
-      <section className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-12 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+      <section className="bg-[#0046FF] text-white py-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="text-center space-y-6 animate-fade-in">
             <h1 className="text-3xl md:text-4xl font-bold leading-tight">Heavy Equipment & Machinery</h1>
-            <p className="text-lg text-green-100 max-w-3xl mx-auto">
+            <p className="text-lg text-white/90 max-w-3xl mx-auto">
               Buy or rent industrial equipment and machinery for your business needs
             </p>
 
@@ -141,7 +141,7 @@ export function MachineListings() {
             </div>
 
             <div className="flex justify-center space-x-4">
-              <Badge variant="secondary" className="bg-green-500 text-white px-3 py-1 text-sm">
+              <Badge variant="secondary" className="bg-white/30 text-white px-3 py-1 text-sm">
                 {machinesLoading ? "Loading..." : `${machines.length} Machines Available`}
               </Badge>
               <Badge variant="secondary" className="bg-white/20 text-white px-3 py-1 text-sm">
@@ -314,11 +314,11 @@ export function MachineListings() {
             ))}
           </div>
         ) : (
-          <Card className="text-center py-12 border-green-600/20 shadow-lg animate-fade-in">
+          <Card className="text-center py-12 border-blue-600/20 shadow-lg animate-fade-in">
             <CardContent>
               <div className="space-y-4">
-                <div className="w-16 h-16 bg-green-600/10 rounded-full flex items-center justify-center mx-auto">
-                  <Search className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-blue-600/10 rounded-full flex items-center justify-center mx-auto">
+                  <Search className="w-8 h-8 text-[#0046FF]" />
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">No machines found</h3>
@@ -327,7 +327,7 @@ export function MachineListings() {
                   </p>
                 </div>
                 <Button
-                  className="bg-green-600 hover:bg-green-700 text-white text-sm"
+                  className="bg-[#0046FF] hover:bg-[#0038CC] text-white text-sm"
                   onClick={() => {
                     setSearchQuery("")
                     setFilters({

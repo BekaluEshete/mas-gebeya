@@ -124,11 +124,11 @@ export function CarListings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-green-600 to-emerald-700 text-white py-16">
+      <section className="bg-[#0046FF] text-white py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 className="text-responsive-3xl font-bold mb-4">Find Your Perfect Car</h1>
-            <p className="text-responsive-lg text-green-100 mb-8">
+            <p className="text-responsive-lg text-white/90 mb-8">
               Buy or rent thousands of quality vehicles from trusted dealers
             </p>
 
@@ -386,7 +386,7 @@ export function CarListings() {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-blue-600">
+                          <span className="text-2xl font-bold text-[#0046FF]">
                             ETB {(car.price || 0).toLocaleString()}
                             {car.listingType === "rent" && (
                               <span className="text-sm font-normal text-muted-foreground">
@@ -429,7 +429,7 @@ export function CarListings() {
                             <>
                               <Button
                                 onClick={() => addToCart("car", car)}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                                className="flex-1 bg-[#0046FF] hover:bg-[#0038CC] text-white"
                                 disabled={!user}
                               >
                                 {car.listingType === "rent" ? (

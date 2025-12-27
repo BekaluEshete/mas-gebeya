@@ -83,14 +83,14 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={`px-2 lg:px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center hover:scale-105 relative group ${
-                    isActive(item.href) ? "text-blue-600" : "text-foreground/80 hover:text-foreground hover:bg-muted/80"
+                    isActive(item.href) ? "text-[#0046FF]" : "text-foreground/80 hover:text-foreground hover:bg-muted/80"
                   }`}
                 >
                   {item.icon && <item.icon className="w-4 h-4 mr-1 lg:mr-2" />}
                   <span className="hidden lg:inline">{item.label}</span>
                   <span className="lg:hidden text-xs">{item.label.slice(0, 4)}</span>
                   <div
-                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 ${
+                    className={`absolute bottom-0 left-1/2 transform -translate-x-1/2 h-0.5 bg-[#0046FF] transition-all duration-300 ${
                       isActive(item.href) ? "w-6 lg:w-8" : "w-0 group-hover:w-4 lg:group-hover:w-6"
                     }`}
                   />
@@ -107,7 +107,7 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="relative hover:bg-orange-500/10 text-foreground/80 hover:text-orange-500 transition-all duration-300 hover:scale-105 font-medium px-2 lg:px-3"
+                    className="relative hover:bg-[#0046FF]/10 text-foreground/80 hover:text-[#0046FF] transition-all duration-300 hover:scale-105 font-medium px-2 lg:px-3"
                   >
                     <MessageSquare className="w-4 h-4 lg:w-5 lg:h-5" />
                     <span className="ml-1 lg:ml-2 hidden lg:inline text-sm">Deals</span>
@@ -118,7 +118,7 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="relative hover:bg-blue-500/10 text-foreground/80 hover:text-blue-500 transition-all duration-300 hover:scale-105 font-medium px-2 lg:px-3"
+                    className="relative hover:bg-[#0046FF]/10 text-foreground/80 hover:text-[#0046FF] transition-all duration-300 hover:scale-105 font-medium px-2 lg:px-3"
                   >
                     <ShoppingCart className="w-4 h-4 lg:w-5 lg:h-5" />
                     {cartItemCount > 0 && (
@@ -140,7 +140,7 @@ export function Navigation() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="flex items-center space-x-1 lg:space-x-2 hover:scale-105 transition-all duration-300 hover:bg-blue-500/10 hover:text-blue-500 font-medium px-2 lg:px-3"
+                    className="flex items-center space-x-1 lg:space-x-2 hover:scale-105 transition-all duration-300 hover:bg-[#0046FF]/10 hover:text-[#0046FF] font-medium px-2 lg:px-3"
                   >
                     <User className="w-4 h-4" />
                     <span className="hidden lg:inline text-sm max-w-20 truncate">{user.fullName}</span>
@@ -160,7 +160,7 @@ export function Navigation() {
             ) : (
               <Button
                 onClick={() => setIsAuthModalOpen(true)}
-                className="hover:scale-105 transition-all duration-300 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium text-sm px-3 lg:px-4"
+                className="hover:scale-105 transition-all duration-300 bg-[#0046FF] hover:bg-[#0038CC] text-white font-medium text-sm px-3 lg:px-4"
               >
                 <span className="hidden lg:inline">Sign In</span>
                 <span className="lg:hidden">Login</span>
@@ -174,7 +174,7 @@ export function Navigation() {
               variant="ghost"
               size="sm"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="hover:scale-105 transition-all duration-300 hover:bg-blue-500/10 hover:text-blue-500 p-2"
+              className="hover:scale-105 transition-all duration-300 hover:bg-[#0046FF]/10 hover:text-[#0046FF] p-2"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </Button>
@@ -192,7 +192,7 @@ export function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className={`px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 flex items-center animate-in slide-in-from-left relative ${
                     isActive(item.href)
-                      ? "text-blue-600 bg-blue-50"
+                      ? "text-[#0046FF] bg-blue-50"
                       : "text-foreground/80 hover:text-foreground hover:bg-muted"
                   }`}
                   style={{ animationDelay: `${index * 50}ms` }}
@@ -200,7 +200,7 @@ export function Navigation() {
                   {item.icon && <item.icon className="w-4 h-4 mr-3" />}
                   {item.label}
                   {isActive(item.href) && (
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600" />
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-0.5 bg-[#0046FF]" />
                   )}
                 </Link>
               ))}
@@ -212,7 +212,7 @@ export function Navigation() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="w-full justify-start hover:scale-105 transition-all duration-300 hover:bg-orange-500/10 hover:text-orange-500 font-medium py-2.5"
+                        className="w-full justify-start hover:scale-105 transition-all duration-300 hover:bg-[#0046FF]/10 hover:text-[#0046FF] font-medium py-2.5"
                       >
                         <MessageSquare className="w-4 h-4 mr-3" />
                         <span className="text-sm">Deals</span>
