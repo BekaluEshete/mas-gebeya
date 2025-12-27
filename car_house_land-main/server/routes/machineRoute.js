@@ -26,8 +26,8 @@ const handleMulterError = (err, req, res, next) => {
   }
   next();
 };
- 
-  
+
+
 
 // Public routes
 router.get('/', optionalAuth, getMachines);
@@ -46,23 +46,23 @@ router.use(protect);
 router.post(
   '/:id/favorite',
   param('id').isMongoId().withMessage('Invalid machine ID'),
-   toggleFavorite
+  toggleFavorite
 );
 
 // Admin only routes
 router.post(
   '/',
-  adminOnly,
- 
+
+
   upload.array('images', 3),
-     validateRequest,
+  validateRequest,
   createMachine
 );
 
 router.put(
   '/:id',
   adminOnly,
-   
+
   validateRequest,
   updateMachine
 );

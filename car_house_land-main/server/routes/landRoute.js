@@ -27,7 +27,7 @@ const handleMulterError = (err, req, res, next) => {
   }
   next();
 };
- 
+
 
 // Validation rules
 // const createLandValidation = [
@@ -72,7 +72,7 @@ router.post(
 // Admin only routes
 router.post(
   '/',
-  adminOnly,
+
   upload.array('images', 3),
   handleMulterError,
   createLand

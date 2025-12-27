@@ -30,7 +30,7 @@ const createConsultation = async (req, res) => {
     const { fullName, email, phone, category, description, type, mode, dateTime } = req.body;
 
     // Basic validation (Mongoose will handle schema validation)
-    if (!fullName || !email || !phone || !category || !description || !type || !mode || !dateTime) {
+    if (!fullName || !email || !phone || !category || !type || !mode || !dateTime) {
       return res.status(400).json({
         status: 'error',
         message: 'All fields are required'

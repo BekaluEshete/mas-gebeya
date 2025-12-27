@@ -60,7 +60,7 @@ const createCarValidation = [
     .isLength({ min: 20, max: 1000 })
     .withMessage('Description must be between 20 and 1000 characters'),
   body('owner').isMongoId().withMessage('Invalid owner ID'),
-  
+
 ];
 
 const updateCarValidation = [
@@ -106,7 +106,6 @@ router.post(
 router.post(
   '/',
   protect,
-  adminOnly,
   createCarLimiter,
   upload.array('images', 3),
   handleMulterError,

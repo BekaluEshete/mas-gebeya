@@ -27,8 +27,8 @@ const handleMulterError = (err, req, res, next) => {
   }
   next();
 };
- 
- 
+
+
 
 // Public routes
 router.get('/', optionalAuth, getProperties);
@@ -36,7 +36,7 @@ router.get('/property/stats', getPropertyStats);
 router.get(
   '/:id',
   param('id').isMongoId().withMessage('Invalid property ID'),
-   
+
   optionalAuth,
   getPropertyById
 );
@@ -47,24 +47,23 @@ router.use(protect);
 router.post(
   '/:id/favorite',
   param('id').isMongoId().withMessage('Invalid property ID'),
-   toggleFavorite
+  toggleFavorite
 );
 
 // Admin only routes
 router.post(
   '/',
   protect,
-  adminOnly,
-   upload.array('images', 5),
+  upload.array('images', 5),
   handleMulterError,
-   createProperty
+  createProperty
 );
 
 router.put(
   '/:id',
   adminOnly,
   param('id').isMongoId().withMessage('Invalid property ID'),
-    
+
   updateProperty
 );
 
@@ -72,7 +71,7 @@ router.delete(
   '/:id',
   adminOnly,
   param('id').isMongoId().withMessage('Invalid property ID'),
-   deleteProperty
+  deleteProperty
 );
 
 module.exports = router;

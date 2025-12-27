@@ -11,7 +11,7 @@ const getProperties = asyncHandler(async (req, res) => {
 
 const getPropertyById = asyncHandler(async (req, res) => {
   const property = await Property.findById(req.params.id).lean();
-  
+
   if (!property) {
     res.status(404);
     throw new Error('Property not found');
@@ -28,7 +28,7 @@ const createProperty = asyncHandler(async (req, res) => {
     floors, parkingSpaces, yearBuilt, features, amenities, description,
     city, address, region, owner
   } = req.body;
-  
+
 
   // Validate owner ObjectId
   if (!mongoose.isValidObjectId(owner)) {
@@ -61,9 +61,9 @@ const createProperty = asyncHandler(async (req, res) => {
   // Handle image uploads
   let images = [];
   if (req.files && req.files.length > 0) {
-    if (req.files.length > 3) {
+    if (req.files.length > 5) {
       res.status(400);
-      throw new Error('Maximum 3 images allowed');
+      throw new Error('Maximum 5 images allowed');
     }
     images = req.files.map((file, index) => ({
       url: file.path, // Cloudinary URL
@@ -78,7 +78,7 @@ const createProperty = asyncHandler(async (req, res) => {
       type,
       propertyType,
       price: parseFloat(price),
-      size ,
+      size,
       bedrooms: parseInt(bedrooms),
       bathrooms: parseInt(bathrooms),
       floors: floors ? parseInt(floors) : undefined,

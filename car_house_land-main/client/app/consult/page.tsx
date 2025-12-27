@@ -46,18 +46,22 @@ export default function ConsultPage() {
     }
     return slots
   }
-  
+
   const availableSlots = generateAvailableSlots()
 
   const handleSubmitRequest = () => {
     console.log('=== REQUEST FORM SUBMIT ==='); // Debug
     console.log('Current user from context:', user); // NEW: Log user object
 
-    if (!formData.fullName || !formData.email || !formData.phone || !formData.category || !formData.description) {
+    // Description is now optional
+    if (!formData.fullName || !formData.email || !formData.phone || !formData.category) {
       console.log('Missing form fields'); // Debug
-      alert("Please fill all fields.")
+      alert("Please fill all required fields.")
       return
     }
+
+    // Auto-set type from category
+    setBookingData(prev => ({ ...prev, type: formData.category }))
     setStep(2)
   }
 
@@ -67,7 +71,8 @@ export default function ConsultPage() {
     console.log('Form data:', formData); // NEW
     console.log('Booking data:', bookingData); // NEW
 
-    if (!bookingData.type || !bookingData.mode || !bookingData.dateTime) {
+    // Type is now auto-set, check mode and dateTime
+    if (!bookingData.mode || !bookingData.dateTime) {
       console.log('Missing booking fields'); // Debug
       alert("Please select all booking options.")
       return
@@ -93,7 +98,7 @@ export default function ConsultPage() {
     try {
       const consultationData = {
         ...formData,
-        type: bookingData.type,
+        type: formData.category, // Use category as type directly
         mode: bookingData.mode,
         dateTime: bookingData.dateTime.toISOString(),
       }
@@ -104,9 +109,9 @@ export default function ConsultPage() {
       const newConsult = await createConsultation(consultationData, token); // UPDATED: Pass token
       console.log('Consultation created:', newConsult); // NEW
 
-      setConfirmation(`Booking confirmed! ID: ${newConsult.id}. You'll receive an email/SMS shortly.`)
+      setConfirmation(`Booking confirmed! ID: ${newConsult.id || newConsult._id}. You'll receive an email/SMS shortly.`)
       setStep(3)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Booking error:', error); // NEW: Full error
       alert(`Booking failed: ${error.message || 'Check console for details'}`);
     } finally {
@@ -201,12 +206,12 @@ export default function ConsultPage() {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="description">Short Description *</Label>
+                  <Label htmlFor="description">Short Description <span className="text-gray-400 font-normal">(Optional)</span></Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe your issue or needs..."
+                    placeholder="Describe your issue or needs (optional)..."
                     rows={4}
                   />
                 </div>
@@ -218,20 +223,7 @@ export default function ConsultPage() {
 
             {step === 2 && (
               <div className="space-y-4">
-                <div>
-                  <Label htmlFor="type">Consultation Type *</Label>
-                  <Select value={bookingData.type} onValueChange={(v) => setBookingData({ ...bookingData, type: v as any })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Research">Research</SelectItem>
-                      <SelectItem value="Cases in law">Cases in law</SelectItem>
-                      <SelectItem value="Health">Health</SelectItem>
-                      <SelectItem value="Business">Business</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Removed Consultation Type Selector - now using Category */}
                 <div>
                   <Label htmlFor="mode">Mode *</Label>
                   <Select value={bookingData.mode} onValueChange={(v) => setBookingData({ ...bookingData, mode: v as any })}>
@@ -247,8 +239,8 @@ export default function ConsultPage() {
                 </div>
                 <div>
                   <Label>Available Date & Time *</Label>
-                  <Dialog 
-                    open={isDatePickerOpen} 
+                  <Dialog
+                    open={isDatePickerOpen}
                     onOpenChange={(open) => {
                       setIsDatePickerOpen(open)
                       if (open) {
