@@ -37,8 +37,8 @@ export function MachineListings() {
       filtered = filtered.filter(
         (machine) =>
           machine.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          machine.specifications.some((spec) => spec.toLowerCase().includes(searchQuery.toLowerCase())),
+          (machine.description?.toLowerCase() || "").includes(searchQuery.toLowerCase()) ||
+          (machine.specifications?.some((spec) => spec.toLowerCase().includes(searchQuery.toLowerCase())) || false),
       )
     }
 
@@ -293,7 +293,7 @@ export function MachineListings() {
           </div>
         ) : filteredMachines.length > 0 ? (
           <>
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
               {filteredMachines.slice(0, visibleItems).map((machine) => (
                 <ItemCard key={machine.id} item={machine} type="machine" />
               ))}

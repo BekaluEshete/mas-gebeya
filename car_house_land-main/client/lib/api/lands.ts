@@ -66,8 +66,7 @@ export async function fetchLands(): Promise<Land[]> {
       kebele: apiLand.kebele,
       images: apiLand.images.map((img) => img.url),
       status: apiLand.status,
-      rating: 4.5, // Default rating since not in API
-      reviews: Math.floor(Math.random() * 50) + 10, // Random reviews for now
+
       description: apiLand.description,
       featured: Math.random() > 0.7, // Random featured status
       createdAt: apiLand.createdAt,
@@ -116,8 +115,7 @@ export async function fetchLandById(id: string): Promise<Land | null> {
       kebele: apiLand.kebele,
       images: apiLand.images.map((img) => img.url),
       status: apiLand.status,
-      rating: 4.5,
-      reviews: Math.floor(Math.random() * 50) + 10,
+
       description: apiLand.description,
       featured: Math.random() > 0.7,
       createdAt: apiLand.createdAt,

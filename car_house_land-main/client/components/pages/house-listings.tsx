@@ -17,6 +17,7 @@ export function HouseListings() {
   const [filteredHouses, setFilteredHouses] = React.useState<House[]>(houses)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
+  const [visibleItems, setVisibleItems] = React.useState(6)
   const [showFilters, setShowFilters] = React.useState(false)
   const [filters, setFilters] = React.useState({
     listingType: "all",
@@ -176,7 +177,7 @@ export function HouseListings() {
           </div>
 
           <div
-            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
+            className={`grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-3 ${showFilters ? "block" : "hidden md:grid"}`}
           >
             <Select value={filters.listingType} onValueChange={(value) => handleFilterChange("listingType", value)}>
               <SelectTrigger className="text-sm">
@@ -261,7 +262,6 @@ export function HouseListings() {
                 <SelectItem value="date-old">Oldest First</SelectItem>
                 <SelectItem value="price-asc">Price: Low to High</SelectItem>
                 <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="rating">Highest Rated</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -285,15 +285,35 @@ export function HouseListings() {
             </div>
           </div>
         ) : filteredHouses.length > 0 ? (
-          <div
-            className={`${viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-3"} animate-fade-in`}
-          >
-            {filteredHouses.map((house, index) => (
-              <div key={house.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <ItemCard item={house} type="house" viewMode={viewMode} />
+          <>
+            <div
+              className={`${viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-3"} animate-fade-in`}
+            >
+              {filteredHouses.slice(0, visibleItems).map((house, index) => (
+                <div key={house.id} className="animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <ItemCard item={house} type="house" className={viewMode === "list" ? "max-w-none" : ""} />
+                </div>
+              ))}
+            </div>
+
+            {/* Load More Button */}
+            {visibleItems < filteredHouses.length && (
+              <div className="mt-8 text-center animate-fade-in">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setVisibleItems((prev) => prev + 6)}
+                  className="text-[#0046FF] hover:text-blue-700 hover:bg-blue-50 font-semibold transition-all duration-300 group px-8"
+                >
+                  Show More Properties
+                  <Grid3X3 className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
+                </Button>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Showing {visibleItems} of {filteredHouses.length} properties
+                </p>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         ) : (
           <Card className="text-center py-12 border-blue-100 shadow-lg animate-fade-in">
             <CardContent>

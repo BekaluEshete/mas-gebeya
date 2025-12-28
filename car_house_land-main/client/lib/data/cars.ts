@@ -19,8 +19,7 @@ export const CARS_DATA: Car[] = [
       "https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.8,
-    reviews: 24,
+
     description: "Brand new 2023 Toyota Camry with hybrid engine, premium interior, and advanced safety features.",
     featured: true,
     createdAt: "2024-01-15",
@@ -51,8 +50,7 @@ export const CARS_DATA: Car[] = [
       "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.9,
-    reviews: 18,
+
     description: "Luxury BMW X3 SUV with premium features, excellent condition, and full service history.",
     featured: false,
     createdAt: "2024-01-10",
@@ -83,8 +81,7 @@ export const CARS_DATA: Car[] = [
       "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.7,
-    reviews: 12,
+
     description: "Elegant Mercedes-Benz C-Class with luxury appointments and excellent performance.",
     featured: false,
     createdAt: "2024-01-05",
@@ -115,8 +112,7 @@ export const CARS_DATA: Car[] = [
       "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.6,
-    reviews: 8,
+
     description: "Brand new Toyota Corolla available for daily rental. Perfect for city driving and business trips.",
     featured: true,
     createdAt: "2024-01-20",
@@ -147,8 +143,7 @@ export const CARS_DATA: Car[] = [
       "https://images.unsplash.com/photo-1544636331-e26879cd4d9b?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.5,
-    reviews: 15,
+
     description: "Reliable Hyundai Tucson SUV available for monthly rental. Great for families and long trips.",
     featured: false,
     createdAt: "2024-01-12",

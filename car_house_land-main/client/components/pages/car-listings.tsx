@@ -61,7 +61,7 @@ export function CarListings() {
 
   // Get unique makes/brands from cars
   const uniqueMakes = Array.from(new Set(cars.map(car => car.make).filter(Boolean))).sort()
-  
+
   // Get unique years from cars
   const uniqueYears = Array.from(new Set(cars.map(car => car.year).filter(Boolean))).sort((a, b) => b - a)
 
@@ -81,8 +81,8 @@ export function CarListings() {
       const matchesLocation =
         !filters.location || (car.location?.toLowerCase() || "").includes(filters.location.toLowerCase())
       const matchesListingType = filters.listingType === "all" || car.listingType === filters.listingType
-      const matchesPriceRange = 
-        filters.priceRange === "all" || 
+      const matchesPriceRange =
+        filters.priceRange === "all" ||
         (filters.priceRange === "low" && car.price <= medianPrice) ||
         (filters.priceRange === "high" && car.price > medianPrice)
 
@@ -118,7 +118,8 @@ export function CarListings() {
       setIsAuthModalOpen(true)
       return
     }
-    createDeal("car", car)
+    const message = `I am interested in your ${car.title}. Please provide more details.`
+    createDeal("car", car, message)
   }
 
   return (
@@ -334,7 +335,7 @@ export function CarListings() {
         ) : (
           <>
             {/* Car Listings */}
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "space-y-4"}>
               {filteredCars.slice(0, visibleItems).map((car) => {
                 const isSold = soldItems.has(car.id)
                 const applicationCount = getApplicationCount(car.id, deals)
@@ -349,70 +350,77 @@ export function CarListings() {
                       <img
                         src={car.images[0] || "/placeholder.svg"}
                         alt={car.title}
-                        className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
-                      <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge variant={car.status === "available" ? "default" : "destructive"} className={`shadow-md ${car.status === "available" ? "bg-green-600" : "bg-red-600"}`}>
+                      <div className="absolute top-2 left-2 flex gap-1.5">
+                        <Badge variant={car.status === "available" ? "default" : "destructive"} className={`shadow-md text-[10px] px-1.5 py-0.5 ${car.status === "available" ? "bg-green-600" : "bg-red-600"}`}>
                           {car.status === "available" ? "Available" : "Not Available"}
                         </Badge>
-                        <Badge variant={car.listingType === "sale" ? "default" : "secondary"} className="shadow-md">
+                        <Badge variant={car.listingType === "sale" ? "default" : "secondary"} className="shadow-md text-[10px] px-1.5 py-0.5">
                           {car.listingType === "sale" ? "For Sale" : "For Rent"}
                         </Badge>
-                        <Badge variant={car.condition === "new" ? "default" : "secondary"} className="shadow-md">
+                        <Badge variant={car.condition === "new" ? "default" : "secondary"} className="shadow-md text-[10px] px-1.5 py-0.5">
                           {car.condition}
                         </Badge>
                         {isSold && (
-                          <Badge variant="destructive" className="shadow-md">
+                          <Badge variant="destructive" className="shadow-md text-[10px] px-1.5 py-0.5">
                             SOLD
                           </Badge>
                         )}
                       </div>
                     </div>
 
-                    <CardContent className="p-6">
-                      <div className="space-y-3">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
                         <div>
-                          <h3 className="text-lg font-semibold">{car.title}</h3>
-                          <p className="text-sm text-muted-foreground">
+                          <h3 className="text-base font-semibold line-clamp-1">{car.title}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1">
                             {car.year} • {car.sellerName}
                           </p>
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-2xl font-bold text-[#0046FF]">
+                          <span className="text-lg font-bold text-[#0046FF]">
                             ETB {(car.price || 0).toLocaleString()}
                             {car.listingType === "rent" && (
-                              <span className="text-sm font-normal text-muted-foreground">
+                              <span className="text-xs font-normal text-muted-foreground ml-1">
                                 {(car.price || 0) <= 5000 ? "/day" : "/month"}
                               </span>
                             )}
                           </span>
                         </div>
 
-                        <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                        <div className="flex items-center space-x-3 text-xs text-muted-foreground">
                           <div className="flex items-center">
-                            <Settings className="w-4 h-4 mr-1" />
+                            <Settings className="w-3.5 h-3.5 mr-1" />
                             {(car.mileage || 0).toLocaleString()} km
                           </div>
                           <div className="flex items-center">
-                            <Fuel className="w-4 h-4 mr-1" />
+                            <Fuel className="w-3.5 h-3.5 mr-1" />
                             {car.fuelType}
                           </div>
                         </div>
 
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <MapPin className="w-4 h-4 mr-1" />
-                          {car.location}
+                        <div className="flex items-center text-xs text-muted-foreground line-clamp-1">
+                          <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                          {car.city || car.location || "Location N/A"}
                         </div>
 
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <Calendar className="w-4 h-4 mr-1" />
+                        <div className="flex items-center text-xs text-muted-foreground">
+                          <Calendar className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
                           Posted: {new Date(car.createdAt).toLocaleDateString()}
                         </div>
 
+                        {car.address && (
+                          <div className="flex items-center text-xs text-muted-foreground pt-1 border-t border-dashed border-gray-200 mt-1">
+                            <MapPin className="w-3.5 h-3.5 text-green-600 mr-1 flex-shrink-0" />
+                            <span className="line-clamp-1 italic text-gray-500">{car.address}</span>
+                          </div>
+                        )}
+
                         {applicationCount > 0 && (
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <MessageCircle className="w-4 h-4 mr-1" />
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <MessageCircle className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
                             {applicationCount} {applicationCount === 1 ? 'Application' : 'Applications'}
                           </div>
                         )}

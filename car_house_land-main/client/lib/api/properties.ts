@@ -97,8 +97,7 @@ function mapPropertyToHouse(property: PropertyAPIResponse): House {
     location: `${property.city}, ${property.region}`,
     images: property.images.map((img) => img.url),
     status: property.status as "available" | "sold" | "pending",
-    rating: 4.5, // Default rating since not in API
-    reviews: Math.floor(Math.random() * 50) + 1, // Random reviews since not in API
+
     description: property.description,
     featured: property.views > 100, // Consider high-view properties as featured
     createdAt: property.createdAt,

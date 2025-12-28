@@ -6,7 +6,7 @@ import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users, Star } from "lucide-react"
+import { MapPin, ShoppingCart, MessageCircle, Heart, Calendar, Users } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import type { Car, House, Land, Machine } from "@/types"
 import { cn, getApplicationCount } from "@/lib/utils"
@@ -160,7 +160,7 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
     >
       <Link href={`/${type}s/${item.id}`}>
         <div className="relative overflow-hidden">
-          <div className="aspect-[4/3] sm:aspect-[3/2] overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+          <div className="aspect-video overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
             <Image
               src={item.images[0] || "/placeholder.svg?height=200&width=300&query=modern property"}
               alt={item.title}
@@ -176,7 +176,7 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
             <Badge
               variant="secondary"
               className={cn(
-                "text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs px-1.5 py-0.5 sm:px-2 sm:py-1",
+                "text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-[10px] px-1.5 py-0.5",
                 item.status === "available" ? "bg-green-500 hover:bg-green-600" : "bg-red-500 hover:bg-red-600",
               )}
             >
@@ -186,7 +186,7 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
             {isRentalItem() && (
               <Badge
                 variant="secondary"
-                className="bg-purple-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs px-1.5 py-0.5 sm:px-2 sm:py-1"
+                className="bg-purple-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-[10px] px-1.5 py-0.5"
               >
                 <span className="hidden sm:inline">For Rent</span>
                 <span className="sm:hidden">Rent</span>
@@ -199,26 +199,13 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
             <div className="absolute top-1.5 sm:top-2 right-1.5 sm:right-2 animate-slide-in-right">
               <Badge
                 variant="secondary"
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-xs animate-pulse px-1.5 py-0.5 sm:px-2 sm:py-1"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 shadow-md backdrop-blur-sm transition-all duration-300 font-medium text-[10px] animate-pulse px-1.5 py-0.5"
               >
                 <span className="hidden sm:inline">⭐ Featured</span>
                 <span className="sm:hidden">⭐</span>
               </Badge>
             </div>
           )}
-
-          {/* Category badge */}
-          <div className="absolute bottom-1.5 sm:bottom-2 left-1.5 sm:left-2 animate-slide-in-bottom">
-            <Badge
-              variant="outline"
-              className={cn(
-                "font-medium capitalize backdrop-blur-sm shadow-md transition-all duration-300 border text-xs px-1.5 py-0.5 sm:px-2 sm:py-1",
-                getCategoryColor(type),
-              )}
-            >
-              {type}
-            </Badge>
-          </div>
 
           {/* Favorite button overlay */}
           <div className="absolute bottom-1.5 sm:bottom-2 right-1.5 sm:right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -227,70 +214,69 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
               size="sm"
               onClick={handleToggleFavorite}
               className={cn(
-                "rounded-full w-6 h-6 sm:w-8 sm:h-8 p-0 shadow-md backdrop-blur-sm transition-all duration-300",
+                "rounded-full w-6 h-6 p-0 shadow-md backdrop-blur-sm transition-all duration-300",
                 isItemFavorite
                   ? "bg-red-500 hover:bg-red-600 text-white"
                   : "bg-white/90 hover:bg-white text-gray-700 hover:text-red-500",
               )}
               disabled={!user}
             >
-              <Heart className={cn("w-2.5 h-2.5 sm:w-3 sm:h-3", isItemFavorite && "fill-current")} />
+              <Heart className={cn("w-2.5 h-2.5", isItemFavorite && "fill-current")} />
             </Button>
           </div>
         </div>
       </Link>
 
-      <CardContent className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+      <CardContent className="p-3 space-y-2">
         <Link href={`/${type}s/${item.id}`}>
-          <div className="space-y-2 sm:space-y-3">
+          <div className="space-y-1.5">
             {/* Title and Price */}
-            <div className="space-y-1">
-              <h3 className="font-bold text-sm sm:text-base md:text-lg line-clamp-2 group-hover:text-blue-600 transition-colors duration-300 leading-tight">
+            <div className="space-y-0.5">
+              <h3 className="font-bold text-sm sm:text-base line-clamp-1 group-hover:text-blue-600 transition-colors duration-300 leading-tight">
                 {item.title}
               </h3>
-              <p className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+              <p className="text-sm sm:text-base font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
                 {formatPrice(item.price)}
               </p>
             </div>
 
             {/* Details */}
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium bg-gray-50 dark:bg-gray-800 rounded-lg px-2 py-1 line-clamp-1">
+            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium bg-gray-50 dark:bg-gray-800 rounded px-1.5 py-0.5 line-clamp-1">
               {getItemDetails()}
             </p>
 
             {/* Location */}
-            <div className="flex items-center justify-between text-xs gap-2">
-              <div className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors duration-300 min-w-0 flex-1">
-                <MapPin className="w-3 h-3 text-red-500 flex-shrink-0" />
-                <span className="line-clamp-1 font-medium text-xs sm:text-sm">{item.location}</span>
-              </div>
-              <div className="flex items-center space-x-1 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 px-1.5 sm:px-2 py-1 rounded-full border border-blue-200 dark:border-blue-800 flex-shrink-0">
-                <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-yellow-400 text-yellow-400" />
-                <span className="font-bold text-yellow-700 dark:text-yellow-300 text-xs">{item.rating}</span>
-                <span className="text-yellow-600 dark:text-yellow-400 text-xs hidden sm:inline">({item.reviews})</span>
-              </div>
-            </div >
+            <div className="flex items-center space-x-1 text-muted-foreground hover:text-foreground transition-colors duration-300 min-w-0">
+              <MapPin className="w-2.5 h-2.5 text-red-500 flex-shrink-0" />
+              <span className="line-clamp-1 font-medium">{item.city || item.location || "Location N/A"}</span>
+            </div>
 
             {/* Posted date display */}
-            < div className="flex items-center space-x-1 text-muted-foreground text-xs" >
-              <Calendar className="w-3 h-3 text-[#0046FF] flex-shrink-0" />
+            <div className="flex items-center space-x-1 text-muted-foreground text-[10px] sm:text-xs">
+              <Calendar className="w-2.5 h-2.5 text-[#0046FF] flex-shrink-0" />
               <span className="font-medium">Posted: {new Date(item.createdAt).toLocaleDateString()}</span>
-            </div >
+            </div>
+
+            {/* Reference Location / Address (Below Posted Date) */}
+            {item.address && (
+              <div className="flex items-center space-x-1 text-muted-foreground text-[10px] sm:text-xs pt-1 border-t border-dashed border-gray-200 mt-1">
+                <MapPin className="w-2.5 h-2.5 text-green-600 flex-shrink-0" />
+                <span className="font-medium line-clamp-1 italic text-gray-500">{item.address}</span>
+              </div>
+            )}
 
             {/* Application count */}
-            {
-              applicationCount > 0 && (
-                <div className="flex items-center space-x-1 text-[#0046FF] text-xs bg-blue-50 px-2 py-1 rounded-full">
-                  <Users className="w-3 h-3" />
-                  <span className="font-medium">{applicationCount} {applicationCount === 1 ? "application" : "applications"}</span>
-                </div>
-              )
-            }
-          </div >
-        </Link >
+            {applicationCount > 0 && (
+              <div className="flex items-center space-x-1 text-[#0046FF] text-xs bg-blue-50 px-2 py-1 rounded-full">
+                <Users className="w-3 h-3" />
+                <span className="font-medium">{applicationCount} {applicationCount === 1 ? "application" : "applications"}</span>
+              </div>
+            )}
+          </div>
+        </Link>
 
         {/* Actions */}
-        < div className="flex items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3 border-t border-border/50" >
+        <div className="flex items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3 border-t border-border/50">
           <Button
             size="sm"
             className="flex-1 transition-all duration-300 shadow-sm hover:shadow-md bg-[#0046FF] hover:bg-[#0038CC] text-white font-medium text-xs sm:text-sm py-1.5 sm:py-2 px-2 sm:px-3"
@@ -334,8 +320,8 @@ export function ItemCard({ item, type, className }: ItemCardProps) {
           >
             <Heart className={cn("w-3 h-3", isItemFavorite && "fill-current")} />
           </Button>
-        </div >
-      </CardContent >
-    </Card >
+        </div>
+      </CardContent>
+    </Card>
   )
 }

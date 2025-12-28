@@ -7,8 +7,7 @@ export interface BaseItem {
   images: string[]
   listingType: "sale" | "rent"
   status: "available" | "sold" | "rented"
-  rating: number
-  reviews: number
+
   sellerName: string
   sellerContact: string
   createdAt: string
@@ -67,8 +66,7 @@ export const cars: Car[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 23,
+
     sellerName: "Dawit Tesfaye",
     sellerContact: "dawit.tesfaye@email.com",
     make: "Tesla",
@@ -96,8 +94,7 @@ export const cars: Car[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.7,
-    reviews: 18,
+
     sellerName: "Meron Haile",
     sellerContact: "meron.haile@email.com",
     make: "BMW",
@@ -125,8 +122,7 @@ export const cars: Car[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.8,
-    reviews: 31,
+
     sellerName: "Yohannes Bekele",
     sellerContact: "yohannes.bekele@email.com",
     make: "Porsche",
@@ -154,8 +150,7 @@ export const cars: Car[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 12,
+
     sellerName: "Tigist Alemayehu",
     sellerContact: "tigist.alemayehu@email.com",
     make: "Audi",
@@ -183,8 +178,7 @@ export const cars: Car[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.6,
-    reviews: 27,
+
     sellerName: "Haile Mariam",
     sellerContact: "haile.mariam@email.com",
     make: "Mercedes-Benz",
@@ -215,8 +209,7 @@ export const houses: House[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 45,
+
     sellerName: "Selamawit Desta",
     sellerContact: "selamawit.desta@email.com",
     bedrooms: 5,
@@ -243,8 +236,7 @@ export const houses: House[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.7,
-    reviews: 32,
+
     sellerName: "Abebe Tadesse",
     sellerContact: "abebe.tadesse@email.com",
     bedrooms: 4,
@@ -271,8 +263,7 @@ export const houses: House[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.8,
-    reviews: 28,
+
     sellerName: "Hanan Girma",
     sellerContact: "hanan.girma@email.com",
     bedrooms: 3,
@@ -299,8 +290,7 @@ export const houses: House[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.6,
-    reviews: 19,
+
     sellerName: "Mulugeta Assefa",
     sellerContact: "mulugeta.assefa@email.com",
     bedrooms: 3,
@@ -327,8 +317,7 @@ export const houses: House[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 37,
+
     sellerName: "Berhanu Tesfaye",
     sellerContact: "berhanu.tesfaye@email.com",
     bedrooms: 4,
@@ -358,8 +347,7 @@ export const lands: Land[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.5,
-    reviews: 14,
+
     sellerName: "Alemayehu Bekele",
     sellerContact: "alemayehu.bekele@email.com",
     acres: 8.5,
@@ -385,8 +373,7 @@ export const lands: Land[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.8,
-    reviews: 22,
+
     sellerName: "Tigist Alemayehu",
     sellerContact: "tigist.alemayehu@email.com",
     acres: 12.3,
@@ -412,8 +399,7 @@ export const lands: Land[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.7,
-    reviews: 18,
+
     sellerName: "Dawit Tesfaye",
     sellerContact: "dawit.tesfaye@email.com",
     acres: 25.0,
@@ -439,8 +425,7 @@ export const lands: Land[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 31,
+
     sellerName: "Meron Haile",
     sellerContact: "meron.haile@email.com",
     acres: 4.2,
@@ -466,8 +451,7 @@ export const lands: Land[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.4,
-    reviews: 12,
+
     sellerName: "Yohannes Bekele",
     sellerContact: "yohannes.bekele@email.com",
     acres: 15.8,
@@ -496,8 +480,7 @@ export const machines: Machine[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.6,
-    reviews: 15,
+
     sellerName: "Haile Mariam Construction",
     sellerContact: "sales@haileconstruction.et",
     category: "Construction Equipment",
@@ -524,8 +507,7 @@ export const machines: Machine[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.8,
-    reviews: 23,
+
     sellerName: "Abebe Tadesse Farm Equipment",
     sellerContact: "info@abebeequipment.et",
     category: "Agricultural Equipment",
@@ -552,8 +534,7 @@ export const machines: Machine[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.5,
-    reviews: 18,
+
     sellerName: "Berhanu Tesfaye Equipment",
     sellerContact: "sales@berhanuequip.et",
     category: "Construction Equipment",
@@ -580,8 +561,7 @@ export const machines: Machine[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.7,
-    reviews: 21,
+
     sellerName: "Mulugeta Assefa Heavy Equipment",
     sellerContact: "contact@mulugetaheavy.et",
     category: "Construction Equipment",
@@ -608,8 +588,7 @@ export const machines: Machine[] = [
     ],
     listingType: "sale",
     status: "available",
-    rating: 4.9,
-    reviews: 16,
+
     sellerName: "Selamawit Desta Ag Equipment",
     sellerContact: "sales@selamwitag.et",
     category: "Agricultural Equipment",

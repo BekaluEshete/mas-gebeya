@@ -67,9 +67,9 @@ type AppAction =
   | { type: "REMOVE_FROM_CART"; payload: string }
   | { type: "UPDATE_CART_QUANTITY"; payload: { id: string; quantity: number } }
   | {
-      type: "ADD_TO_FAVORITES";
-      payload: { type: "car" | "house" | "land" | "machine"; item: Car | House | Land | Machine };
-    }
+    type: "ADD_TO_FAVORITES";
+    payload: { type: "car" | "house" | "land" | "machine"; item: Car | House | Land | Machine };
+  }
   | { type: "REMOVE_FROM_FAVORITES"; payload: string }
   | { type: "SET_AUTH_MODAL"; payload: boolean }
   | { type: "SET_DEALS"; payload: Deal[] }
@@ -81,22 +81,22 @@ type AppAction =
   | { type: "ADD_CONSULTATION"; payload: Consultation }
   | { type: "UPDATE_CONSULTATION"; payload: { id: string; updates: Partial<Consultation> } }
   | {
-      type: "SET_CART";
-      payload: Array<{
-        id: string;
-        type: "car" | "house" | "land" | "machine";
-        item: Car | House | Land | Machine;
-        quantity: number;
-      }>;
-    }
+    type: "SET_CART";
+    payload: Array<{
+      id: string;
+      type: "car" | "house" | "land" | "machine";
+      item: Car | House | Land | Machine;
+      quantity: number;
+    }>;
+  }
   | {
-      type: "SET_FAVORITES";
-      payload: Array<{
-        id: string;
-        type: "car" | "house" | "land" | "machine";
-        item: Car | House | Land | Machine;
-      }>;
-    }
+    type: "SET_FAVORITES";
+    payload: Array<{
+      id: string;
+      type: "car" | "house" | "land" | "machine";
+      item: Car | House | Land | Machine;
+    }>;
+  }
   | { type: "SET_CARS"; payload: Car[] }
   | { type: "ADD_CAR"; payload: Car }
   | { type: "UPDATE_CAR"; payload: { id: string; updates: Partial<Car> } }
@@ -472,14 +472,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Helper to validate MongoDB ObjectId format (24 hex characters)
+    const isValidObjectId = (id: string) => /^[0-9a-fA-F]{24}$/.test(id);
+
     try {
+      const buyerId = auth.user._id;
+      const sellerId = (item as any).sellerId || (item as any).owner || auth.user._id;
+      const itemId = item.id;
+
+      // Log IDs for debugging
+      console.log("[v0] Validating IDs for deal creation:", { buyerId, sellerId, itemId });
+
+      // If IDs are not valid ObjectIds (e.g., sample data "car-1"), don't call the API
+      if (!isValidObjectId(buyerId) || !isValidObjectId(sellerId) || !isValidObjectId(itemId)) {
+        console.warn("[v0] Skipping API call: One or more IDs are not valid MongoDB ObjectIds. This item might be local sample data.");
+
+        // For local sample data, we'll simulate success by adding to local state if needed
+        // but for now, we just notify the user that real API interaction requires real data
+        throw new Error("Cannot create a real deal for sample data. Please use items that were fetched from the server.");
+      }
+
       const backendItemType =
         itemType === "house"
           ? "Property"
           : ((itemType.charAt(0).toUpperCase() + itemType.slice(1)) as "Car" | "Property" | "Land" | "Machine");
 
-      const sellerId = item.sellerId || item.owner || auth.user._id;
-      const sellerName = item.sellerName || item.ownerName || "Property Owner";
+      const sellerName = (item as any).sellerName || (item as any).ownerName || "Property Owner";
 
       const dealData = {
         item: item.id,
@@ -490,6 +508,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         dealType: "inquiry",
       };
 
+      console.log("[v0] Full Deal Data Payload:", JSON.stringify(dealData, null, 2));
       const newDeal = await apiCreateDeal(dealData);
       if (newDeal) {
         const mappedDeal: Deal = {
@@ -531,13 +550,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
             ...(itemType === "house" && {
               bedrooms: (item as House).bedrooms,
               bathrooms: (item as House).bathrooms,
-              area: (item as House).area,
+              size: (item as House).size,
               propertyType: (item as House).propertyType,
               listingType: (item as House).listingType,
             }),
             ...(itemType === "land" && {
-              area: (item as Land).area,
-              landType: (item as Land).landType,
+              size: (item as Land).size,
+              landType: (item as any).landType,
               zoning: (item as Land).zoning,
             }),
             ...(itemType === "machine" && {
@@ -711,41 +730,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-const fetchConsultations = async () => {
-  const token = authService.getStoredToken();
-  console.log("fetchConsultations token:", token ? "Present" : "Missing");
+  const fetchConsultations = async () => {
+    const token = authService.getStoredToken();
+    console.log("fetchConsultations token:", token ? "Present" : "Missing");
 
-  if (!token) {
-    console.error("No token for fetchConsultations");
-    throw new Error("Authentication required to fetch consultations");
-  }
-
-  try {
-    const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-
-    console.log("fetchConsultations response status:", response.status);
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.status === "success" && Array.isArray(data.data)) {
-        console.log("Fetched consultations:", data.data); // Add this line
-        dispatch({ type: "SET_CONSULTATIONS", payload: data.data });
-      } else {
-        throw new Error(data.message || "Invalid response format");
-      }
-    } else {
-      throw new Error(`Failed to fetch consultations: ${response.status} - ${await response.text()}`);
+    if (!token) {
+      console.error("No token for fetchConsultations");
+      throw new Error("Authentication required to fetch consultations");
     }
-  } catch (error) {
-    console.error("Error loading consultations from API:", error);
-    throw error;
-  }
-};
+
+    try {
+      const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("fetchConsultations response status:", response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.status === "success" && Array.isArray(data.data)) {
+          console.log("Fetched consultations:", data.data); // Add this line
+          dispatch({ type: "SET_CONSULTATIONS", payload: data.data });
+        } else {
+          throw new Error(data.message || "Invalid response format");
+        }
+      } else {
+        throw new Error(`Failed to fetch consultations: ${response.status} - ${await response.text()}`);
+      }
+    } catch (error) {
+      console.error("Error loading consultations from API:", error);
+      throw error;
+    }
+  };
 
   const createConsultation = async (data: Omit<Consultation, "id" | "status" | "createdAt" | "updatedAt">): Promise<Consultation> => {
     const token = authService.getStoredToken();
@@ -795,48 +814,48 @@ const fetchConsultations = async () => {
     }
   };
 
- const updateConsultationStatus = async (id: string, status: Consultation["status"], notes?: string): Promise<void> => {
-  const token = authService.getStoredToken();
-  console.log("updateConsultationStatus token:", token ? "Present" : "Missing");
+  const updateConsultationStatus = async (id: string, status: Consultation["status"], notes?: string): Promise<void> => {
+    const token = authService.getStoredToken();
+    console.log("updateConsultationStatus token:", token ? "Present" : "Missing");
 
-  if (!token) {
-    console.error("No token in updateConsultationStatus");
-    throw new Error("No authentication token found");
-  }
-
-  if (!id) {
-    console.error("Invalid consultation ID:", id);
-    throw new Error("Invalid consultation ID");
-  }
-
-  try {
-    const response = await fetch(`https://car-house-land.onrender.com/api/consultations/${id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status, agentNotes: notes }),
-    });
-
-    console.log("updateConsultationStatus response status:", response.status);
-
-    if (response.ok) {
-      const updated = await response.json();
-      if (updated.status === "success" && updated.data) {
-        dispatch({ type: "UPDATE_CONSULTATION", payload: { id, updates: updated.data } });
-        await logActivity(status, "consultation", `updated consultation status to ${status}`, id);
-      }
-    } else {
-      const errorText = await response.text();
-      console.error("Error response body:", errorText);
-      throw new Error(`Failed to update consultation: ${response.status} - ${errorText}`);
+    if (!token) {
+      console.error("No token in updateConsultationStatus");
+      throw new Error("No authentication token found");
     }
-  } catch (error) {
-    console.error("Error updating consultation status:", error);
-    throw error instanceof Error ? error : new Error("Failed to update consultation status. Please try again.");
-  }
-};
+
+    if (!id) {
+      console.error("Invalid consultation ID:", id);
+      throw new Error("Invalid consultation ID");
+    }
+
+    try {
+      const response = await fetch(`https://car-house-land.onrender.com/api/consultations/${id}`, {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status, agentNotes: notes }),
+      });
+
+      console.log("updateConsultationStatus response status:", response.status);
+
+      if (response.ok) {
+        const updated = await response.json();
+        if (updated.status === "success" && updated.data) {
+          dispatch({ type: "UPDATE_CONSULTATION", payload: { id, updates: updated.data } });
+          await logActivity(status, "consultation", `updated consultation status to ${status}`, id);
+        }
+      } else {
+        const errorText = await response.text();
+        console.error("Error response body:", errorText);
+        throw new Error(`Failed to update consultation: ${response.status} - ${errorText}`);
+      }
+    } catch (error) {
+      console.error("Error updating consultation status:", error);
+      throw error instanceof Error ? error : new Error("Failed to update consultation status. Please try again.");
+    }
+  };
   const refreshConsultations = async () => {
     await fetchConsultations();
   };
@@ -903,9 +922,8 @@ const fetchConsultations = async () => {
             action: deal.status === "pending" ? "created" : deal.status,
             entityType: "deal",
             entityId: deal.id,
-            description: `${deal.status === "pending" ? "created" : deal.status} deal for ${
-              deal.item?.title || "item"
-            }`,
+            description: `${deal.status === "pending" ? "created" : deal.status} deal for ${deal.item?.title || "item"
+              }`,
             timestamp: deal.createdAt || new Date(now.getTime() - Math.random() * 86400000).toISOString(),
             metadata: { dealId: deal.dealId, price: deal.originalPrice, autoGenerated: true },
           });
@@ -927,9 +945,8 @@ const fetchConsultations = async () => {
             action: consultation.status === "pending" ? "created" : consultation.status,
             entityType: "consultation",
             entityId: consultation.id,
-            description: `${consultation.status === "pending" ? "booked" : consultation.status} ${
-              consultation.type
-            } consultation`,
+            description: `${consultation.status === "pending" ? "booked" : consultation.status} ${consultation.type
+              } consultation`,
             timestamp:
               consultation.createdAt ||
               new Date(now.getTime() - Math.random() * 172800000).toISOString(),

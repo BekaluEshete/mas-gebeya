@@ -118,17 +118,16 @@ export interface Car {
   transmission: string
   condition: "new" | "used"
   location: string
-  city: string
-  region: string
-  address: string
+  city?: string
+  region?: string
+  address?: string
   kebele?: string
   referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
   approved?: boolean // Admin approval status
   approvedAt?: string // Approval timestamp
-  rating: number
-  reviews: number
+
   description?: string // Made optional
   featured: boolean
   createdAt: string
@@ -150,16 +149,15 @@ export interface House {
   bathrooms: number
   size: number
   location: string
-  city: string
-  region: string
-  address: string
+  city?: string
+  region?: string
+  address?: string
   referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
   approved?: boolean // Admin approval status
   approvedAt?: string // Approval timestamp
-  rating: number
-  reviews: number
+
   description?: string // Made optional
   featured: boolean
   createdAt: string
@@ -171,8 +169,8 @@ export interface House {
   listingType: "sale" | "rent"
   yearBuilt: number
   parking: number
-  floors?: number
-  amenities: string[]
+  amenities?: string[]
+  condition?: "new" | "used" | "refurbished" | "on-construction" | "renovated" // Added condition field
   agentName: string
   agentPhone: string
 }
@@ -184,8 +182,9 @@ export interface Land {
   size: number
   sizeUnit?: "hectare" | "acre" | "sqm" // Added size unit field
   location: string
-  city: string // Added city field
-  region: string // Added region field
+  address?: string // Added address field
+  city?: string // Added city field
+  region?: string // Added region field
   zone?: string // Added zone field
   kebele?: string // Added kebele field
   referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
@@ -193,8 +192,7 @@ export interface Land {
   status: "available" | "sold" | "pending" | "reserved" // Added reserved status
   approved?: boolean // Admin approval status
   approvedAt?: string // Approval timestamp
-  rating: number
-  reviews: number
+
   description?: string // Made optional
   featured: boolean
   createdAt: string
@@ -229,17 +227,16 @@ export interface Machine {
   price: number
   condition: "new" | "used" | "refurbished"
   location: string
-  city: string
+  city?: string
   region?: string
   zone?: string
-  address: string
+  address?: string
   referenceLocation?: string // Reference location (e.g., "infront of skylight hotel")
   images: string[]
   status: "available" | "sold" | "pending"
   approved?: boolean // Admin approval status
   approvedAt?: string // Approval timestamp
-  rating: number
-  reviews: number
+
   description?: string // Made optional
   featured: boolean
   createdAt: string
@@ -258,6 +255,7 @@ export interface Machine {
   subcategory?: string
   yearManufactured?: number
   features: string[]
+  specifications?: string[] // Added specifications field
   views: number
   favorites: string[]
 }

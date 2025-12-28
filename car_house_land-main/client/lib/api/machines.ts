@@ -29,12 +29,11 @@ function mapApiMachineToMachine(apiMachine: any): Machine {
     // Default values for fields not in API
     machineType: apiMachine.category || "industrial",
     power: "",
-    weight: "",
+    weight: 0,
     capacity: "",
     hoursUsed: 0,
     warranty: "",
-    rating: 4.5,
-    reviews: Math.floor(Math.random() * 50) + 10,
+
     featured: false,
     listingType: "sale",
     sellerId: apiMachine.owner || "api-seller",

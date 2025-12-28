@@ -9,8 +9,10 @@ import { Separator } from "@/components/ui/separator"
 import { Trash2, ShoppingBag, ArrowLeft, Heart } from "lucide-react"
 import { useApp } from "@/context/app-context"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export function Cart() {
+  const router = useRouter()
   const { cart = [], dispatch, removeFromCart, user, createDeal, cars, houses, lands, machines } = useApp()
   const [isCreatingDeals, setIsCreatingDeals] = useState(false)
 
@@ -26,65 +28,62 @@ export function Cart() {
   }
 
   const handleGoToDeals = async () => {
-    if (!user) {
+    if (!user || cart.length === 0) {
       return
     }
 
     setIsCreatingDeals(true)
     console.log("[v0] Starting to create deals for", cart.length, "cart items")
 
+    // Create a copy of the cart to process
+    const itemsToProcess = [...cart]
+    let successCount = 0
+
     try {
-      for (let i = 0; i < cart.length; i++) {
-        const cartItem = cart[i]
-        console.log("[v0] Processing cart item:", cartItem.id, "type:", cartItem.type)
+      for (const cartItem of itemsToProcess) {
+        try {
+          console.log("[v0] Processing cart item:", cartItem.id, "type:", cartItem.type)
 
-        // Get complete product details from the appropriate data source
-        let completeProduct = cartItem.item
+          // Get complete product details
+          let completeProduct = cartItem.item
 
-        // Ensure we have complete product data by fetching from the main data arrays if needed
-        if (cartItem.type === "car") {
-          const foundCar = cars?.find((car) => car.id === cartItem.item.id)
-          if (foundCar) {
-            completeProduct = foundCar
-            console.log("[v0] Found complete car details:", foundCar.title)
+          if (cartItem.type === "car") {
+            const foundCar = cars?.find((car) => car.id === cartItem.item.id)
+            if (foundCar) completeProduct = foundCar
+          } else if (cartItem.type === "house") {
+            const foundHouse = houses?.find((house) => house.id === cartItem.item.id)
+            if (foundHouse) completeProduct = foundHouse
+          } else if (cartItem.type === "land") {
+            const foundLand = lands?.find((land) => land.id === cartItem.item.id)
+            if (foundLand) completeProduct = foundLand
+          } else if (cartItem.type === "machine") {
+            const foundMachine = machines?.find((machine) => machine.id === cartItem.item.id)
+            if (foundMachine) completeProduct = foundMachine
           }
-        } else if (cartItem.type === "house") {
-          const foundHouse = houses?.find((house) => house.id === cartItem.item.id)
-          if (foundHouse) {
-            completeProduct = foundHouse
-            console.log("[v0] Found complete house details:", foundHouse.title)
-          }
-        } else if (cartItem.type === "land") {
-          const foundLand = lands?.find((land) => land.id === cartItem.item.id)
-          if (foundLand) {
-            completeProduct = foundLand
-            console.log("[v0] Found complete land details:", foundLand.title)
-          }
-        } else if (cartItem.type === "machine") {
-          const foundMachine = machines?.find((machine) => machine.id === cartItem.item.id)
-          if (foundMachine) {
-            completeProduct = foundMachine
-            console.log("[v0] Found complete machine details:", foundMachine.title)
-          }
+
+          const message = `ሰላም፣ በ${completeProduct.title} ላይ ፍላጎት አለኝ። እባክዎ ተጨማሪ መረጃ ይስጡኝ?`
+
+          await createDeal(cartItem.type, completeProduct, message)
+          successCount++
+          console.log("[v0] Successfully created deal for:", completeProduct.title)
+        } catch (itemError) {
+          console.error(`[v0] Error creating deal for item ${cartItem.id}:`, itemError)
+          // Continue with next item even if one fails
         }
-
-        console.log("[v0] Creating deal for item:", completeProduct.id, "type:", cartItem.type)
-        const message = `ሰላም፣ በ${completeProduct.title} ላይ ፍላጎት አለኝ። እባክዎ ተጨማሪ መረጃ ይስጡኝ?`
-
-        await createDeal(cartItem.type, completeProduct, message)
-        console.log("[v0] Successfully created deal for:", completeProduct.title)
       }
 
-      console.log("[v0] Finished creating deals, clearing cart")
-      // Clear the cart after creating deals
+      console.log(`[v0] Finished processing deals. Successful: ${successCount}/${itemsToProcess.length}`)
+
+      // Clear the cart - we do this even if some failed as per user request
       dispatch({ type: "SET_CART", payload: [] })
 
-      // Redirect to deals page
-      window.location.href = "/deals"
+      // Use router.push instead of window.location.href for smoother transition
+      router.push("/deals")
     } catch (error) {
-      console.error("[v0] Error creating deals from cart:", error)
-      // Still redirect even if there's an error
-      window.location.href = "/deals"
+      console.error("[v0] Global error in handleGoToDeals:", error)
+      // Attempt to clear cart and redirect anyway to avoid getting stuck
+      dispatch({ type: "SET_CART", payload: [] })
+      router.push("/deals")
     } finally {
       setIsCreatingDeals(false)
     }
@@ -191,15 +190,14 @@ export function Cart() {
                           <div className="flex items-center gap-2">
                             <Badge
                               variant="outline"
-                              className={`capitalize ${
-                                cartItem.type === "car"
+                              className={`capitalize ${cartItem.type === "car"
                                   ? "border-blue-200 text-blue-700 bg-blue-50"
                                   : cartItem.type === "house"
                                     ? "border-green-200 text-green-700 bg-green-50"
                                     : cartItem.type === "land"
                                       ? "border-yellow-200 text-yellow-700 bg-yellow-50"
                                       : "border-orange-200 text-orange-700 bg-orange-50"
-                              }`}
+                                }`}
                             >
                               {cartItem.type}
                             </Badge>
@@ -277,7 +275,7 @@ export function Cart() {
                   {isCreatingDeals ? "Creating Deals..." : "Go to Deals"}
                 </Button>
 
-                
+
 
 
                 {/* Trust Badges */}

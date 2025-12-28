@@ -108,7 +108,15 @@ export async function createDeal(dealData: CreateDealData) {
       throw new Error("Authentication required")
     }
 
-    console.log("[v0] Making API request to create deal:", dealData)
+    console.log("[v0] Making API request to create deal:", {
+      url: `${API_BASE_URL}/deals`,
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token.substring(0, 10)}...`,
+        "Content-Type": "application/json",
+      },
+      body: dealData
+    })
 
     const response = await fetch(`${API_BASE_URL}/deals`, {
       method: "POST",
@@ -122,7 +130,15 @@ export async function createDeal(dealData: CreateDealData) {
     console.log("[v0] API response status:", response.status)
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: "Unknown error" }))
+      let errorData = { message: `HTTP error! status: ${response.status}` }
+      try {
+        errorData = await response.json()
+      } catch (e) {
+        // If not JSON, try to get text
+        const errorText = await response.text().catch(() => "Could not read response body")
+        console.error("[v0] API error response (non-JSON):", errorText)
+        errorData = { message: errorText || `HTTP error! status: ${response.status}` }
+      }
       console.error("[v0] API error response:", errorData)
       throw new Error(errorData.message || `HTTP error! status: ${response.status}`)
     }

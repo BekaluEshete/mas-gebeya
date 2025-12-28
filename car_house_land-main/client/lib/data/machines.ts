@@ -16,8 +16,7 @@ export const MACHINES_DATA: Machine[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.8,
-    reviews: 15,
+
     description:
       "Reliable Caterpillar excavator in excellent condition with low hours. Perfect for construction and excavation projects.",
     featured: true,
@@ -48,8 +47,7 @@ export const MACHINES_DATA: Machine[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.6,
-    reviews: 12,
+
     description:
       "Powerful John Deere bulldozer available for monthly rental. Ideal for earthmoving and construction projects.",
     featured: false,
@@ -80,8 +78,7 @@ export const MACHINES_DATA: Machine[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.9,
-    reviews: 8,
+
     description: "Brand new Komatsu mobile crane with advanced safety features and excellent lifting capacity.",
     featured: true,
     createdAt: "2024-01-20",
@@ -111,8 +108,7 @@ export const MACHINES_DATA: Machine[] = [
       "https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.5,
-    reviews: 20,
+
     description: "Reliable Volvo forklift available for daily rental. Perfect for warehouse and loading operations.",
     featured: false,
     createdAt: "2024-01-12",
@@ -142,8 +138,7 @@ export const MACHINES_DATA: Machine[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&h=400&fit=crop&crop=center",
     ],
     status: "available",
-    rating: 4.7,
-    reviews: 6,
+
     description: "Brand new Caterpillar generator set with high power output. Ideal for industrial and commercial use.",
     featured: false,
     createdAt: "2024-01-08",

@@ -338,8 +338,7 @@ export function AdminDashboard() {
       id: itemData.id || `${selectedCategory.slice(0, -1)}-${Date.now()}`,
       createdAt: itemData.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      rating: itemData.rating || 4.5,
-      reviews: itemData.reviews || 0,
+
       status: itemData.status || "available",
       sellerName: itemData.sellerName || "Admin Added",
       sellerPhone: itemData.sellerPhone || "+251 911 000 000",
@@ -445,7 +444,7 @@ export function AdminDashboard() {
   }
 
   const getCurrentDataSetter = () => {
-    return () => {}
+    return () => { }
   }
 
   const handleEditUser = (user: any) => {

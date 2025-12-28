@@ -20,8 +20,7 @@ export function mapApiCarToLocal(apiCar: any): Car {
     kebele: apiCar.kebele,
     images: apiCar.images?.map((img: any) => img.url) || ["/classic-red-convertible.png"],
     status: apiCar.status === "available" ? "available" : apiCar.status === "sold" ? "sold" : "pending",
-    rating: 4.5, // Default rating since API doesn't provide this
-    reviews: Math.floor(Math.random() * 50) + 1, // Random reviews count
+
     description: apiCar.description,
     featured: Math.random() > 0.7, // Random featured status
     createdAt: apiCar.createdAt || new Date().toISOString(),

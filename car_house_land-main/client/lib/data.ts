@@ -13,8 +13,7 @@ export const cars: Car[] = [
       "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Excellent condition hybrid sedan with low mileage and full service history.",
-    rating: 4.8,
-    reviews: 24,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-15",
@@ -46,8 +45,7 @@ export const cars: Car[] = [
       "https://images.unsplash.com/photo-1503376780353-7e6692767b70?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Luxury SUV with premium features and excellent performance.",
-    rating: 4.9,
-    reviews: 18,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-10",
@@ -78,8 +76,7 @@ export const cars: Car[] = [
       "https://images.unsplash.com/photo-1502877338535-766e1452684a?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Luxury sedan with advanced technology and premium interior.",
-    rating: 4.8,
-    reviews: 31,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-22",
@@ -110,8 +107,7 @@ export const cars: Car[] = [
       "https://images.unsplash.com/photo-1593941707882-a5bac6861d75?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Electric sedan with autopilot and supercharging capability.",
-    rating: 4.9,
-    reviews: 45,
+
     status: "available",
     featured: false,
     createdAt: "2024-01-25",
@@ -145,8 +141,6 @@ export const houses: House[] = [
       "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Beautiful 4-bedroom home with modern amenities and large backyard.",
-
-    reviews: 12,
     status: "available",
     featured: true,
     createdAt: "2024-01-20",
@@ -164,7 +158,6 @@ export const houses: House[] = [
     amenities: ["Pool", "Garden", "Garage", "Modern Kitchen"],
     agentName: "Sarblet Tesfaye",
     agentPhone: "+1 (555) 234-5678",
-    rating: 0
   },
   {
     id: "house-2",
@@ -178,8 +171,7 @@ export const houses: House[] = [
       "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Stunning 2-bedroom apartment in the heart of downtown with city views.",
-    rating: 4.9,
-    reviews: 28,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-18",
@@ -209,8 +201,7 @@ export const houses: House[] = [
       "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Spacious 5-bedroom villa with swimming pool and desert views.",
-    rating: 4.8,
-    reviews: 19,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-23",
@@ -243,8 +234,7 @@ export const lands: Land[] = [
       "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Prime 5-acre plot perfect for residential development with utilities nearby.",
-    rating: 4.6,
-    reviews: 8,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-12",
@@ -265,15 +255,14 @@ export const lands: Land[] = [
     id: "land-2",
     title: "Agricultural Farmland",
     price: 180000,
-    location: "Lemikora,AA" ,
+    location: "Lemikora,AA",
     images: [
       "https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=600&fit=crop&crop=center",
       "https://images.unsplash.com/photo-1574263867128-a3d5c1b1deaa?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Fertile 10-acre farmland with excellent soil quality and irrigation system.",
-    rating: 4.8,
-    reviews: 15,
+
     status: "available",
     featured: false,
     createdAt: "2024-01-08",
@@ -304,8 +293,7 @@ export const machines: Machine[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Heavy-duty excavator in excellent condition with low hours.",
-    rating: 4.7,
-    reviews: 22,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-14",
@@ -323,7 +311,11 @@ export const machines: Machine[] = [
     capacity: "1.2 cubic yards",
     hoursUsed: 2800,
     warranty: "6 months parts and labor",
-    listingType: "sale"
+    listingType: "sale",
+    category: "excavator",
+    features: ["Hydraulic thumb", "AC cab"],
+    views: 120,
+    favorites: []
   },
   {
     id: "machine-2",
@@ -336,8 +328,7 @@ export const machines: Machine[] = [
       "https://images.unsplash.com/photo-1574263867128-a3d5c1b1deaa?w=800&h=600&fit=crop&crop=center",
     ],
     description: "Reliable agricultural tractor with modern features and GPS guidance.",
-    rating: 4.9,
-    reviews: 16,
+
     status: "available",
     featured: true,
     createdAt: "2024-01-16",
@@ -355,6 +346,10 @@ export const machines: Machine[] = [
     capacity: "N/A",
     hoursUsed: 1200,
     warranty: "12 months full warranty",
-    listingType: "sale"
+    listingType: "sale",
+    category: "tractor",
+    features: ["4WD", "Front loader"],
+    views: 85,
+    favorites: []
   },
 ]
