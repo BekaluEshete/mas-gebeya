@@ -251,10 +251,10 @@ const getUserStats = async (req, res) => {
           _id: null,
           totalUsers: { $sum: 1 },
           activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } },
-           
+
           adminUsers: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
           ownerUsers: { $sum: { $cond: [{ $eq: ['$role', 'owner'] }, 1, 0] } },
-          
+
         },
       },
     ]);
@@ -297,6 +297,26 @@ const getUserStats = async (req, res) => {
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch user statistics',
+    });
+  }
+};
+
+// Get public user count 
+const getPublicUserCount = async (req, res) => {
+  try {
+    const activeUsers = await User.countDocuments({ isActive: true });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        activeUsers
+      }
+    });
+  } catch (error) {
+    console.error('Get public user count error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch user count'
     });
   }
 };
@@ -392,4 +412,5 @@ module.exports = {
   getUserStats,
   getUserDashboard,
   toggleUserRole,
+  getPublicUserCount,
 };

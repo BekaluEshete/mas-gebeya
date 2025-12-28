@@ -25,7 +25,7 @@ export function AllTransactionsPage() {
   useEffect(() => {
     async function fetchAllDeals() {
       try {
-        const response = await fetch("https://car-house-land.onrender.com/api/deals");
+        const response = await fetch("https://car-house-land.onrender.com/api/deals/recent?limit=100");
 
         let responseData;
         if (response.ok) {

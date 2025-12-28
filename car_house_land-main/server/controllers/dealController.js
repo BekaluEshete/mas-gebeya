@@ -310,6 +310,30 @@ const getDealStats = async (req, res) => {
   }
 };
 
+const getRecentDeals = async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 5;
+
+    const deals = await Deal.find({ status: { $in: ['completed', 'approved'] } })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .populate('item', 'title category price images')
+      .populate('buyer', 'fullName')
+      .populate('seller', 'fullName');
+
+    res.status(200).json({
+      status: 'success',
+      data: { deals },
+    });
+  } catch (error) {
+    console.error('Get recent deals error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to fetch recent deals',
+    });
+  }
+};
+
 module.exports = {
   getDeals,
   getDealById,
@@ -317,4 +341,5 @@ module.exports = {
   updateDealStatus,
   deleteDeal,
   getDealStats,
+  getRecentDeals,
 };
