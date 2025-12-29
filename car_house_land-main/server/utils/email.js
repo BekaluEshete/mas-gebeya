@@ -39,7 +39,7 @@ const sendEmail = async (options) => {
     return info;
   } catch (error) {
     console.error("❌ Email sending failed:", error.message);
-    throw new Error("Email could not be sent");
+    throw new Error(`Email could not be sent. Check SMTP_USER (${process.env.SMTP_USER}) and SMTP_PASS configuration.`);
   }
 };
 
@@ -129,12 +129,12 @@ const emailTemplates = {
     text: `Your Massgebeya password reset code is: ${code}\nThis code expires in 15 minutes.`
   }),
 
- adminNotification: (message, user) => {
-  const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "N/A";
+  adminNotification: (message, user) => {
+    const fullName = user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "N/A";
 
-  return {
-    subject: '⚠️ Admin Notification - Massgebeya',
-    html: wrapEmail('Admin Notification', `
+    return {
+      subject: '⚠️ Admin Notification - Massgebeya',
+      html: wrapEmail('Admin Notification', `
       <p>${message}</p>
       <h4 style="color: #333;">User Details:</h4>
       <ul style="color: #555; line-height: 1.8;">
@@ -144,7 +144,7 @@ const emailTemplates = {
         <li><strong>Location:</strong> ${user?.location || "N/A"}</li>
       </ul>
     `),
-    text: `
+      text: `
       Admin Notification:
       ${message}
 
@@ -154,8 +154,8 @@ const emailTemplates = {
       - Phone: ${user?.phoneNumber || "N/A"}
       - Location: ${user?.location?.city || "N/A"}
     `
-  };
-},
+    };
+  },
 
 
   dealCreated: (firstName, dealId, itemTitle) => ({

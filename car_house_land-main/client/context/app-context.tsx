@@ -1095,6 +1095,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (auth.user) {
       loadDealsFromAPI();
+    } else {
+      // Clear sensitive data on logout
+      dispatch({ type: "SET_CART", payload: [] });
+      dispatch({ type: "SET_FAVORITES", payload: [] });
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("userCart");
+        localStorage.removeItem("userFavorites");
+      }
     }
   }, [auth.user]);
 

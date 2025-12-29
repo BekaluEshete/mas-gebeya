@@ -17,8 +17,7 @@ const getUsers = async (req, res) => {
     if (search) {
       const searchRegex = new RegExp(sanitizeSearchString(search), 'i');
       filter.$or = [
-        { firstName: searchRegex },
-        { lastName: searchRegex },
+        { fullName: searchRegex },
         { email: searchRegex },
         { phone: searchRegex },
       ];

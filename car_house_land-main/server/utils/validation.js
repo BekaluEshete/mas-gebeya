@@ -19,8 +19,7 @@ const changePasswordValidation = [
 ];
 
 const updateProfileValidation = [
-  body('firstName').optional().trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
-  body('lastName').optional().trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
+  body('fullName').optional().trim().isLength({ min: 2, max: 50 }).matches(/^[a-zA-Z\s]+$/),
   body('phone').optional().matches(/^\+251[0-9]{9}$/),
   body('avatar').optional().isURL()
 ];
@@ -30,7 +29,8 @@ const forgotPasswordValidation = [
 ];
 
 const resetPasswordValidation = [
-  param('token').isLength({ min: 64, max: 64 }),
+  body('email').isEmail().normalizeEmail(),
+  body('code').isLength({ min: 6, max: 6 }),
   body('password').isLength({ min: 6 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
 ];
 

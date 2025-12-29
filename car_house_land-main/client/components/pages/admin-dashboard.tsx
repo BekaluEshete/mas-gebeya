@@ -646,12 +646,12 @@ export function AdminDashboard() {
   const handleEditUser = (user: any) => {
     setEditingUser({
       ...user,
-      fullName: user.fullName,
+      fullName: user.name, // Fixed: use transformed name
       street: user.address?.street || "",
       city: user.address?.city || "",
       region: user.address?.region || "",
       country: user.address?.country || "ETHIOPIA",
-      isActive: user.isActive,
+      isActive: user.status === "active", // Fixed: use transformed status
       isVerified: user.isVerified,
     })
     setIsUserDialogOpen(true)
@@ -685,13 +685,13 @@ export function AdminDashboard() {
       }
 
       console.log("Saving user with data:", userData)
-      console.log("Is editing existing user:", !!editingUser._id)
+      console.log("Is editing existing user:", !!editingUser.id)
 
-      const url = editingUser._id
-        ? `https://car-house-land.onrender.com/api/users/${editingUser._id}`
+      const url = editingUser.id
+        ? `https://car-house-land.onrender.com/api/users/${editingUser.id}`
         : "https://car-house-land.onrender.com/api/users"
 
-      const method = editingUser._id ? "PUT" : "POST"
+      const method = editingUser.id ? "PUT" : "POST"
 
       console.log("Making request to:", url, "with method:", method)
 

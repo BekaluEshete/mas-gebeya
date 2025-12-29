@@ -363,16 +363,23 @@ const forgotPassword = async (req, res) => {
     user.resetCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
 
-    const resetEmail = emailTemplates.passwordReset(resetCode);
-    await sendEmail({ email: user.email, ...resetEmail });
+    // Send email asynchronously to avoid blocking the response
+    setImmediate(async () => {
+      try {
+        const resetEmail = emailTemplates.passwordReset(user.fullName, resetCode);
+        await sendEmail({ email: user.email, ...resetEmail });
+      } catch (emailError) {
+        console.error('Forgot password email failed:', emailError.message);
+      }
+    });
 
     res.status(200).json({
       status: 'success',
       message: 'If an account with that email exists, a reset code has been sent'
     });
   } catch (error) {
-    console.error('Forgot password error:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to process forgot password request' });
+    console.error('Forgot password fatal error:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to process forgot password request', detail: error.message });
   }
 };
 
@@ -462,6 +469,17 @@ const resetPassword = async (req, res) => {
       status: 'success',
       message: 'Password reset successful',
       data: {
+        user: {
+          _id: user._id,
+          fullName: user.fullName,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          isActive: user.isActive,
+          isVerified: user.isVerified,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        },
         token: authToken,
         refreshToken
       }
@@ -478,7 +496,7 @@ const resetPassword = async (req, res) => {
 const refreshToken = async (req, res) => {
   try {
     const incoming = req.cookies.refreshToken || req.body.refreshToken;
-    
+
     if (!incoming) {
       return res.status(400).json({
         status: 'error',
@@ -582,7 +600,7 @@ const requestEmailVerification = async (req, res) => {
     user.verificationCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save();
 
-    const emailContent = emailTemplates.verificationCode(verificationCode);
+    const emailContent = emailTemplates.verificationCode(user.fullName, verificationCode);
     await sendEmail({ email: user.email, ...emailContent });
 
     res.status(200).json({ status: 'success', message: 'Verification code sent to your email' });
