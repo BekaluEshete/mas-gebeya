@@ -2,23 +2,26 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI || "mongodb+srv://temesgenmarie:123456Tom@cluster0.mxzpylr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0", {
-      
-      serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-      maxPoolSize: 10, // Maximum number of sockets in the connection pool
+    const uri = process.env.MONGO_URI || "mongodb+srv://temesgenmarie:123456Tom@cluster0.mxzpylr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+    console.log(`[connectDB] Attempting to connect to MongoDB... (URI: ${uri.split('@')[1]})`);
+
+    await mongoose.connect(uri, {
+      serverSelectionTimeoutMS: 5000,
+      maxPoolSize: 10,
     });
 
-    console.log(`✅ MongoDB Connected: ${mongoose.connection.host}`);
+    console.log(`✅ [connectDB] MongoDB Connected: ${mongoose.connection.host}`);
 
     mongoose.connection.on('error', (err) => {
-      console.error('MongoDB connection error:', err);
+      console.error('[connectDB] MongoDB connection error:', err);
     });
 
     mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
+      console.log('[connectDB] MongoDB disconnected');
     });
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error.message);
+    console.error('❌ [connectDB] MongoDB connection error:', error.message);
+    if (error.stack) console.error(error.stack);
     process.exit(1);
   }
 };

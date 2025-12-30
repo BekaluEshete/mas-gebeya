@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight } from "lucide-react"
+import { API_BASE_URL } from "@/lib/config"
 
 interface Deal {
   _id: string;
@@ -25,7 +26,7 @@ export function AllTransactionsPage() {
   useEffect(() => {
     async function fetchAllDeals() {
       try {
-        const response = await fetch("https://car-house-land.onrender.com/api/deals/recent?limit=100");
+        const response = await fetch(`${API_BASE_URL}/deals/recent?limit=100`);
 
         let responseData;
         if (response.ok) {

@@ -59,7 +59,6 @@ const landSchema = new mongoose.Schema({
     description: { type: String, trim: true }
   }],
 
-  address: { type: String, required: true },
   city: { type: String, required: true },
   region: { type: String, required: true },
   zone: { type: String, trim: true },

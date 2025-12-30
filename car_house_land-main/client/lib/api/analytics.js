@@ -1,7 +1,8 @@
 // lib/api/analytics.js
 import { authService } from "@/lib/auth";
 
-const BASE_URL = "https://car-house-land.onrender.com/api/analytics";
+import { API_BASE_URL } from "@/lib/config";
+const BASE_URL = `${API_BASE_URL}/analytics`;
 
 export const analyticsAPI = {
   async getUserGrowth() {

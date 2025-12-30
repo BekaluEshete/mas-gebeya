@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://car-house-land.onrender.com/api"
+import { API_BASE_URL } from "@/lib/config"
 
 export interface AdminContactInfo {
   name: string
@@ -20,11 +20,11 @@ export async function fetchAdminContact(): Promise<AdminContactInfo | null> {
     }
 
     const data = await response.json()
-    
+
     if (data.status === "success" && data.data) {
       return data.data
     }
-    
+
     return null
   } catch (error) {
     console.error("Error fetching admin contact:", error)

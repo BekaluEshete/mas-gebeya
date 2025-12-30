@@ -6,6 +6,7 @@ import { useApp } from "@/context/app-context"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { API_BASE_URL } from "@/lib/config"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -123,7 +124,7 @@ export function AdminDashboard() {
       }
 
       console.log("[v0] Fetching owners from API...")
-      const response = await fetch("https://car-house-land.onrender.com/api/users/owner/list", {
+      const response = await fetch(`${API_BASE_URL}/users/owner/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -164,7 +165,7 @@ export function AdminDashboard() {
           return
         }
 
-        const response = await fetch("https://car-house-land.onrender.com/api/users", {
+        const response = await fetch(`${API_BASE_URL}/users`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -492,8 +493,8 @@ export function AdminDashboard() {
       console.log("[v0] Is editing existing user:", !!editingUser._id)
 
       const url = editingUser._id
-        ? `https://car-house-land.onrender.com/api/users/${editingUser._id}`
-        : "https://car-house-land.onrender.com/api/users"
+        ? `${API_BASE_URL}/users/${editingUser._id}`
+        : `${API_BASE_URL}/users`
 
       const method = editingUser._id ? "PUT" : "POST"
 
@@ -522,7 +523,7 @@ export function AdminDashboard() {
               return
             }
 
-            const response = await fetch("https://car-house-land.onrender.com/api/users", {
+            const response = await fetch(`${API_BASE_URL}/users`, {
               method: "GET",
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -800,7 +801,7 @@ export function AdminDashboard() {
         console.log(`[v0] ${key}:`, value)
       }
 
-      const baseUrl = "https://car-house-land.onrender.com/api"
+      const baseUrl = API_BASE_URL
       let apiEndpoint = ""
 
       switch (selectedCategory) {

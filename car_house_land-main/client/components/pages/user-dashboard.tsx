@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Heart, Settings, User, Loader2, Lock, Package } from "lucide-react"
 import { useApp } from "@/context/app-context"
+import { API_BASE_URL } from "@/lib/config"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -23,9 +24,9 @@ export function UserDashboard() {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
-  
+
   const router = useRouter()
-  
+
   // Filter posted items by user's ID
   const postedItems = user?._id ? [
     ...(cars || []).filter((car: any) => String(car.sellerId) === String(user._id)).map((car: any) => ({ ...car, type: "car" })),
@@ -54,7 +55,7 @@ export function UserDashboard() {
 
       if (!user?._id) throw new Error("User ID is missing. Please refresh the page.")
 
-      const response = await fetch(`https://car-house-land.onrender.com/api/auth/update-profile`, {
+      const response = await fetch(`${API_BASE_URL}/auth/update-profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -103,7 +104,7 @@ export function UserDashboard() {
       const token = authService.getStoredToken()
       if (!token) throw new Error("No token available. Please log in again.")
 
-      const response = await fetch(`https://car-house-land.onrender.com/api/auth/change-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -262,12 +263,12 @@ export function UserDashboard() {
                               return "#"
                           }
                         }
-                        
+
                         const itemUrl = getItemUrl(favorite.type, favorite.item.id)
                         const itemImage = favorite.item.images?.[0] || favorite.item.image || "/placeholder.svg"
                         const itemTitle = favorite.item.title || favorite.item.name || "Untitled"
                         const itemPrice = favorite.item.price ? `${favorite.item.price.toLocaleString()} ብር` : "Price not available"
-                        
+
                         return (
                           <div
                             key={favorite.id}
@@ -346,12 +347,12 @@ export function UserDashboard() {
                               return "#"
                           }
                         }
-                        
+
                         const itemUrl = getItemUrl(item.type, item.id)
                         const itemImage = item.images?.[0] || item.image || "/placeholder.svg"
                         const itemTitle = item.title || item.name || "Untitled"
                         const itemPrice = item.price ? `${item.price.toLocaleString()} ብር` : "Price not available"
-                        
+
                         return (
                           <div
                             key={item.id}
@@ -368,14 +369,13 @@ export function UserDashboard() {
                                     target.src = "/placeholder.svg"
                                   }}
                                 />
-                                <Badge 
-                                  className={`absolute top-2 right-2 ${
-                                    item.status === "available" 
-                                      ? "bg-green-500" 
-                                      : item.status === "sold" 
-                                      ? "bg-red-500" 
-                                      : "bg-yellow-500"
-                                  } text-white`}
+                                <Badge
+                                  className={`absolute top-2 right-2 ${item.status === "available"
+                                      ? "bg-green-500"
+                                      : item.status === "sold"
+                                        ? "bg-red-500"
+                                        : "bg-yellow-500"
+                                    } text-white`}
                                 >
                                   {item.status}
                                 </Badge>

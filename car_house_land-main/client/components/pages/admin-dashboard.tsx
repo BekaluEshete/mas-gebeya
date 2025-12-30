@@ -73,6 +73,7 @@ import type { Deal, Consultation, Car, House, Land, Machine } from "@/types" // 
 import { Label } from "@/components/ui/label"
 import { createCar, updateCar as apiUpdateCar } from "@/lib/api/cars"
 import { authService } from "@/lib/auth"
+import { API_BASE_URL } from "@/lib/config"
 
 import { useState, useEffect } from "react"
 import RecentActivities from "./RecentActivities"
@@ -220,7 +221,7 @@ export function AdminDashboard() {
       const token = authService.getStoredToken()
       if (!token) return
 
-      const response = await fetch("https://car-house-land.onrender.com/api/admin/pending", {
+      const response = await fetch(`${API_BASE_URL}/admin/pending`, {
         headers: { Authorization: `Bearer ${token}` }
       })
 
@@ -238,7 +239,7 @@ export function AdminDashboard() {
   const handleApprove = async (type: string, id: string) => {
     try {
       const token = authService.getStoredToken()
-      const response = await fetch(`https://car-house-land.onrender.com/api/admin/approve/${type}/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/approve/${type}/${id}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -260,7 +261,7 @@ export function AdminDashboard() {
 
     try {
       const token = authService.getStoredToken()
-      const response = await fetch(`https://car-house-land.onrender.com/api/admin/reject/${type}/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/admin/reject/${type}/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` }
       })
@@ -296,7 +297,7 @@ export function AdminDashboard() {
       }
 
       console.log("Fetching owners from API...")
-      const response = await fetch("https://car-house-land.onrender.com/api/users/owner/list", {
+      const response = await fetch(`${API_BASE_URL}/users/owner/list`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -337,7 +338,7 @@ export function AdminDashboard() {
           return
         }
 
-        const response = await fetch("https://car-house-land.onrender.com/api/users", {
+        const response = await fetch(`${API_BASE_URL}/users`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -667,7 +668,7 @@ export function AdminDashboard() {
         return
       }
 
-      const userData = {
+      const userData: any = {
         fullName: editingUser.fullName,
         email: editingUser.email,
         password: editingUser.password,
@@ -684,12 +685,17 @@ export function AdminDashboard() {
         isVerified: editingUser.isVerified !== undefined ? editingUser.isVerified : false,
       }
 
+      // Remove password if empty (for updates)
+      if (!userData.password || userData.password.trim() === "") {
+        delete userData.password
+      }
+
       console.log("Saving user with data:", userData)
       console.log("Is editing existing user:", !!editingUser.id)
 
       const url = editingUser.id
-        ? `https://car-house-land.onrender.com/api/users/${editingUser.id}`
-        : "https://car-house-land.onrender.com/api/users"
+        ? `${API_BASE_URL}/users/${editingUser.id}`
+        : `${API_BASE_URL}/users`
 
       const method = editingUser.id ? "PUT" : "POST"
 
@@ -719,7 +725,7 @@ export function AdminDashboard() {
               return
             }
 
-            const response = await fetch("https://car-house-land.onrender.com/api/users", {
+            const response = await fetch(`${API_BASE_URL}/users`, {
               method: "GET",
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -832,7 +838,7 @@ export function AdminDashboard() {
             return
           }
 
-          const response = await fetch("https://car-house-land.onrender.com/api/users", {
+          const response = await fetch(`${API_BASE_URL}/users`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -1480,7 +1486,7 @@ export function AdminDashboard() {
         console.log(`[v0] ${key}:`, value)
       }
 
-      const baseUrl = "https://car-house-land.onrender.com/api"
+      const baseUrl = API_BASE_URL
       let apiEndpoint = ""
 
       switch (selectedCategory) {
@@ -1673,7 +1679,7 @@ export function AdminDashboard() {
 
       console.log('Fetching deal details for ID:', dealId);
 
-      const response = await fetch(`https://car-house-land.onrender.com/api/deals/${dealId}`, {
+      const response = await fetch(`${API_BASE_URL}/deals/${dealId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -3795,19 +3801,19 @@ export function AdminDashboard() {
                         />
                       </div>
 
-                      {!editingUser?._id && (
-                        <div className="space-y-2">
-                          <label className="text-xs sm:text-sm font-medium">Password *</label>
-                          <Input
-                            type="password"
-                            value={editingUser?.password || ""}
-                            onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                            className="text-sm"
-                            placeholder="Enter password (min 6 characters)"
-                            minLength={6}
-                          />
-                        </div>
-                      )}
+                      <div className="space-y-2">
+                        <label className="text-xs sm:text-sm font-medium">
+                          {editingUser?.id ? "New Password (optional)" : "Password *"}
+                        </label>
+                        <Input
+                          type="password"
+                          value={editingUser?.password || ""}
+                          onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+                          className="text-sm"
+                          placeholder={editingUser?.id ? "Update password (min 6 characters)" : "Enter password (min 6 characters)"}
+                          minLength={6}
+                        />
+                      </div>
 
                       <div className="space-y-2">
                         <label className="text-xs sm:text-sm font-medium">Phone *</label>
@@ -3825,7 +3831,7 @@ export function AdminDashboard() {
                         <label className="text-xs sm:text-sm font-medium">Role</label>
                         <Select
                           value={editingUser?.role || "user"}
-                          onChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />
@@ -3899,7 +3905,7 @@ export function AdminDashboard() {
                                 : "inactive"
                               : "active"
                           }
-                          onChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />
@@ -3921,7 +3927,7 @@ export function AdminDashboard() {
                                 : "unverified"
                               : "unverified"
                           }
-                          onChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
+                          onValueChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
                         >
                           <SelectTrigger className="text-xs sm:text-sm">
                             <SelectValue />

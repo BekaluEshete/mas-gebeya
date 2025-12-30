@@ -46,7 +46,8 @@ export interface LoginData {
   password: string
 }
 
-const API_BASE_URL = "https://car-house-land.onrender.com/api/auth"
+import { API_BASE_URL as BASE_URL } from "@/lib/config"
+const API_BASE_URL = `${BASE_URL}/auth`
 
 class AuthService {
   getStoredToken(): string | null {
@@ -261,12 +262,12 @@ class AuthService {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Failed to send reset code" }))
         return { status: "error", message: errorData.message || "Failed to send reset code" }
       }
-      
+
       const result = await response.json()
       return result
     } catch (error) {
@@ -282,12 +283,12 @@ class AuthService {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, code, password }),
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: "Failed to reset password" }))
         return { status: "error", message: errorData.message || "Failed to reset password" }
       }
-      
+
       const result = await response.json()
       if (result.status === "success" && result.data) {
         if (result.data.token) {
@@ -321,11 +322,11 @@ class AuthService {
       })
 
       const result = await response.json()
-      
+
       if (result.status === "success" && result.data?.user) {
         this.setUser(result.data.user)
       }
-      
+
       return result
     } catch (error) {
       console.error("Update profile error:", error)

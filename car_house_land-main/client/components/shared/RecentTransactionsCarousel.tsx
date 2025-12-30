@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { ArrowRight } from "lucide-react"
+import { API_BASE_URL } from "@/lib/config"
 
 interface Deal {
   _id: string;
@@ -23,7 +24,7 @@ export function RecentTransactionsCarousel() {
   useEffect(() => {
     async function fetchRecentDeals() {
       try {
-        const response = await fetch("https://car-house-land.onrender.com/api/deals/recent");
+        const response = await fetch(`${API_BASE_URL}/deals/recent`);
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }

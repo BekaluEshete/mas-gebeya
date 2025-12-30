@@ -7,9 +7,9 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Full name is required'],
     trim: true,
-    maxlength: [80, 'First name cannot exceed 50 characters']
+    maxlength: [80, 'Full name cannot exceed 80 characters']
   },
-  
+
   email: {
     type: String,
     required: [true, 'Email is required'],
@@ -17,7 +17,7 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true,
     match: [
-      /^[^\s@]+@[^\s@]+\.[^\s@]+$/, 
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
       'Please enter a valid email'
     ]
   },
@@ -69,14 +69,17 @@ const userSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
- 
+
 
 // Middleware
 userSchema.pre('save', async function (next) {
   if (this.isModified('email')) {
     this.email = this.email.toLowerCase();
   }
-  if (!this.isModified('password')) return next();
+
+  if (!this.isModified('password')) {
+    return next();
+  }
 
   try {
     const salt = await bcrypt.genSalt(12);
@@ -94,6 +97,6 @@ userSchema.methods.comparePassword = async function (candidatePassword) {
   }
   return bcrypt.compare(candidatePassword, this.password);
 };
- 
+
 
 module.exports = mongoose.model('User', userSchema);

@@ -1,4 +1,5 @@
-import type { Land } from "@/types" // Fixed import to use correct path for Land interface
+import type { Land } from "@/types"
+import { API_BASE_URL } from "@/lib/config"
 
 export interface APILand {
   _id: string
@@ -46,7 +47,7 @@ export interface APILand {
 
 export async function fetchLands(): Promise<Land[]> {
   try {
-    const response = await fetch("https://car-house-land.onrender.com/api/lands")
+    const response = await fetch(`${API_BASE_URL}/lands`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -95,7 +96,7 @@ export async function fetchLands(): Promise<Land[]> {
 
 export async function fetchLandById(id: string): Promise<Land | null> {
   try {
-    const response = await fetch(`https://car-house-land.onrender.com/api/lands/${id}`)
+    const response = await fetch(`${API_BASE_URL}/lands/${id}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -144,7 +145,7 @@ export async function fetchLandById(id: string): Promise<Land | null> {
 
 export async function deleteLand(id: string, token: string): Promise<boolean> {
   try {
-    const response = await fetch(`https://car-house-land.onrender.com/api/lands/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/lands/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

@@ -1,6 +1,6 @@
 import type { Machine } from "@/types"
 
-const API_BASE_URL = "https://car-house-land.onrender.com/api"
+import { API_BASE_URL } from "@/lib/config"
 
 // Map API response to Machine interface
 function mapApiMachineToMachine(apiMachine: any): Machine {

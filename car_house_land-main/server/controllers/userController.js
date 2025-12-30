@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Deal = require('../models/Deal');
 const Cart = require('../models/Cart');
 const { getPaginationInfo, sanitizeSearchString } = require('../utils/helper');
+
 const getUsers = async (req, res) => {
   try {
     const {
@@ -22,21 +23,29 @@ const getUsers = async (req, res) => {
         { phone: searchRegex },
       ];
     }
+
     if (role) filter.role = role;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
     if (isVerified !== undefined) filter.isVerified = isVerified === 'true';
 
-    const sort = {};
-    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
+    const { limit, skip, page } = getPaginationInfo(req.query);
     const users = await User.find(filter)
-      .select('-password')
-      .sort(sort);
+      .sort({ [sortBy]: sortOrder === 'asc' ? 1 : -1 })
+      .limit(limit)
+      .skip(skip)
+      .select('-password');
+
+    const total = await User.countDocuments(filter);
 
     res.status(200).json({
       status: 'success',
       data: {
         users,
+        pagination: {
+          total,
+          page,
+          pages: Math.ceil(total / limit),
+        },
       },
     });
   } catch (error) {
@@ -48,12 +57,11 @@ const getUsers = async (req, res) => {
   }
 };
 
-// Get a single user by ID
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-
     const user = await User.findById(id).select('-password');
+
     if (!user) {
       return res.status(404).json({
         status: 'error',
@@ -61,14 +69,30 @@ const getUserById = async (req, res) => {
       });
     }
 
+    // Get user's deal stats
     const dealStats = await Deal.aggregate([
       { $match: { $or: [{ buyer: user._id }, { seller: user._id }] } },
       {
         $group: {
           _id: null,
           totalDeals: { $sum: 1 },
-          completedDeals: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
-          totalSpent: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, '$finalPrice', 0] } },
+          completedDeals: {
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+          },
+          totalSpent: {
+            $sum: {
+              $cond: [
+                {
+                  $and: [
+                    { $eq: ['$buyer', user._id] },
+                    { $eq: ['$status', 'completed'] },
+                  ],
+                },
+                '$price',
+                0, // Assuming 'price' field exists for completed deals
+              ],
+            },
+          },
         },
       },
     ]);
@@ -99,16 +123,8 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Prevent updating sensitive fields
-    delete updates.password;
-    delete updates.email;
-    delete updates.resetPasswordToken;
-    delete updates.resetPasswordExpire;
-
-    const user = await User.findByIdAndUpdate(id, updates, {
-      new: true,
-      runValidators: true,
-    }).select('-password');
+    // Explicitly select password for isModified check
+    const user = await User.findById(id).select('+password');
 
     if (!user) {
       return res.status(404).json({
@@ -117,16 +133,54 @@ const updateUser = async (req, res) => {
       });
     }
 
+    // List of allowed fields for admin update
+    const allowedUpdates = [
+      'fullName',
+      'password',
+      'phone',
+      'role',
+      'avatar',
+      'address',
+      'isActive',
+      'isVerified',
+    ];
+
+    // Apply updates
+    allowedUpdates.forEach((field) => {
+      if (updates[field] !== undefined) {
+        // Handle nested address object
+        if (field === 'address' && typeof updates.address === 'object') {
+          user.address = { ...user.address, ...updates.address };
+        } else if (field === 'password') {
+          if (updates.password && updates.password.trim().length >= 6) {
+            user.password = updates.password;
+            user.markModified('password');
+          }
+        } else {
+          user[field] = updates[field];
+        }
+      }
+    });
+
+    await user.save();
+
+    // Return updated user without password
+    const updatedUser = user.toObject();
+    delete updatedUser.password;
+
     res.status(200).json({
       status: 'success',
       message: 'User updated successfully',
-      data: { user },
+      data: {
+        user: updatedUser,
+      },
     });
   } catch (error) {
     console.error('Update user error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update user',
+      detail: error.message
     });
   }
 };
@@ -218,8 +272,7 @@ const toggleUserRole = async (req, res) => {
       });
     }
 
-    // Toggle role between 'admin' and 'user'
-    user.role = user.role === 'admin' ? 'user' : 'user' === user.role ? 'admin' : 'user';
+    user.role = user.role === 'admin' ? 'user' : 'admin';
     await user.save();
 
     res.status(200).json({
@@ -241,142 +294,76 @@ const toggleUserRole = async (req, res) => {
   }
 };
 
-// Get user statistics (for admins)
 const getUserStats = async (req, res) => {
   try {
-    const stats = await User.aggregate([
-      {
-        $group: {
-          _id: null,
-          totalUsers: { $sum: 1 },
-          activeUsers: { $sum: { $cond: [{ $eq: ['$isActive', true] }, 1, 0] } },
-
-          adminUsers: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
-          ownerUsers: { $sum: { $cond: [{ $eq: ['$role', 'owner'] }, 1, 0] } },
-
-        },
-      },
-    ]);
-
-    const registrationTrends = await User.aggregate([
-      {
-        $match: {
-          createdAt: { $gte: new Date(Date.now() - 12 * 30 * 24 * 60 * 60 * 1000) },
-        },
-      },
-      {
-        $group: {
-          _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' },
-          },
-          count: { $sum: 1 },
-        },
-      },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
-    ]);
-
-    const locationStats = await User.aggregate([
-      { $match: { 'address.region': { $exists: true, $ne: null } } },
-      { $group: { _id: '$address.region', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 10 },
-    ]);
+    const totalUsers = await User.countDocuments();
+    const activeUsers = await User.countDocuments({ isActive: true });
+    const verifiedUsers = await User.countDocuments({ isVerified: true });
+    const admins = await User.countDocuments({ role: 'admin' });
 
     res.status(200).json({
       status: 'success',
       data: {
-        overview: stats[0] || {},
-        registrationTrends,
-        locationBreakdown: locationStats,
+        totalUsers,
+        activeUsers,
+        verifiedUsers,
+        admins,
       },
     });
   } catch (error) {
     console.error('Get user stats error:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Failed to fetch user statistics',
+      message: 'Failed to fetch user stats',
     });
   }
 };
 
-// Get public user count 
 const getPublicUserCount = async (req, res) => {
   try {
-    const activeUsers = await User.countDocuments({ isActive: true });
-
-    res.status(200).json({
-      status: 'success',
-      data: {
-        activeUsers
-      }
-    });
+    const count = await User.countDocuments({ isActive: true });
+    res.json({ status: 'success', count });
   } catch (error) {
-    console.error('Get public user count error:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Failed to fetch user count'
-    });
+    res.status(500).json({ status: 'error', message: 'Error fetching user count' });
   }
 };
 
-// Get user dashboard (for authenticated user)
 const getUserDashboard = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const { _id: id } = req.user;
 
-    // Recent deals where user is buyer or seller
-    const recentDeals = await Deal.find({ $or: [{ buyer: userId }, { seller: userId }] })
-      .populate('item')
-      .populate('seller', 'fullName email')
-      .populate('buyer', 'fullName email')
+    // Get recent deals
+    const recentDeals = await Deal.find({
+      $or: [{ buyer: id }, { seller: id }],
+    })
       .sort({ createdAt: -1 })
       .limit(5);
 
-    // Deal statistics
+    // Get deal stats
     const dealStats = await Deal.aggregate([
-      { $match: { $or: [{ buyer: userId }, { seller: userId }] } },
+      { $match: { $or: [{ buyer: id }, { seller: id }] } },
       {
         $group: {
           _id: null,
           totalDeals: { $sum: 1 },
-          pendingDeals: { $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] } },
-          approvedDeals: { $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] } },
-          completedDeals: { $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] } },
+          pendingDeals: {
+            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] },
+          },
+          approvedDeals: {
+            $sum: { $cond: [{ $eq: ['$status', 'approved'] }, 1, 0] },
+          },
+          completedDeals: {
+            $sum: { $cond: [{ $eq: ['$status', 'completed'] }, 1, 0] },
+          },
         },
       },
     ]);
 
-    // Fetch user's cart items
-    let cart = { items: [] };
-    try {
-      cart = await Cart.findOne({ user: userId }).populate('items.product').lean();
-    } catch (err) {
-      console.warn('Cart fetch error (possibly no Cart model):', err);
-    }
+    // Get cart
+    const cart = await Cart.findOne({ user: id });
 
-    // Fetch favorite items
+    // Get favorites (simplified mockup check)
     const favoriteItems = [];
-    if (req.user.favoriteItems?.length > 0) {
-      for (let i = 0; i < Math.min(req.user.favoriteItems.length, 6); i++) {
-        const itemId = req.user.favoriteItems[i];
-        const itemType = req.user.favoriteItemTypes?.[i];
-        if (!itemType || !['Car', 'Property', 'Land', 'Machine'].includes(itemType)) continue;
-        try {
-          const ItemModel = require(`../models/${itemType}`);
-          const item = await ItemModel.findById(itemId)
-            .select('title images location status');
-          if (item) {
-            favoriteItems.push({
-              ...item.toObject(),
-              itemType,
-            });
-          }
-        } catch (err) {
-          console.error(`Error fetching favorite ${itemType}:`, err);
-        }
-      }
-    }
 
     res.status(200).json({
       status: 'success',

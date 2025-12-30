@@ -11,18 +11,19 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Upload, Car, Home, MapPin, Wrench, AlertCircle, X, CheckCircle } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { authService } from "../../lib/auth"
+import { API_BASE_URL } from "@/lib/config"
 
 export default function PostItems() {
   const { user, setIsAuthModalOpen } = useApp()
   const [isClient, setIsClient] = useState(false)
-  
+
   // Form State
   const [selectedCategory, setSelectedCategory] = useState("cars")
   const [isPosting, setIsPosting] = useState(false)
   const [postStatus, setPostStatus] = useState<"idle" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState("")
   const [uploadedImages, setUploadedImages] = useState<File[]>([])
-  
+
   // Item Data State - initialized with comprehensive fields to match Admin Dashboard
   const [itemData, setItemData] = useState<any>({
     // Common fields
@@ -34,11 +35,11 @@ export default function PostItems() {
     address: "",
     kebele: "",
     status: "available",
-    
+
     // Listing specific
     listingType: "sale", // 'sale', 'rent', 'lease'
     condition: "used", // 'new', 'used', 'refurbished'
-    
+
     // Car specific
     make: "",
     model: "",
@@ -48,21 +49,21 @@ export default function PostItems() {
     transmission: "manual",
     bodyType: "sedan",
     color: "",
-    features: "", 
-    
+    features: "",
+
     // House specific (Property)
-    propertyType: "apartment", 
+    propertyType: "apartment",
     bedrooms: "",
     bathrooms: "",
-    size: "", 
+    size: "",
     floors: "",
     parkingSpaces: "",
     amenities: "",
     yearBuilt: new Date().getFullYear(),
-    
+
     // Land specific
-    sizeValue: "", 
-    sizeUnit: "hectare", 
+    sizeValue: "",
+    sizeUnit: "hectare",
     zoning: "residential",
     landUse: "development",
     topography: "flat",
@@ -70,14 +71,14 @@ export default function PostItems() {
     waterAccess: "none",
     electricityAccess: false,
     roadAccess: false,
-    
+
     // Machine specific
     category: "construction",
     brand: "",
     yearManufactured: new Date().getFullYear(),
     hoursUsed: "",
     machineType: "",
-    specifications: "", 
+    specifications: "",
   })
 
   // Strict enum values based on Server Models
@@ -92,18 +93,18 @@ export default function PostItems() {
   ];
 
   const propertyTypes = [
-     { value: "apartment", label: "Apartment" },
-     { value: "house", label: "House" },
-     { value: "villa", label: "Villa" },
-     { value: "condo", label: "Condo" },
-     { value: "commercial", label: "Commercial" },
-     { value: "office", label: "Office" },
-     { value: "warehouse", label: "Warehouse" }
+    { value: "apartment", label: "Apartment" },
+    { value: "house", label: "House" },
+    { value: "villa", label: "Villa" },
+    { value: "condo", label: "Condo" },
+    { value: "commercial", label: "Commercial" },
+    { value: "office", label: "Office" },
+    { value: "warehouse", label: "Warehouse" }
   ];
 
   const validateForm = () => {
     const errors: string[] = []
-    
+
     // Common validation
     if (!itemData.title || itemData.title.trim().length < 5) errors.push("Title must be at least 5 characters")
     if (!itemData.description || itemData.description.trim().length < 20) errors.push("Description must be at least 20 characters")
@@ -111,7 +112,7 @@ export default function PostItems() {
     if (!itemData.city) errors.push("City is required")
     if (!itemData.region) errors.push("Region is required")
     if (!itemData.address) errors.push("Address is required")
-    
+
     // Category specific
     if (selectedCategory === "cars") {
       if (!itemData.make) errors.push("Make is required")
@@ -123,10 +124,10 @@ export default function PostItems() {
       if (!itemData.sizeValue || Number(itemData.sizeValue) <= 0) errors.push("Size value is required")
       if (!itemData.zoning) errors.push("Zoning is required")
     } else if (selectedCategory === "machines") {
-       if (!itemData.category) errors.push("Category is required")
-       if (!itemData.brand) errors.push("Brand is required")
+      if (!itemData.category) errors.push("Category is required")
+      if (!itemData.brand) errors.push("Brand is required")
     }
-    
+
     return errors
   }
 
@@ -170,10 +171,10 @@ export default function PostItems() {
 
     try {
       const formData = new FormData()
-      
+
       const finalTitle = itemData.title.trim().length >= 5 ? itemData.title.trim() : itemData.title.trim() + " Item"
       const finalDescription = itemData.description.trim().length >= 20 ? itemData.description.trim() : itemData.description.trim() + " - Detailed description provided upon request."
-      
+
       if (selectedCategory === "cars") {
         formData.append("title", finalTitle)
         formData.append("description", finalDescription)
@@ -194,7 +195,7 @@ export default function PostItems() {
         if (itemData.kebele) formData.append("kebele", itemData.kebele.trim())
         formData.append("owner", user?._id || "")
         formData.append("status", "available")
-        
+
         if (itemData.features) {
           // Convert comma separated string to JSON array
           const featuresArray = itemData.features.split(",").map((s: string) => s.trim()).filter((s: string) => s)
@@ -220,23 +221,23 @@ export default function PostItems() {
         if (itemData.kebele) formData.append("kebele", itemData.kebele.trim())
         formData.append("owner", user?._id || "")
         formData.append("status", "available")
-        
+
         if (itemData.amenities) {
-           // Convert comma separated string to JSON array
-           const amenitiesArray = itemData.amenities.split(",").map((s: string) => s.trim()).filter((s: string) => s)
-           formData.append("amenities", JSON.stringify(amenitiesArray))
+          // Convert comma separated string to JSON array
+          const amenitiesArray = itemData.amenities.split(",").map((s: string) => s.trim()).filter((s: string) => s)
+          formData.append("amenities", JSON.stringify(amenitiesArray))
         }
 
       } else if (selectedCategory === "lands") {
         formData.append("title", finalTitle)
         formData.append("description", finalDescription)
-        
+
         const sizeData = {
           value: itemData.sizeValue?.toString() || "0",
           unit: itemData.sizeUnit || "hectare"
         }
         formData.append("size", JSON.stringify(sizeData))
-        
+
         formData.append("price", itemData.price.toString())
         formData.append("zoning", itemData.zoning || "residential")
         formData.append("landUse", itemData.landUse || "development")
@@ -270,15 +271,15 @@ export default function PostItems() {
         if (itemData.kebele) formData.append("kebele", itemData.kebele.trim())
         formData.append("owner", user?._id || "")
         formData.append("status", "available")
-        
+
         if (itemData.machineType) {
-           formData.append("machineType", itemData.machineType)
+          formData.append("machineType", itemData.machineType)
         }
-        
+
         if (itemData.specifications) {
-           // Convert comma separated string to JSON array
-           const specsArray = itemData.specifications.split(",").map((s: string) => s.trim()).filter((s: string) => s)
-           formData.append("specifications", JSON.stringify(specsArray))
+          // Convert comma separated string to JSON array
+          const specsArray = itemData.specifications.split(",").map((s: string) => s.trim()).filter((s: string) => s)
+          formData.append("specifications", JSON.stringify(specsArray))
         }
       }
 
@@ -288,11 +289,11 @@ export default function PostItems() {
       })
 
       // Determine endpoint
-      const baseUrl = "https://car-house-land.onrender.com/api"
+      const baseUrl = API_BASE_URL
       let endpoint = ""
-      switch(selectedCategory) {
+      switch (selectedCategory) {
         case "cars": endpoint = "/cars"; break;
-        case "houses": endpoint = "/properties"; break; 
+        case "houses": endpoint = "/properties"; break;
         case "lands": endpoint = "/lands"; break;
         case "machines": endpoint = "/machines"; break;
       }
@@ -314,12 +315,12 @@ export default function PostItems() {
 
       const result = await response.json()
       console.log("Post success:", result)
-      
+
       setPostStatus("success")
       setUploadedImages([])
-      setItemData({ ...itemData, title: "", description: "", price: "" }) 
+      setItemData({ ...itemData, title: "", description: "", price: "" })
       window.scrollTo(0, 0)
-      
+
     } catch (error: any) {
       console.error("Post error:", error)
       setErrorMessage(error.message || "An unexpected error occurred. Please try again.")
@@ -374,11 +375,10 @@ export default function PostItems() {
           <button
             key={cat.id}
             onClick={() => setSelectedCategory(cat.id)}
-            className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${
-              selectedCategory === cat.id
+            className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 transition-all ${selectedCategory === cat.id
                 ? "border-blue-600 bg-blue-50 text-blue-700"
                 : "border-transparent bg-white shadow-sm hover:bg-gray-50 text-gray-600"
-            }`}
+              }`}
           >
             <cat.icon className={`w-6 h-6 mb-2 ${selectedCategory === cat.id ? "text-blue-600" : "text-gray-500"}`} />
             <span className="font-medium text-sm sm:text-base">{cat.label}</span>
@@ -398,36 +398,36 @@ export default function PostItems() {
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            
+
             {/* Common Fields Section */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Basic Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2 md:col-span-2">
                   <Label>Title * <span className="text-xs text-gray-400">(Min 5 chars)</span></Label>
-                  <Input 
+                  <Input
                     value={itemData.title}
-                    onChange={(e) => setItemData({...itemData, title: e.target.value})}
+                    onChange={(e) => setItemData({ ...itemData, title: e.target.value })}
                     placeholder="e.g., 2020 Toyota Corolla in Excellent Condition"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Price (ETB) *</Label>
-                  <Input 
+                  <Input
                     type="number"
                     value={itemData.price}
-                    onChange={(e) => setItemData({...itemData, price: e.target.value})}
+                    onChange={(e) => setItemData({ ...itemData, price: e.target.value })}
                     placeholder="0.00"
                     min="0"
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Listing Type *</Label>
-                  <Select 
-                    value={itemData.listingType} 
-                    onValueChange={(val) => setItemData({...itemData, listingType: val})}
+                  <Select
+                    value={itemData.listingType}
+                    onValueChange={(val) => setItemData({ ...itemData, listingType: val })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -442,9 +442,9 @@ export default function PostItems() {
 
                 <div className="space-y-2">
                   <Label>Condition</Label>
-                  <Select 
-                    value={itemData.condition} 
-                    onValueChange={(val) => setItemData({...itemData, condition: val})}
+                  <Select
+                    value={itemData.condition}
+                    onValueChange={(val) => setItemData({ ...itemData, condition: val })}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -460,51 +460,51 @@ export default function PostItems() {
             {/* Category Specific Fields */}
             <div className="space-y-4">
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">
-                {selectedCategory === "cars" ? "Vehicle Specs" : 
-                 selectedCategory === "houses" ? "Property Specs" :
-                 selectedCategory === "lands" ? "Land Specs" : "Machine Specs"}
+                {selectedCategory === "cars" ? "Vehicle Specs" :
+                  selectedCategory === "houses" ? "Property Specs" :
+                    selectedCategory === "lands" ? "Land Specs" : "Machine Specs"}
               </h3>
-              
+
               {/* CARS FORM */}
               {selectedCategory === "cars" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Make *</Label>
-                    <Input 
+                    <Input
                       value={itemData.make}
-                      onChange={(e) => setItemData({...itemData, make: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, make: e.target.value })}
                       placeholder="e.g., Toyota"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Model *</Label>
-                    <Input 
+                    <Input
                       value={itemData.model}
-                      onChange={(e) => setItemData({...itemData, model: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, model: e.target.value })}
                       placeholder="e.g., Corolla"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Year (1990+)</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.year}
-                      onChange={(e) => setItemData({...itemData, year: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, year: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Mileage (km)</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.mileage}
-                      onChange={(e) => setItemData({...itemData, mileage: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, mileage: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Fuel Type</Label>
-                    <Select 
-                      value={itemData.fuelType} 
-                      onValueChange={(val) => setItemData({...itemData, fuelType: val})}
+                    <Select
+                      value={itemData.fuelType}
+                      onValueChange={(val) => setItemData({ ...itemData, fuelType: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -517,9 +517,9 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Transmission</Label>
-                    <Select 
-                      value={itemData.transmission} 
-                      onValueChange={(val) => setItemData({...itemData, transmission: val})}
+                    <Select
+                      value={itemData.transmission}
+                      onValueChange={(val) => setItemData({ ...itemData, transmission: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -530,9 +530,9 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Body Type</Label>
-                    <Select 
-                      value={itemData.bodyType} 
-                      onValueChange={(val) => setItemData({...itemData, bodyType: val})}
+                    <Select
+                      value={itemData.bodyType}
+                      onValueChange={(val) => setItemData({ ...itemData, bodyType: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -548,18 +548,18 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Color *</Label>
-                    <Input 
+                    <Input
                       value={itemData.color}
-                      onChange={(e) => setItemData({...itemData, color: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, color: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                     <Label>Features (comma separated)</Label>
-                     <Input 
-                       value={itemData.features}
-                       onChange={(e) => setItemData({...itemData, features: e.target.value})}
-                       placeholder="e.g., Sunroof, Leather Seats, GPS"
-                     />
+                    <Label>Features (comma separated)</Label>
+                    <Input
+                      value={itemData.features}
+                      onChange={(e) => setItemData({ ...itemData, features: e.target.value })}
+                      placeholder="e.g., Sunroof, Leather Seats, GPS"
+                    />
                   </div>
                 </div>
               )}
@@ -569,9 +569,9 @@ export default function PostItems() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Property Type *</Label>
-                    <Select 
-                      value={itemData.propertyType} 
-                      onValueChange={(val) => setItemData({...itemData, propertyType: val})}
+                    <Select
+                      value={itemData.propertyType}
+                      onValueChange={(val) => setItemData({ ...itemData, propertyType: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -583,51 +583,51 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Size (sqm)</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.size}
-                      onChange={(e) => setItemData({...itemData, size: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, size: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Bedrooms</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.bedrooms}
-                      onChange={(e) => setItemData({...itemData, bedrooms: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, bedrooms: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Bathrooms</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.bathrooms}
-                      onChange={(e) => setItemData({...itemData, bathrooms: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, bathrooms: e.target.value })}
                     />
                   </div>
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label>Floors</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.floors}
-                      onChange={(e) => setItemData({...itemData, floors: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, floors: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Parking Spaces</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.parkingSpaces}
-                      onChange={(e) => setItemData({...itemData, parkingSpaces: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, parkingSpaces: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
-                     <Label>Amenities (comma separated)</Label>
-                     <Input 
-                       value={itemData.amenities}
-                       onChange={(e) => setItemData({...itemData, amenities: e.target.value})}
-                       placeholder="e.g., Garden, Pool, Security"
-                     />
+                    <Label>Amenities (comma separated)</Label>
+                    <Input
+                      value={itemData.amenities}
+                      onChange={(e) => setItemData({ ...itemData, amenities: e.target.value })}
+                      placeholder="e.g., Garden, Pool, Security"
+                    />
                   </div>
                 </div>
               )}
@@ -637,17 +637,17 @@ export default function PostItems() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Size Value *</Label>
-                    <Input 
+                    <Input
                       type="number"
                       value={itemData.sizeValue}
-                      onChange={(e) => setItemData({...itemData, sizeValue: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, sizeValue: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Size Unit</Label>
-                    <Select 
-                      value={itemData.sizeUnit} 
-                      onValueChange={(val) => setItemData({...itemData, sizeUnit: val})}
+                    <Select
+                      value={itemData.sizeUnit}
+                      onValueChange={(val) => setItemData({ ...itemData, sizeUnit: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -659,9 +659,9 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Zoning *</Label>
-                    <Select 
-                      value={itemData.zoning} 
-                      onValueChange={(val) => setItemData({...itemData, zoning: val})}
+                    <Select
+                      value={itemData.zoning}
+                      onValueChange={(val) => setItemData({ ...itemData, zoning: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -674,9 +674,9 @@ export default function PostItems() {
                   </div>
                   <div className="space-y-2">
                     <Label>Land Use</Label>
-                     <Select 
-                      value={itemData.landUse} 
-                      onValueChange={(val) => setItemData({...itemData, landUse: val})}
+                    <Select
+                      value={itemData.landUse}
+                      onValueChange={(val) => setItemData({ ...itemData, landUse: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -692,56 +692,56 @@ export default function PostItems() {
               {/* MACHINES FORM */}
               {selectedCategory === "machines" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label>Category *</Label>
-                    <Select 
+                    <Select
                       value={itemData.category}
-                      onValueChange={(val) => setItemData({...itemData, category: val})}
+                      onValueChange={(val) => setItemData({ ...itemData, category: val })}
                     >
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
                         {machineCategories.map((cat) => (
-                           <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
                     <Label>Brand *</Label>
-                    <Input 
+                    <Input
                       value={itemData.brand}
-                      onChange={(e) => setItemData({...itemData, brand: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, brand: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Model</Label>
-                    <Input 
+                    <Input
                       value={itemData.model}
-                      onChange={(e) => setItemData({...itemData, model: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, model: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label>Year Manf. (1990+)</Label>
-                     <Input 
+                    <Input
                       type="number"
                       value={itemData.yearManufactured}
-                      onChange={(e) => setItemData({...itemData, yearManufactured: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, yearManufactured: e.target.value })}
                     />
                   </div>
-                   <div className="space-y-2">
+                  <div className="space-y-2">
                     <Label>Hours Used</Label>
-                     <Input 
+                    <Input
                       type="number"
                       value={itemData.hoursUsed}
-                      onChange={(e) => setItemData({...itemData, hoursUsed: e.target.value})}
+                      onChange={(e) => setItemData({ ...itemData, hoursUsed: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                     <Label>Specifications (comma separated)</Label>
-                     <Input 
-                       value={itemData.specifications}
-                       onChange={(e) => setItemData({...itemData, specifications: e.target.value})}
-                     />
+                    <Label>Specifications (comma separated)</Label>
+                    <Input
+                      value={itemData.specifications}
+                      onChange={(e) => setItemData({ ...itemData, specifications: e.target.value })}
+                    />
                   </div>
                 </div>
               )}
@@ -753,23 +753,23 @@ export default function PostItems() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>City *</Label>
-                  <Input 
+                  <Input
                     value={itemData.city}
-                    onChange={(e) => setItemData({...itemData, city: e.target.value})}
+                    onChange={(e) => setItemData({ ...itemData, city: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>Region *</Label>
-                  <Input 
+                  <Input
                     value={itemData.region}
-                    onChange={(e) => setItemData({...itemData, region: e.target.value})}
+                    onChange={(e) => setItemData({ ...itemData, region: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Address *</Label>
-                  <Input 
+                  <Input
                     value={itemData.address}
-                    onChange={(e) => setItemData({...itemData, address: e.target.value})}
+                    onChange={(e) => setItemData({ ...itemData, address: e.target.value })}
                     placeholder="Specific location address"
                   />
                 </div>
@@ -781,9 +781,9 @@ export default function PostItems() {
               <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Details</h3>
               <div className="space-y-2">
                 <Label>Description * <span className="text-xs text-gray-400">(Min 20 chars)</span></Label>
-                <Textarea 
+                <Textarea
                   value={itemData.description}
-                  onChange={(e) => setItemData({...itemData, description: e.target.value})}
+                  onChange={(e) => setItemData({ ...itemData, description: e.target.value })}
                   rows={4}
                   placeholder="Provide a detailed description of your item..."
                 />
@@ -805,14 +805,14 @@ export default function PostItems() {
                     <span className="text-sm text-gray-600">Click to upload images</span>
                   </label>
                 </div>
-                
+
                 {uploadedImages.length > 0 && (
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-4 mt-4">
                     {uploadedImages.map((file, idx) => (
                       <div key={idx} className="relative aspect-square">
-                        <img 
-                          src={URL.createObjectURL(file)} 
-                          alt="preview" 
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt="preview"
                           className="w-full h-full object-cover rounded-lg border"
                         />
                         <button
@@ -829,7 +829,7 @@ export default function PostItems() {
               </div>
             </div>
 
-            <Button 
+            <Button
               className="w-full bg-blue-600 hover:bg-blue-700 text-white py-6 text-lg font-semibold"
               onClick={handlePostItem}
               disabled={isPosting}
@@ -843,7 +843,7 @@ export default function PostItems() {
                 "Submit Item for Approval"
               )}
             </Button>
-            
+
             <p className="text-xs text-center text-gray-500 mt-2">
               By posting, you agree to our terms and conditions.
             </p>

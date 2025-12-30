@@ -33,6 +33,7 @@ import {
 } from "@/lib/api/deals";
 import { mapApiDealToLocal } from "@/lib/utils/mappers";
 import { authService } from "@/lib/auth";
+import { API_BASE_URL } from "@/lib/config";
 
 interface AppState {
   cart: Array<{
@@ -740,7 +741,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
+      const response = await fetch(`${API_BASE_URL}/consultations`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -777,7 +778,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await fetch("https://car-house-land.onrender.com/api/consultations", {
+      const response = await fetch(`${API_BASE_URL}/consultations`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -829,7 +830,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const response = await fetch(`https://car-house-land.onrender.com/api/consultations/${id}`, {
+      const response = await fetch(`${API_BASE_URL}/consultations/${id}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -874,7 +875,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       console.log("🔄 Fetching activities from API...");
       const response = await fetch(
-        `https://car-house-land.onrender.com/api/activities/recent?limit=${limit}`,
+        `${API_BASE_URL}/activities/recent?limit=${limit}`,
         {
           method: "GET",
           headers: {
@@ -1018,7 +1019,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         metadata: {},
       };
 
-      const response = await fetch("https://car-house-land.onrender.com/api/activities", {
+      const response = await fetch(`${API_BASE_URL}/activities`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

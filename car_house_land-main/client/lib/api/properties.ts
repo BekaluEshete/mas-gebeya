@@ -32,7 +32,7 @@ export interface PropertyAPIResponse {
 
 import type { House } from "@/types"
 
-const API_BASE_URL = "https://car-house-land.onrender.com/api"
+import { API_BASE_URL } from "@/lib/config"
 
 export async function fetchProperties(): Promise<House[]> {
   try {

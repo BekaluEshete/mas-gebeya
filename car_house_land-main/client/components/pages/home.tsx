@@ -9,6 +9,7 @@ import { useApp } from "@/context/app-context"
 import { useState, useEffect } from "react"
 import { RecentTransactionsCarousel } from "@/components/shared/RecentTransactionsCarousel"
 import { getApplicationCount } from "@/lib/utils"
+import { API_BASE_URL } from "@/lib/config"
 
 export function Home() {
   const { user, setIsAuthModalOpen, cars, houses, lands, machines, deals } = useApp()
@@ -47,7 +48,7 @@ export function Home() {
   useEffect(() => {
     const fetchActiveUsers = async () => {
       try {
-        const res = await fetch("https://car-house-land.onrender.com/api/users/public/user/count");
+        const res = await fetch(`${API_BASE_URL}/users/public/user/count`);
         if (res.ok) {
           const data = await res.json();
           if (data.data?.activeUsers) {
@@ -71,7 +72,7 @@ export function Home() {
     // I'll stick to fetching what I can.
     const fetchDeals = async () => {
       try {
-        const res = await fetch("https://car-house-land.onrender.com/api/deals/recent?limit=1000"); // Try to get as many as possible
+        const res = await fetch(`${API_BASE_URL}/deals/recent?limit=1000`); // Try to get as many as possible
         if (res.ok) {
           const data = await res.json();
           if (data.data?.deals?.length) {
