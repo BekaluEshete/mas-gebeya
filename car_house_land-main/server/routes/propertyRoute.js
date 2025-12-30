@@ -10,7 +10,7 @@ const {
   getPropertyStats
 } = require('../controllers/propertyController');
 const { protect, adminOnly, optionalAuth } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/validation');
+const { validateRequest } = require('../middlewares/requestValidator');
 const { upload } = require('../utils/cloudinary');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer');

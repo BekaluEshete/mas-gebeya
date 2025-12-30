@@ -12,7 +12,7 @@ const {
   getPublicUserCount
 } = require('../controllers/userController');
 const { protect, adminOnly } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/validation');
+const { validateRequest } = require('../middlewares/requestValidator');
 const User = require('../models/User.js')
 const router = express.Router();
 
@@ -37,8 +37,8 @@ router.get('/owner/list', async (req, res) => {
   }
 });
 
-router.get('/count', getPublicUserCount);
-
+// Get public user count
+router.get('/public/user/count', getPublicUserCount);
 // All routes require authentication
 router.use(protect);
 

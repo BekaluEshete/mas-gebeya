@@ -14,7 +14,7 @@ const {
 } = require('../controllers/authController');
 
 const { protect, sensitiveOperationLimit } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/validation');
+const { validateRequest } = require('../middlewares/requestValidator');
 const { authLimiter } = require('../middlewares/rateLimiter');
 
 const {
