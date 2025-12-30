@@ -12,8 +12,8 @@ const createTransporter = () => {
     port,
     secure: port === 465, // true for 465, false for other ports
     auth: {
-      user: process.env.SMTP_USER || "tommr2323@gmail.com",
-      pass: process.env.SMTP_PASS || "ihes tjso xeff afdz"
+      user: process.env.SMTP_USER || "bekelueshete@gmail.com",
+      pass: process.env.SMTP_PASS || "oktk qgxo ttqu rhmp"
     },
     tls: { rejectUnauthorized: false }
   });
@@ -24,22 +24,26 @@ const createTransporter = () => {
  */
 const sendEmail = async (options) => {
   try {
+    console.log(`[sendEmail] Preparing to send email to: ${options.email}`);
     const transporter = createTransporter();
+    console.log(`[sendEmail] Transporter created. Host: ${process.env.SMTP_HOST || "smtp.gmail.com"}, User: ${process.env.SMTP_USER || "bekelueshete@gmail.com"}`);
 
     const mailOptions = {
-      from: process.env.MAIL_FROM || `"Massgebeya" <${process.env.SMTP_USER}>`,
+      from: process.env.MAIL_FROM || `"Massgebeya" <${process.env.SMTP_USER || "bekelueshete@gmail.com"}>`,
       to: options.email,
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, "") // fallback plain text
     };
 
+    console.log(`[sendEmail] Sending mail... Subject: ${options.subject}`);
     const info = await transporter.sendMail(mailOptions);
-    console.log("📨 Email sent:", info.messageId);
+    console.log("📨 [sendEmail] Email sent successfully:", info.messageId);
     return info;
   } catch (error) {
-    console.error("❌ Email sending failed:", error.message);
-    throw new Error(`Email could not be sent. Check SMTP_USER (${process.env.SMTP_USER}) and SMTP_PASS configuration.`);
+    console.error("❌ [sendEmail] Email sending failed:", error.message);
+    if (error.stack) console.error(error.stack);
+    throw new Error(`Email could not be sent. Error: ${error.message}`);
   }
 };
 
