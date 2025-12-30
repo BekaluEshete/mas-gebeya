@@ -345,41 +345,55 @@ const changePassword = async (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
+    console.log(`[forgotPassword] Request received for email: '${email}'`);
 
     if (!email) {
+      console.log('[forgotPassword] Email not provided');
       return res.status(400).json({ status: 'error', message: 'Please provide email address' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[forgotPassword] Searching for user with email: '${normalizedEmail}'`);
+
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
+      console.log(`[forgotPassword] User NOT found for email: '${normalizedEmail}'`);
+      // We still return success to prevent email enumeration, but log internally
       return res.status(200).json({
         status: 'success',
         message: 'If an account with that email exists, a reset code has been sent'
       });
     }
 
+    console.log(`[forgotPassword] User found: ${user.fullName} (${user._id})`);
     const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetCode = resetCode;
     user.resetCodeExpire = Date.now() + 10 * 60 * 1000;
     await user.save({ validateBeforeSave: false });
+    console.log(`[forgotPassword] Reset code generated and saved for ${normalizedEmail}`);
 
-    // Send email asynchronously to avoid blocking the response
-    setImmediate(async () => {
-      try {
-        const resetEmail = emailTemplates.passwordReset(user.fullName, resetCode);
-        await sendEmail({ email: user.email, ...resetEmail });
-      } catch (emailError) {
-        console.error('Forgot password email failed:', emailError.message);
-      }
-    });
+    const resetEmail = emailTemplates.passwordReset(user.fullName, resetCode);
+    console.log(`[forgotPassword] Attempting to send email to ${user.email}...`);
+    try {
+      await sendEmail({ email: user.email, ...resetEmail });
+      console.log(`[forgotPassword] Email sent successfully to ${user.email}`);
+    } catch (emailError) {
+      console.error(`[forgotPassword] FAILED to send email to ${user.email}:`, emailError);
+      // Depending on requirements, might want to return error or silent fail
+      // For now, let's throw it to be caught by outer catch if critical, or just log.
+      // If email fails, user can't reset. Better to fail the request?
+      // But standard practice is not to reveal much.
+      // However, for debugging we need to know.
+      throw emailError;
+    }
 
     res.status(200).json({
       status: 'success',
       message: 'If an account with that email exists, a reset code has been sent'
     });
   } catch (error) {
-    console.error('Forgot password fatal error:', error);
-    res.status(500).json({ status: 'error', message: 'Failed to process forgot password request', detail: error.message });
+    console.error('[forgotPassword] Error:', error);
+    res.status(500).json({ status: 'error', message: 'Failed to process forgot password request' });
   }
 };
 
