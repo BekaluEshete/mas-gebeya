@@ -5,21 +5,17 @@ const nodemailer = require("nodemailer");
  * Create a Nodemailer transporter
  */
 const createTransporter = () => {
-  const port = Number(process.env.SMTP_PORT || 587);
-  const secure = port === 465;
-
-  console.log(`[createTransporter] Config - Port: ${port}, Secure: ${secure}, User: ${process.env.SMTP_USER || "fallback"}`);
+  // Using explicit service 'gmail' often resolves timeouts on cloud hosts
+  // rather than manual host/port config.
+  console.log(`[createTransporter] Using service: 'gmail', User: ${process.env.SMTP_USER || "fallback"}`);
 
   return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || "smtp.gmail.com",
-    port,
-    secure,
+    service: 'gmail',
     auth: {
       user: process.env.SMTP_USER || "bekelueshete@gmail.com",
       pass: process.env.SMTP_PASS || "oktk qgxo ttqu rhmp"
     },
-    tls: { rejectUnauthorized: false },
-    // Enable debug logging for nodemailer
+    // Keep debug logging for now in case it still fails
     logger: true,
     debug: true
   });
