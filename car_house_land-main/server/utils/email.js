@@ -6,16 +6,22 @@ const nodemailer = require("nodemailer");
  */
 const createTransporter = () => {
   const port = Number(process.env.SMTP_PORT || 587);
+  const secure = port === 465;
+
+  console.log(`[createTransporter] Config - Port: ${port}, Secure: ${secure}, User: ${process.env.SMTP_USER || "fallback"}`);
 
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || "smtp.gmail.com",
     port,
-    secure: port === 465, // true for 465, false for other ports
+    secure,
     auth: {
       user: process.env.SMTP_USER || "bekelueshete@gmail.com",
       pass: process.env.SMTP_PASS || "oktk qgxo ttqu rhmp"
     },
-    tls: { rejectUnauthorized: false }
+    tls: { rejectUnauthorized: false },
+    // Enable debug logging for nodemailer
+    logger: true,
+    debug: true
   });
 };
 
