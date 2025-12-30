@@ -428,8 +428,10 @@ const verifyResetCode = async (req, res) => {
 const resetPassword = async (req, res) => {
   try {
     const { email, code, password } = req.body;
+    console.log(`[resetPassword] Received request. Email: ${email}, Code: ${code}`);
 
     if (!email || !code || !password) {
+      console.log('[resetPassword] Missing fields');
       return res.status(400).json({
         status: 'error',
         message: 'Please provide email, verification code, and new password'
@@ -437,31 +439,54 @@ const resetPassword = async (req, res) => {
     }
 
     if (password.length < 6) {
+      console.log('[resetPassword] Password too short');
       return res.status(400).json({
         status: 'error',
         message: 'Password must be at least 6 characters long'
       });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+    console.log(`[resetPassword] Querying for user: ${normalizedEmail} with code: ${code}`);
+
     const user = await User.findOne({
-      email: email.toLowerCase().trim(),
-      resetCode: code,
+      email: normalizedEmail,
+      resetCode: code.toString(), // Ensure string comparison
       resetCodeExpire: { $gt: Date.now() }
     });
 
     if (!user) {
+      console.log(`[resetPassword] User NOT found or code expired/incorrect for ${normalizedEmail}`);
+      // Log what's in DB for comparison (only for debugging)
+      const u = await User.findOne({ email: normalizedEmail });
+      if (u) {
+        console.log(`[resetPassword] Debug - DB code: ${u.resetCode}, Expiry: ${u.resetCodeExpire}, Now: ${new Date()}`);
+      }
       return res.status(400).json({
         status: 'error',
         message: 'Invalid or expired reset code'
       });
     }
 
+    console.log(`[resetPassword] User found. Updating password...`);
     // Update password and clear reset code
     user.password = password;
     user.resetCode = undefined;
     user.resetCodeExpire = undefined;
-    await user.save();
 
+    try {
+      await user.save();
+      console.log(`[resetPassword] User saved successfully`);
+    } catch (saveError) {
+      console.error(`[resetPassword] user.save() FAILED:`, saveError.message);
+      if (saveError.errors) {
+        console.error(`[resetPassword] Validation errors:`, Object.keys(saveError.errors).join(', '));
+      }
+      throw saveError; // Re-throw to be caught by outer catch
+    }
+
+    // Checking if generateAccessToken/generateRefreshToken exists and works
+    console.log(`[resetPassword] Generating tokens...`);
     const authToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
@@ -499,7 +524,7 @@ const resetPassword = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Reset password error:', error);
+    console.error('❌ [resetPassword] Critical error:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to reset password'
