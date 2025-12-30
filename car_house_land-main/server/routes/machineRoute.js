@@ -10,7 +10,7 @@ const {
   getMachineStats
 } = require('../controllers/machineController');
 const { protect, adminOnly, optionalAuth } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/requestValidator');
+const { validateRequest } = require('../middlewares/validatorMiddleware');
 const { upload } = require('../utils/cloudinary');
 const multer = require('multer');
 

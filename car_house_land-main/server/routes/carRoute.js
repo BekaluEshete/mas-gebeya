@@ -10,7 +10,7 @@ const {
   getCarStats
 } = require('../controllers/carController');
 const { protect, adminOnly, optionalAuth } = require('../middlewares/auth');
-const { validateRequest } = require('../middlewares/requestValidator');
+const { validateRequest } = require('../middlewares/validatorMiddleware');
 const { upload } = require('../utils/cloudinary');
 const rateLimit = require('express-rate-limit');
 const multer = require('multer'); // Added to fix ReferenceError
