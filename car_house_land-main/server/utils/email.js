@@ -1,50 +1,30 @@
 // services/emailService.js
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
+
+const resend = new Resend("re_ffG92xVD_638t929AMEAsGFEPMsbyJ2vA");
 
 /**
- * Create a Nodemailer transporter
- */
-const createTransporter = () => {
-  // Switched to Resend SMTP as requested by user
-  console.log(`[createTransporter] Using Resend SMTP`);
-
-  return nodemailer.createTransport({
-    host: "smtp.resend.com",
-    port: 465,
-    secure: true,
-    auth: {
-      user: "resend",
-      pass: "re_ffG92xVD_638t929AMEAsGFEPMsbyJ2vA"
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    logger: true,
-    debug: true
-  });
-};
-
-/**
- * Send Email Utility
+ * Send Email Utility using Resend SDK
  */
 const sendEmail = async (options) => {
   try {
-    console.log(`[sendEmail] Preparing to send email to: ${options.email}`);
-    const transporter = createTransporter();
-    console.log(`[sendEmail] Transporter created. Host: ${process.env.SMTP_HOST || "smtp.gmail.com"}, User: ${process.env.SMTP_USER || "bekelueshete@gmail.com"}`);
+    console.log(`[sendEmail] Preparing to send email via Resend SDK to: ${options.email}`);
 
-    const mailOptions = {
-      from: process.env.MAIL_FROM || `"Massgebeya" <${process.env.SMTP_USER || "bekelueshete@gmail.com"}>`,
-      to: options.email,
+    const { data, error } = await resend.emails.send({
+      from: process.env.MAIL_FROM || "Massgebeya <onboarding@resend.dev>",
+      to: [options.email],
       subject: options.subject,
       html: options.html,
-      text: options.text || options.html.replace(/<[^>]*>/g, "") // fallback plain text
-    };
+      text: options.text || options.html.replace(/<[^>]*>/g, ""),
+    });
 
-    console.log(`[sendEmail] Sending mail... Subject: ${options.subject}`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log("📨 [sendEmail] Email sent successfully:", info.messageId);
-    return info;
+    if (error) {
+      console.error("❌ [sendEmail] Resend error:", error);
+      throw new Error(`Email could not be sent. Resend Error: ${error.message}`);
+    }
+
+    console.log("📨 [sendEmail] Email sent successfully:", data.id);
+    return data;
   } catch (error) {
     console.error("❌ [sendEmail] Email sending failed:", error.message);
     if (error.stack) console.error(error.stack);
@@ -220,6 +200,5 @@ const emailTemplates = {
 
 module.exports = {
   sendEmail,
-  emailTemplates,
-  createTransporter
+  emailTemplates
 };
