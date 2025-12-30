@@ -5,17 +5,23 @@ const nodemailer = require("nodemailer");
  * Create a Nodemailer transporter
  */
 const createTransporter = () => {
-  // Using explicit service 'gmail' often resolves timeouts on cloud hosts
-  // rather than manual host/port config.
-  console.log(`[createTransporter] Using service: 'gmail', User: ${process.env.SMTP_USER || "fallback"}`);
+  // Reverting to manual config to force IPv4 (family: 4)
+  // This often fixes timeouts on Render caused by IPv6 routing issues.
+  const port = 587;
+  console.log(`[createTransporter] Config - Host: smtp.gmail.com, Port: ${port}, User: ${process.env.SMTP_USER || "fallback"}, Family: 4 (IPv4)`);
 
   return nodemailer.createTransport({
-    service: 'gmail',
+    host: "smtp.gmail.com",
+    port: port,
+    secure: false, // use STARTTLS
     auth: {
       user: process.env.SMTP_USER || "bekelueshete@gmail.com",
       pass: process.env.SMTP_PASS || "oktk qgxo ttqu rhmp"
     },
-    // Keep debug logging for now in case it still fails
+    tls: {
+      rejectUnauthorized: false
+    },
+    family: 4, // <-- FORCE IPv4
     logger: true,
     debug: true
   });
