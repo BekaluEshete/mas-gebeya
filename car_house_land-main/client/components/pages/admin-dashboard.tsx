@@ -897,22 +897,26 @@ export function AdminDashboard() {
   }
 
   const handleDeleteItem = async (item: any) => {
-    const baseUrl = "https://car-house-land.onrender.com"
     try {
-      let endpoint = '';
+      const itemId = item.id || item._id;
+      if (!itemId) {
+        console.error('No ID found for deletion');
+        return;
+      }
 
+      let endpoint = '';
       switch (selectedCategory) {
         case 'cars':
-          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          endpoint = `${API_BASE_URL}/cars/${itemId}`;
           break;
         case 'machines':
-          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          endpoint = `${API_BASE_URL}/machines/${itemId}`;
           break;
         case 'lands':
-          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          endpoint = `${API_BASE_URL}/lands/${itemId}`;
           break;
         case 'houses':
-          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          endpoint = `${API_BASE_URL}/properties/${itemId}`;
           break;
         default:
           console.error('Invalid category');
@@ -951,19 +955,18 @@ export function AdminDashboard() {
       }
 
       // Update the UI state to remove the deleted item
-      // Use the appropriate delete function from your context based on category
       switch (selectedCategory) {
         case 'cars':
-          deleteCar(item.id);
+          deleteCar(itemId);
           break;
         case 'machines':
-          deleteMachine(item.id);
+          deleteMachine(itemId);
           break;
         case 'lands':
-          deleteLand(item.id);
+          deleteLand(itemId);
           break;
         case 'houses':
-          deleteHouse(item.id);
+          deleteHouse(itemId);
           break;
       }
 
@@ -989,21 +992,26 @@ export function AdminDashboard() {
 
   // Approval handlers for items
   const handleApproveItem = async (item: any) => {
-    const baseUrl = "https://car-house-land.onrender.com"
     try {
+      const itemId = item.id || item._id;
+      if (!itemId) {
+        console.error('No ID found for approval');
+        return;
+      }
+
       let endpoint = '';
       switch (selectedCategory) {
         case 'cars':
-          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          endpoint = `${API_BASE_URL}/cars/${itemId}`;
           break;
         case 'machines':
-          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          endpoint = `${API_BASE_URL}/machines/${itemId}`;
           break;
         case 'lands':
-          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          endpoint = `${API_BASE_URL}/lands/${itemId}`;
           break;
         case 'houses':
-          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          endpoint = `${API_BASE_URL}/properties/${itemId}`;
           break;
         default:
           console.error('Invalid category');
@@ -1035,7 +1043,7 @@ export function AdminDashboard() {
         selectedCategory === 'machines' ? updateMachine :
           selectedCategory === 'lands' ? updateLand : updateHouse;
 
-      updateFunction({ ...item, approved: true, approvedAt: new Date().toISOString() });
+      updateFunction(itemId, { approved: true, approvedAt: new Date().toISOString() });
       alert('Item approved successfully!');
       setDataVersion(prev => prev + 1);
     } catch (error) {
@@ -1045,21 +1053,26 @@ export function AdminDashboard() {
   }
 
   const handleRejectItem = async (item: any) => {
-    const baseUrl = "https://car-house-land.onrender.com"
     try {
+      const itemId = item.id || item._id;
+      if (!itemId) {
+        console.error('No ID found for rejection');
+        return;
+      }
+
       let endpoint = '';
       switch (selectedCategory) {
         case 'cars':
-          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          endpoint = `${API_BASE_URL}/cars/${itemId}`;
           break;
         case 'machines':
-          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          endpoint = `${API_BASE_URL}/machines/${itemId}`;
           break;
         case 'lands':
-          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          endpoint = `${API_BASE_URL}/lands/${itemId}`;
           break;
         case 'houses':
-          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          endpoint = `${API_BASE_URL}/properties/${itemId}`;
           break;
         default:
           console.error('Invalid category');
@@ -1091,7 +1104,7 @@ export function AdminDashboard() {
         selectedCategory === 'machines' ? updateMachine :
           selectedCategory === 'lands' ? updateLand : updateHouse;
 
-      updateFunction({ ...item, approved: false });
+      updateFunction(itemId, { approved: false });
       alert('Item rejected successfully!');
       setDataVersion(prev => prev + 1);
     } catch (error) {
@@ -1100,29 +1113,39 @@ export function AdminDashboard() {
     }
   }
 
-  const handleView = async (item: any) => {
-    const baseUrl = "https://car-house-land.onrender.com"
+  const handleView = async (item: any, type?: string) => {
     try {
       let endpoint = '';
+      const category = type ? (type === 'property' ? 'houses' : type + 's') : selectedCategory;
+      const itemId = item._id || item.id;
 
-      switch (selectedCategory) {
+      // Update category to ensure correct fields are shown in the dialog
+      setSelectedCategory(category);
+
+      if (!itemId) {
+        console.error('No ID found for item', item);
+        return;
+      }
+
+      switch (category) {
         case 'cars':
-          endpoint = `${baseUrl}/api/cars/${item.id}`;
+          endpoint = `${API_BASE_URL}/cars/${itemId}`;
           break;
         case 'machines':
-          endpoint = `${baseUrl}/api/machines/${item.id}`;
+          endpoint = `${API_BASE_URL}/machines/${itemId}`;
           break;
         case 'lands':
-          endpoint = `${baseUrl}/api/lands/${item.id}`;
+          endpoint = `${API_BASE_URL}/lands/${itemId}`;
           break;
         case 'houses':
-          endpoint = `${baseUrl}/api/properties/${item.id}`;
+          endpoint = `${API_BASE_URL}/properties/${itemId}`;
           break;
         default:
-          console.error('Invalid category');
+          console.error('Invalid category:', category);
           return;
       }
 
+      const baseUrl = API_BASE_URL.replace('/api', '');
       const response = await fetch(endpoint, {
         method: 'GET',
         headers: {
@@ -1136,25 +1159,23 @@ export function AdminDashboard() {
 
       const itemDetails = await response.json();
 
-      // Process images to ensure they have proper URLs - FIXED VERSION
-      let processedImages: string[] = [];
-
-      if (itemDetails.data && itemDetails.data.images) {
-        processedImages = itemDetails.data.images.map((img: string) => {
-          if (img.startsWith('http')) return img;
-          // Handle both absolute and relative paths
-          if (img.startsWith('/')) {
-            return `${baseUrl}${img}`;
-          } else {
-            return `${baseUrl}/${img}`;
-          }
-        });
-      }
+      // Process images to ensure they have proper URLs
+      const fetchedImages = (itemDetails.data?.images || itemDetails.images || []);
+      const processedImages = fetchedImages.map((img: any) => {
+        const url = typeof img === 'string' ? img : img.url;
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`;
+        } else {
+          return `${baseUrl}/${url}`;
+        }
+      }).filter(Boolean);
 
       // Create the viewing item with processed images
       const viewingItemData = {
         ...(itemDetails.data || itemDetails),
-        images: processedImages.length > 0 ? processedImages : (item.images || [])
+        images: processedImages.length > 0 ? processedImages : []
       };
 
       setViewingItem(viewingItemData);
@@ -1162,14 +1183,17 @@ export function AdminDashboard() {
     } catch (error) {
       console.error('Error fetching item details:', error);
       // Fallback to local item data with processed images
-      const processedImages = (item.images || []).map((img: string) => {
-        if (img.startsWith('http')) return img;
-        if (img.startsWith('/')) {
-          return `https://car-house-land.onrender.com${img}`;
+      const baseUrl = API_BASE_URL.replace('/api', '');
+      const processedImages = (item.images || []).map((img: any) => {
+        const url = typeof img === 'string' ? img : img.url;
+        if (!url) return null;
+        if (url.startsWith('http')) return url;
+        if (url.startsWith('/')) {
+          return `${baseUrl}${url}`;
         } else {
-          return `https://car-house-land.onrender.com/${img}`;
+          return `${baseUrl}/${url}`;
         }
-      });
+      }).filter(Boolean);
 
       setViewingItem({
         ...item,
@@ -1179,27 +1203,15 @@ export function AdminDashboard() {
     }
   }
 
-
-  const handleImageUpload = (e) => {
+  const handleImageUpload = (e: any) => {
     const files = Array.from(e.target.files)
-    console.log(
-      " Selected files:",
-      files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
-    )
-
     if (files.length > 0) {
-      // Store the actual File objects for FormData
-      setUploadedImages((prev) => [...prev, ...files])
+      setUploadedImages((prev: any) => [...prev, ...files])
     }
   }
 
   const removeImage = (index: number) => {
-    const imageToRemove = uploadedImages[index]
-    if (imageToRemove instanceof File) {
-      const objectUrl = URL.createObjectURL(imageToRemove)
-      URL.revokeObjectURL(objectUrl)
-    }
-    setUploadedImages((prev) => prev.filter((_, i) => i !== index))
+    setUploadedImages((prev: any) => prev.filter((_: any, i: number) => i !== index))
   }
 
   const handleSave = async () => {
@@ -2276,7 +2288,7 @@ export function AdminDashboard() {
                         </h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                           {pendingItems.cars.map((item: any) => (
-                            <PendingItemCard key={item._id} item={item} type="car" onApprove={handleApprove} onReject={handleReject} />
+                            <PendingItemCard key={item._id} item={item} type="car" onApprove={handleApprove} onReject={handleReject} onView={handleView} />
                           ))}
                         </div>
                       </div>
@@ -2289,7 +2301,7 @@ export function AdminDashboard() {
                         </h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                           {pendingItems.properties.map((item: any) => (
-                            <PendingItemCard key={item._id} item={item} type="property" onApprove={handleApprove} onReject={handleReject} />
+                            <PendingItemCard key={item._id} item={item} type="property" onApprove={handleApprove} onReject={handleReject} onView={handleView} />
                           ))}
                         </div>
                       </div>
@@ -2302,7 +2314,7 @@ export function AdminDashboard() {
                         </h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                           {pendingItems.lands.map((item: any) => (
-                            <PendingItemCard key={item._id} item={item} type="land" onApprove={handleApprove} onReject={handleReject} />
+                            <PendingItemCard key={item._id} item={item} type="land" onApprove={handleApprove} onReject={handleReject} onView={handleView} />
                           ))}
                         </div>
                       </div>
@@ -2315,7 +2327,7 @@ export function AdminDashboard() {
                         </h3>
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                           {pendingItems.machines.map((item: any) => (
-                            <PendingItemCard key={item._id} item={item} type="machine" onApprove={handleApprove} onReject={handleReject} />
+                            <PendingItemCard key={item._id} item={item} type="machine" onApprove={handleApprove} onReject={handleReject} onView={handleView} />
                           ))}
                         </div>
                       </div>
@@ -3477,282 +3489,6 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* View Detail Dialog */}
-            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-              <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">
-                    {viewingItem ? `View ${selectedCategory.slice(0, -1)} Details` : "Loading..."}
-                  </DialogTitle>
-                </DialogHeader>
-                {viewingItem && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Title</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.title || "N/A"}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Price</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          ETB {(viewingItem.price || 0).toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Location</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {viewingItem.location || `${viewingItem.city}, ${viewingItem.region}` || "N/A"}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Listing Type</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {viewingItem.listingType === "sale" ? "For Sale" : "For Rent"}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Posted Date</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {viewingItem.createdAt ? new Date(viewingItem.createdAt).toLocaleDateString() : "N/A"}
-                        </p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Status</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.status || "N/A"}</p>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Description</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.description || "N/A"}</p>
-                      </div>
-
-                      {/* Category-specific fields */}
-                      {selectedCategory === "cars" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Make</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.make || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Model</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Year</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.year || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.mileage || "N/A"} km</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.fuelType || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.transmission || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Features</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.features?.join(", ") || "N/A"}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                      {selectedCategory === "houses" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Property Type</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.propertyType || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bedrooms || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bathrooms || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Size</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.size || "N/A"} sqm</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearBuilt || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.amenities?.join(", ") || "N/A"}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                      {selectedCategory === "lands" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Size</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.sizeValue ? `${viewingItem.sizeValue} ${viewingItem.sizeUnit || "hectare"}` : "N/A"}
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Zoning</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.zoning || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Land Use</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.landUse || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Topography</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.topography || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.waterAccess || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.electricityAccess ? "Yes" : "No"}
-                            </p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.roadAccess ? "Yes" : "No"}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                      {selectedCategory === "machines" && (
-                        <>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Category</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.category || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Brand</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.brand || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Model</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearManufactured || "N/A"}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.hoursUsed || "N/A"} hours</p>
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
-                            <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                              {viewingItem.specifications?.join(", ") || "N/A"}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="space-y-3 sm:space-y-4">
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Images</Label>
-                        {viewingItem.images && viewingItem.images.length > 0 ? (
-                          <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
-                            {viewingItem.images.map((image: string, index: number) => (
-                              <div key={index} className="relative">
-                                <div className="aspect-square relative overflow-hidden rounded-lg border">
-                                  <img
-                                    src={image || "/placeholder.svg"}
-                                    alt={`Image ${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                      // Fallback if image fails to load
-                                      (e.target as HTMLImageElement).src = "/placeholder.svg";
-                                    }}
-                                  />
-                                </div>
-                                {index === 0 && (
-                                  <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                                    <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-gray-500">No images available</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-xs sm:text-sm font-medium">Owner</Label>
-                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
-                          {viewingItem.owner
-                            ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner
-                            : "N/A"
-                          }
-                        </p>
-                      </div>
-
-                    </div>
-                  </div>
-                )}
-                <div className="flex justify-end mt-4 sm:mt-6">
-                  <Button
-                    variant="outline"
-                    className="text-xs sm:text-sm bg-transparent"
-                    onClick={() => {
-                      setIsViewDialogOpen(false);
-                      setViewingItem(null);
-                    }}
-                  >
-                    Close
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            {/* Delete Confirmation Modal */}
-            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-              <DialogContent className="max-w-xs sm:max-w-md mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Are you sure you want to delete the listing "
-                    <span className="font-medium">{deletingItem?.title}</span>"? This action cannot be undone.
-                  </p>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      className="text-xs sm:text-sm bg-transparent"
-                      onClick={() => {
-                        setIsDeleteDialogOpen(false);
-                        setDeletingItem(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-
-
-
-                    <Button
-                      variant="destructive"
-                      className="text-xs sm:text-sm"
-                      onClick={confirmDelete}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4 sm:space-y-6">
@@ -3762,200 +3498,16 @@ export function AdminDashboard() {
                   <Users className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-purple" />
                   User Management
                 </CardTitle>
-                <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
-                      onClick={() => setEditingUser(null)}
-                    >
-                      <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
-                      Add User
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-xs sm:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-sm sm:text-base">
-                        {editingUser ? "Edit User" : "Add New User"}
-                      </DialogTitle>
-                    </DialogHeader>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Full Name *</label>
-                        <Input
-                          value={editingUser?.fullName || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter full name"
-                          maxLength={80}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Email *</label>
-                        <Input
-                          type="email"
-                          value={editingUser?.email || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter email address"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">
-                          {editingUser?.id ? "New Password (optional)" : "Password *"}
-                        </label>
-                        <Input
-                          type="password"
-                          value={editingUser?.password || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
-                          className="text-sm"
-                          placeholder={editingUser?.id ? "Update password (min 6 characters)" : "Enter password (min 6 characters)"}
-                          minLength={6}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Phone *</label>
-                        <Input
-                          type="tel"
-                          value={editingUser?.phone || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
-                          className="text-sm"
-                          placeholder="+251xxxxxxxxx"
-                          pattern="^\+251\d{9}$"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Role</label>
-                        <Select
-                          value={editingUser?.role || "user"}
-                          onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                            <SelectItem value="owner">Owner</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Avatar URL</label>
-                        <Input
-                          type="url"
-                          value={editingUser?.avatar || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, avatar: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter avatar image URL"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Street Address</label>
-                        <Input
-                          value={editingUser?.street || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, street: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter street address"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">City</label>
-                        <Input
-                          value={editingUser?.city || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, city: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter city"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Region</label>
-                        <Input
-                          value={editingUser?.region || ""}
-                          onChange={(e) => setEditingUser({ ...editingUser, region: e.target.value })}
-                          className="text-sm"
-                          placeholder="Enter region"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Country</label>
-                        <Input
-                          value={editingUser?.country || "ETHIOPIA"}
-                          onChange={(e) => setEditingUser({ ...editingUser, country: e.target.value.toUpperCase() })}
-                          className="text-sm"
-                          placeholder="Enter country"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Status</label>
-                        <Select
-                          value={
-                            editingUser?.isActive !== undefined
-                              ? editingUser.isActive
-                                ? "active"
-                                : "inactive"
-                              : "active"
-                          }
-                          onValueChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="active">Active</SelectItem>
-                            <SelectItem value="inactive">Inactive</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs sm:text-sm font-medium">Verification Status</label>
-                        <Select
-                          value={
-                            editingUser?.isVerified !== undefined
-                              ? editingUser.isVerified
-                                ? "verified"
-                                : "unverified"
-                              : "unverified"
-                          }
-                          onValueChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
-                        >
-                          <SelectTrigger className="text-xs sm:text-sm">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="verified">Verified</SelectItem>
-                            <SelectItem value="unverified">Unverified</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end space-x-2 mt-6">
-                      <Button
-                        variant="outline"
-                        className="text-xs sm:text-sm bg-transparent"
-                        onClick={() => setIsUserDialogOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSaveUser}
-                        className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
-                      >
-                        Save
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
+                  onClick={() => {
+                    setEditingUser(null)
+                    setIsUserDialogOpen(true)
+                  }}
+                >
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+                  Add User
+                </Button>
               </CardHeader>
               <CardContent className="p-0">
                 {isLoadingUsers ? (
@@ -4018,39 +3570,7 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Delete User Confirmation Dialog */}
-            <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
-              <DialogContent className="max-w-xs sm:max-w-md mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-xs sm:text-sm text-gray-600">
-                    Are you sure you want to delete user "
-                    <span className="font-medium">{deletingUser?.name || deletingUser?.email}</span>"? This action cannot be undone.
-                  </p>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      className="text-xs sm:text-sm bg-transparent"
-                      onClick={() => {
-                        setIsDeleteUserDialogOpen(false);
-                        setDeletingUser(null);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className="text-xs sm:text-sm"
-                      onClick={confirmDeleteUser}
-                    >
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+
           </TabsContent>
           <TabsContent value="deals" className="space-y-4 sm:space-y-6">
             <Card>
@@ -4351,49 +3871,7 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
 
-            {/* Reschedule Dialog */}
-            <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
-              <DialogContent className="max-w-xs sm:max-w-md mx-4">
-                <DialogHeader>
-                  <DialogTitle className="text-sm sm:text-base">
-                    Reschedule Consultation
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
-                      New Date & Time
-                    </Label>
-                    <Input
-                      id="reschedule-datetime"
-                      type="datetime-local"
-                      value={rescheduleDateTime}
-                      onChange={(e) => setRescheduleDateTime(e.target.value)}
-                      className="text-sm"
-                      min={new Date().toISOString().slice(0, 16)}
-                    />
-                  </div>
-                  <div className="flex justify-end space-x-2">
-                    <Button
-                      variant="outline"
-                      className="text-xs sm:text-sm"
-                      onClick={() => {
-                        setRescheduleConsultId(null);
-                        setRescheduleDateTime("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleRescheduleConsult}
-                      className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
-                    >
-                      Confirm Reschedule
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+
           </TabsContent>
         </Tabs>
 
@@ -4659,6 +4137,577 @@ export function AdminDashboard() {
                   Mark as Completed
                 </Button>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* View Detail Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="max-w-xs sm:max-w-md md:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">
+                {viewingItem ? `View ${selectedCategory.slice(0, -1)} Details` : "Loading..."}
+              </DialogTitle>
+            </DialogHeader>
+            {viewingItem && (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Title</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.title || "N/A"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Price</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      ETB {(viewingItem.price || 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Location</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {viewingItem.location || `${viewingItem.city}, ${viewingItem.region}` || "N/A"}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Listing Type</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {viewingItem.listingType === "sale" ? "For Sale" : "For Rent"}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Posted Date</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {viewingItem.createdAt ? new Date(viewingItem.createdAt).toLocaleDateString() : "N/A"}
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Status</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.status || "N/A"}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Description</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.description || "N/A"}</p>
+                  </div>
+
+                  {/* Category-specific fields */}
+                  {selectedCategory === "cars" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Make</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.make || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Year</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.year || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Mileage</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.mileage || "N/A"} km</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Fuel Type</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.fuelType || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Transmission</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.transmission || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Features</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.features?.join(", ") || "N/A"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {selectedCategory === "houses" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Property Type</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.propertyType || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Bedrooms</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bedrooms || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Bathrooms</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.bathrooms || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.size || "N/A"} sqm</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Year Built</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearBuilt || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Amenities</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.amenities?.join(", ") || "N/A"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {selectedCategory === "lands" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Size</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.sizeValue ? `${viewingItem.sizeValue} ${viewingItem.sizeUnit || "hectare"}` : "N/A"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Zoning</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.zoning || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Land Use</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.landUse || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Topography</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.topography || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Water Access</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.waterAccess || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Electricity Access</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.electricityAccess ? "Yes" : "No"}
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Road Access</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.roadAccess ? "Yes" : "No"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                  {selectedCategory === "machines" && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Category</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.category || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Brand</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.brand || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Model</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.model || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Year Manufactured</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.yearManufactured || "N/A"}</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Hours Used</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">{viewingItem.hoursUsed || "N/A"} hours</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs sm:text-sm font-medium">Specifications</Label>
+                        <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                          {viewingItem.specifications?.join(", ") || "N/A"}
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </div>
+                <div className="space-y-3 sm:space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Images</Label>
+                    {viewingItem.images && viewingItem.images.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2 sm:gap-3 max-h-40 sm:max-h-52 md:max-h-64 overflow-y-auto">
+                        {viewingItem.images.map((image: string, index: number) => (
+                          <div key={index} className="relative">
+                            <div className="aspect-square relative overflow-hidden rounded-lg border">
+                              <img
+                                src={image || "/placeholder.svg"}
+                                alt={`Image ${index + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback if image fails to load
+                                  (e.target as HTMLImageElement).src = "/placeholder.svg";
+                                }}
+                              />
+                            </div>
+                            {index === 0 && (
+                              <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                                <Badge className="text-xxs sm:text-xs bg-brand-blue text-white">Main</Badge>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500">No images available</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs sm:text-sm font-medium">Owner</Label>
+                    <p className="text-sm border rounded-lg p-2 bg-gray-50">
+                      {viewingItem.owner
+                        ? owners.find(owner => owner._id === viewingItem.owner)?.fullName || viewingItem.owner
+                        : "N/A"
+                      }
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end mt-4 sm:mt-6 gap-2">
+              {viewingItem?.approved === false && (
+                <>
+                  <Button
+                    className="text-xs sm:text-sm bg-green-600 hover:bg-green-700 text-white"
+                    onClick={async () => {
+                      if (!viewingItem) return;
+                      const type = viewingItem.itemType || (selectedCategory === 'houses' ? 'property' : selectedCategory.slice(0, -1));
+                      await handleApprove(type, viewingItem._id || viewingItem.id);
+                      setIsViewDialogOpen(false);
+                      setViewingItem(null);
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" /> Approve
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    className="text-xs sm:text-sm"
+                    onClick={async () => {
+                      if (!viewingItem) return;
+                      const type = viewingItem.itemType || (selectedCategory === 'houses' ? 'property' : selectedCategory.slice(0, -1));
+                      await handleReject(type, viewingItem._id || viewingItem.id);
+                      setIsViewDialogOpen(false);
+                      setViewingItem(null);
+                    }}
+                  >
+                    <XCircle className="w-4 h-4 mr-2" /> Reject
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="outline"
+                className="text-xs sm:text-sm bg-transparent"
+                onClick={() => {
+                  setIsViewDialogOpen(false);
+                  setViewingItem(null);
+                }}
+              >
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Modal */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent className="max-w-xs sm:max-w-md mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Are you sure you want to delete the listing "
+                <span className="font-medium">{deletingItem?.title}</span>"? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="text-xs sm:text-sm bg-transparent"
+                  onClick={() => {
+                    setIsDeleteDialogOpen(false);
+                    setDeletingItem(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+
+
+
+                <Button
+                  variant="destructive"
+                  className="text-xs sm:text-sm"
+                  onClick={confirmDelete}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* User Management Dialog */}
+        <Dialog open={isUserDialogOpen} onOpenChange={setIsUserDialogOpen}>
+          <DialogContent className="max-w-xs sm:max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">
+                {editingUser ? "Edit User" : "Add New User"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Full Name *</label>
+                <Input
+                  value={editingUser?.fullName || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, fullName: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter full name"
+                  maxLength={80}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Email *</label>
+                <Input
+                  type="email"
+                  value={editingUser?.email || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">
+                  {editingUser?.id ? "New Password (optional)" : "Password *"}
+                </label>
+                <Input
+                  type="password"
+                  value={editingUser?.password || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, password: e.target.value })}
+                  className="text-sm"
+                  placeholder={editingUser?.id ? "Update password (min 6 characters)" : "Enter password (min 6 characters)"}
+                  minLength={6}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Phone *</label>
+                <Input
+                  type="tel"
+                  value={editingUser?.phone || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, phone: e.target.value })}
+                  className="text-sm"
+                  placeholder="+251xxxxxxxxx"
+                  pattern="^\+251\d{9}$"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Role</label>
+                <Select
+                  value={editingUser?.role || "user"}
+                  onValueChange={(value) => setEditingUser({ ...editingUser, role: value })}
+                >
+                  <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                    <SelectItem value="owner">Owner</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Avatar URL</label>
+                <Input
+                  type="url"
+                  value={editingUser?.avatar || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, avatar: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter avatar image URL"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Street Address</label>
+                <Input
+                  value={editingUser?.street || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, street: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter street address"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">City</label>
+                <Input
+                  value={editingUser?.city || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, city: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter city"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Region</label>
+                <Input
+                  value={editingUser?.region || ""}
+                  onChange={(e) => setEditingUser({ ...editingUser, region: e.target.value })}
+                  className="text-sm"
+                  placeholder="Enter region"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Country</label>
+                <Input
+                  value={editingUser?.country || "ETHIOPIA"}
+                  onChange={(e) => setEditingUser({ ...editingUser, country: e.target.value.toUpperCase() })}
+                  className="text-sm"
+                  placeholder="Enter country"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Status</label>
+                <Select
+                  value={
+                    editingUser?.isActive !== undefined
+                      ? editingUser.isActive
+                        ? "active"
+                        : "inactive"
+                      : "active"
+                  }
+                  onValueChange={(value) => setEditingUser({ ...editingUser, isActive: value === "active" })}
+                >
+                  <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs sm:text-sm font-medium">Verification Status</label>
+                <Select
+                  value={
+                    editingUser?.isVerified !== undefined
+                      ? editingUser.isVerified
+                        ? "verified"
+                        : "unverified"
+                      : "unverified"
+                  }
+                  onValueChange={(value) => setEditingUser({ ...editingUser, isVerified: value === "verified" })}
+                >
+                  <SelectTrigger className="text-xs sm:text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="verified">Verified</SelectItem>
+                    <SelectItem value="unverified">Unverified</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                className="text-xs sm:text-sm bg-transparent"
+                onClick={() => setIsUserDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveUser}
+                className="bg-brand-purple hover:bg-brand-purple/90 text-xs sm:text-sm"
+              >
+                Save
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete User Confirmation Dialog */}
+        <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+          <DialogContent className="max-w-xs sm:max-w-md mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">Confirm Deletion</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-xs sm:text-sm text-gray-600">
+                Are you sure you want to delete user "
+                <span className="font-medium">{deletingUser?.name || deletingUser?.email}</span>"? This action cannot be undone.
+              </p>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="text-xs sm:text-sm bg-transparent"
+                  onClick={() => {
+                    setIsDeleteUserDialogOpen(false);
+                    setDeletingUser(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="text-xs sm:text-sm"
+                  onClick={confirmDeleteUser}
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Consultation Reschedule Dialog */}
+        <Dialog open={!!rescheduleConsultId} onOpenChange={(open) => !open && setRescheduleConsultId(null)}>
+          <DialogContent className="max-w-xs sm:max-w-md mx-4">
+            <DialogHeader>
+              <DialogTitle className="text-sm sm:text-base">
+                Reschedule Consultation
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reschedule-datetime" className="text-xs sm:text-sm">
+                  New Date & Time
+                </Label>
+                <Input
+                  id="reschedule-datetime"
+                  type="datetime-local"
+                  value={rescheduleDateTime}
+                  onChange={(e) => setRescheduleDateTime(e.target.value)}
+                  className="text-sm"
+                  min={new Date().toISOString().slice(0, 16)}
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  className="text-xs sm:text-sm"
+                  onClick={() => {
+                    setRescheduleConsultId(null);
+                    setRescheduleDateTime("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleRescheduleConsult}
+                  className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700"
+                >
+                  Confirm Reschedule
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

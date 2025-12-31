@@ -1,6 +1,6 @@
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, XCircle, MapPin, DollarSign, User } from "lucide-react"
+import { CheckCircle, XCircle, MapPin, DollarSign, User, Eye } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 
 interface PendingItemProps {
@@ -8,9 +8,10 @@ interface PendingItemProps {
     type: string
     onApprove: (type: string, id: string) => void
     onReject: (type: string, id: string) => void
+    onView?: (item: any, type: string) => void
 }
 
-export function PendingItemCard({ item, type, onApprove, onReject }: PendingItemProps) {
+export function PendingItemCard({ item, type, onApprove, onReject, onView }: PendingItemProps) {
     return (
         <Card className="overflow-hidden border-orange-200">
             <div className="relative h-48 bg-gray-100">
@@ -36,20 +37,31 @@ export function PendingItemCard({ item, type, onApprove, onReject }: PendingItem
                     {item.owner?.name || item.owner?.email || "Unknown User"}
                 </div>
             </CardContent>
-            <CardFooter className="bg-gray-50 p-4 flex gap-2">
-                <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => onApprove(type, item._id)}
-                >
-                    <CheckCircle className="w-4 h-4 mr-2" /> Approve
-                </Button>
-                <Button
-                    variant="destructive"
-                    className="flex-1"
-                    onClick={() => onReject(type, item._id)}
-                >
-                    <XCircle className="w-4 h-4 mr-2" /> Reject
-                </Button>
+            <CardFooter className="bg-gray-50 p-4 flex flex-col gap-2">
+                <div className="flex gap-2 w-full">
+                    <Button
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => onApprove(type, item._id)}
+                    >
+                        <CheckCircle className="w-4 h-4 mr-2" /> Approve
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => onReject(type, item._id)}
+                    >
+                        <XCircle className="w-4 h-4 mr-2" /> Reject
+                    </Button>
+                </div>
+                {onView && (
+                    <Button
+                        variant="outline"
+                        className="w-full border-blue-600 text-blue-600 hover:bg-blue-50"
+                        onClick={() => onView(item, type)}
+                    >
+                        <Eye className="w-4 h-4 mr-2" /> View Details
+                    </Button>
+                )}
             </CardFooter>
         </Card>
     )
