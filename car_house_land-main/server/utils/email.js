@@ -1,30 +1,37 @@
 // services/emailService.js
-const { Resend } = require("resend");
-
-const resend = new Resend("re_ffG92xVD_638t929AMEAsGFEPMsbyJ2vA");
+const nodemailer = require("nodemailer");
 
 /**
- * Send Email Utility using Resend SDK
+ * Send Email Utility using Nodemailer (configured for Mailtrap/SMTP)
  */
 const sendEmail = async (options) => {
   try {
-    console.log(`[sendEmail] Preparing to send email via Resend SDK to: ${options.email}`);
+    console.log(`[sendEmail] Preparing to send email via SMTP (Mailtrap) to: ${options.email}`);
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.MAIL_FROM || "Massgebeya <onboarding@resend.dev>",
-      to: [options.email],
+    // Configuration for Mailtrap or any other SMTP service
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || "sandbox.smtp.mailtrap.io",
+      port: process.env.SMTP_PORT || 2525,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      // Mailtrap specific or generic SMTP
+      debug: true,
+      logger: true
+    });
+
+    const mailOptions = {
+      from: process.env.MAIL_FROM || '"Massgebeya" <onboarding@resend.dev>', // Fallback from before
+      to: options.email,
       subject: options.subject,
       html: options.html,
       text: options.text || options.html.replace(/<[^>]*>/g, ""),
-    });
+    };
 
-    if (error) {
-      console.error("❌ [sendEmail] Resend error:", error);
-      throw new Error(`Email could not be sent. Resend Error: ${error.message}`);
-    }
-
-    console.log("📨 [sendEmail] Email sent successfully:", data.id);
-    return data;
+    const info = await transporter.sendMail(mailOptions);
+    console.log("📨 [sendEmail] Email sent successfully:", info.messageId);
+    return info;
   } catch (error) {
     console.error("❌ [sendEmail] Email sending failed:", error.message);
     if (error.stack) console.error(error.stack);
