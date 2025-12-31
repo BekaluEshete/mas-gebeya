@@ -30,7 +30,7 @@ const forgotPasswordValidation = [
 ];
 
 const resetPasswordValidation = [
-  body('email').isEmail(),
+  body('email').isEmail().withMessage('Please provide a valid email address'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('Reset code must be 6 digits'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ];
