@@ -1,4 +1,4 @@
-const { body, param } = require('express-validator');
+const { body } = require('express-validator');
 
 const registerValidation = [
   body('fullName').trim().isLength({ min: 2, max: 50 }).withMessage('Full name must be between 2 and 50 characters').matches(/^[a-zA-Z\s]+$/).withMessage('Full name can only contain letters and spaces'),
@@ -30,8 +30,8 @@ const forgotPasswordValidation = [
 ];
 
 const resetPasswordValidation = [
-  body('email').isEmail().withMessage('Please provide a valid email address'),
-  body('code').isLength({ min: 6, max: 6 }).withMessage('Reset code must be exactly 6 digits'),
+  body('email').isEmail().withMessage('Please enter a valid email address'),
+  body('code').isLength({ min: 6, max: 6 }).withMessage('Code must be 6 digits'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
 ];
 
