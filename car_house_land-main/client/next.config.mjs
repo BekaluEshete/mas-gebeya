@@ -9,6 +9,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://car-house-land.onrender.com/api/:path*',
+      },
+    ]
+  },
 }
 
 export default nextConfig

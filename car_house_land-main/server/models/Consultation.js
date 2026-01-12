@@ -83,6 +83,20 @@ const consultationSchema = new mongoose.Schema({
     maxlength: [500, 'Agent notes cannot exceed 500 characters']
   },
 
+  // Consultant assignment
+  assignedConsultant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Consultant',
+    default: null
+  },
+
+  // Requester information (for consult_requester role)
+  requesterId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
+  },
+
   createdAt: {
     type: Date,
     default: Date.now

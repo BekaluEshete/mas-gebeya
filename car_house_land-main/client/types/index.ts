@@ -3,7 +3,7 @@ export interface User {
   fullName: string
   email: string
   phone: string
-  role: "user" | "admin" | "owner"
+  role: "user" | "admin" | "owner" | "consultant" | "consult_requester"
   avatar?: string
   address?: {
     street?: string
@@ -259,6 +259,51 @@ export interface Machine {
   views: number
   favorites: string[]
 }
+export interface ConsultantDocument {
+  _id: string;
+  type: 'degree' | 'certificate' | 'license' | 'cv' | 'other';
+  title: string;
+  originalName?: string | null;
+  url: string;
+  publicId: string;
+  verified: boolean;
+  uploadedAt: string;
+}
+
+export interface Consultant {
+  _id: string;
+  userId: {
+    _id: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    avatar?: string;
+  };
+  specialization: string[];
+  experience: number;
+  education: string;
+  bio: string;
+  languages: string[];
+  hourlyRate: number;
+  availability: 'full-time' | 'part-time' | 'weekends' | 'evenings';
+  documents: ConsultantDocument[];
+  isApproved: boolean;
+  approvedAt?: string;
+  approvedBy?: {
+    _id: string;
+    fullName: string;
+  };
+  rejectionReason?: string;
+  isActive: boolean;
+  rating: number;
+  totalConsultations: number;
+  linkedin?: string;
+  website?: string;
+  certifications?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 // lib/types.ts
 export interface Consultation {
   id: string;
@@ -274,6 +319,8 @@ export interface Consultation {
   createdAt: string;
   updatedAt: string;
   agentNotes?: string; // For admin updates
+  assignedConsultant?: string; // Consultant ID
+  requesterId?: string; // User ID of the requester
 }
 // types/index.ts (add Activity type)
 export interface Activity {

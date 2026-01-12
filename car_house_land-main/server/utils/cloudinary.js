@@ -15,8 +15,8 @@ cloudinary.config({
   timeout: 30000,
 });
 
-// Configure Cloudinary storage for multer
-const storage = new CloudinaryStorage({
+// Configure Cloudinary storage for images (marketplace)
+const imageStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'marketplace',
@@ -25,9 +25,19 @@ const storage = new CloudinaryStorage({
   }
 });
 
-// Multer setup for multiple file uploads (max 3 images)
-const upload = multer({
-  storage: storage,
+// Configure Cloudinary storage for documents (consultants)
+const documentStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'consultant-documents',
+    allowed_formats: ['pdf', 'doc', 'docx', 'jpg', 'png', 'jpeg'],
+    resource_type: 'raw'
+  }
+});
+
+// Multer setup for multiple image uploads (max 3 images)
+const uploadImages = multer({
+  storage: imageStorage,
   limits: { fileSize: 10 * 1024 * 1024, files: 3 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/;
@@ -40,4 +50,22 @@ const upload = multer({
   }
 });
 
-module.exports = { cloudinary, upload };
+// Multer setup for document uploads (max 5 documents, 10MB each)
+const uploadDocuments = multer({
+  storage: documentStorage,
+  limits: { fileSize: 10 * 1024 * 1024, files: 5 },
+  fileFilter: (req, file, cb) => {
+    const filetypes = /pdf|doc|docx|jpeg|jpg|png/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(file.originalname.split('.').pop().toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error(`Invalid file type for ${file.originalname}. Only PDF, DOC, DOCX, JPG, JPEG, and PNG are allowed.`));
+  }
+});
+
+// Backward compatibility
+const upload = uploadImages;
+
+module.exports = { cloudinary, upload, uploadImages, uploadDocuments };

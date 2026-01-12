@@ -17,6 +17,15 @@ const register = async (req, res) => {
       address = { street: '', city: '', region: '', country: 'ETHIOPIA' }
     } = req.body;
 
+    // Validate role
+    const validRoles = ['user', 'admin', 'owner', 'consultant', 'consult_requester'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Invalid role specified'
+      });
+    }
+
     const existingUser = await User.findOne({
       $or: [
         { email: email.toLowerCase() },

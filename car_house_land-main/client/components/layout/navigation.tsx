@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield, Package } from "lucide-react"
+import { Menu, X, ShoppingCart, User, LogOut, HomeIcon, MessageSquare, Shield, Package, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useApp } from "@/context/app-context"
@@ -33,6 +33,7 @@ export function Navigation() {
 
   const adminNavItems = [
     { href: "/dashboard/admin", label: "Dashboard", icon: Shield },
+    { href: "/admin/consultants", label: "Consultant Approvals", icon: Users },
     { href: "/profile/admin", label: "Profile", icon: User },
   ]
 

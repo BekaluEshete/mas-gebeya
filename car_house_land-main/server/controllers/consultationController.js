@@ -27,7 +27,7 @@ const getConsultations = async (req, res) => {
 // @access  Private (authenticated user)
 const createConsultation = async (req, res) => {
   try {
-    const { fullName, email, phone, category, description, type, mode, dateTime } = req.body;
+    const { fullName, email, phone, category, description, type, mode, dateTime, consultantId } = req.body;
 
     // Basic validation (Mongoose will handle schema validation)
     if (!fullName || !email || !phone || !category || !type || !mode || !dateTime) {
@@ -45,6 +45,18 @@ const createConsultation = async (req, res) => {
       });
     }
 
+    // If a consultant is specified, validate they exist and are approved
+    if (consultantId) {
+      const Consultant = require('../models/Consultant');
+      const consultant = await Consultant.findById(consultantId);
+      if (!consultant || !consultant.isApproved || !consultant.isActive) {
+        return res.status(400).json({
+          status: 'error',
+          message: 'Selected consultant is not available'
+        });
+      }
+    }
+
     const consultation = await Consultation.create({
       fullName,
       email,
@@ -53,8 +65,16 @@ const createConsultation = async (req, res) => {
       description,
       type,
       mode,
-      dateTime
+      dateTime,
+      assignedConsultant: consultantId || null,
+      requesterId: req.user ? req.user._id : null
     });
+
+    // Update user role to consult_requester if they're not already a consultant
+    if (req.user && req.user.role === 'user') {
+      const User = require('../models/User');
+      await User.findByIdAndUpdate(req.user._id, { role: 'consult_requester' });
+    }
 
     // TODO: Send confirmation email/SMS here (e.g., using Nodemailer or Twilio)
 

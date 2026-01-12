@@ -4,10 +4,11 @@ import type { NextRequest } from "next/server"
 const protectedRoutes = {
   "/dashboard/admin": ["admin"],
   "/profile/admin": ["admin"],
-  "/dashboard/user": ["user", "admin", "owner"],
-  "/profile/user": ["user", "admin", "owner"],
-  "/deals": ["user", "admin", "owner"],
-  "/cart": ["user", "admin", "owner"],
+  // Treat these roles as authenticated users for user dashboard routes
+  "/dashboard/user": ["user", "admin", "owner", "consultant", "consult_requester"],
+  "/profile/user": ["user", "admin", "owner", "consultant", "consult_requester"],
+  "/deals": ["user", "admin", "owner", "consultant", "consult_requester"],
+  "/cart": ["user", "admin", "owner", "consultant", "consult_requester"],
 }
 
 const authRequiredRoutes = ["/dashboard", "/profile", "/deals", "/cart"]

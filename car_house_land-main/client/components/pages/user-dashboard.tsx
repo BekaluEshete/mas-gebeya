@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -26,6 +26,7 @@ export function UserDashboard() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
 
   const router = useRouter()
+  const pathname = usePathname()
 
   // Filter posted items by user's ID
   const postedItems = user?._id ? [
@@ -39,12 +40,12 @@ export function UserDashboard() {
     console.log("[UserDashboard] User state:", user)
     if (user && user.role) {
       const targetPath = user.role === "admin" ? "/dashboard/admin" : "/dashboard/user"
-      if (router.pathname !== targetPath) {
+      if (pathname !== targetPath) {
         console.log("[UserDashboard] Redirecting to:", targetPath)
         router.replace(targetPath)
       }
     }
-  }, [user, router])
+  }, [user, router, pathname])
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

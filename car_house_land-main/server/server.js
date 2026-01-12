@@ -13,6 +13,7 @@ const UserRoutes = require("./routes/userRoute");
 const DealRoutes = require("./routes/dealRoute");
 const PropertyRoute = require("./routes/propertyRoute");
 const ConsultationRoutes = require("./routes/consultationRoute");
+const ConsultantRoutes = require("./routes/consultantRoutes");
 const AnalyticsRoutes = require("./routes/analyticsRoute");
 const AdminRoutes = require("./routes/adminRoute");
 const app = express();
@@ -40,6 +41,7 @@ app.use('/api/users', UserRoutes);
 app.use('/api/deals', DealRoutes);
 app.use('/api/properties', PropertyRoute);
 app.use('/api/consultations', ConsultationRoutes);
+app.use('/api/consultants', ConsultantRoutes);
 app.use('/api/analytics', AnalyticsRoutes);
 app.use('/api/admin', AdminRoutes);
 

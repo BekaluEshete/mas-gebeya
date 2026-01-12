@@ -54,6 +54,26 @@ const protect = async (req, res, next) => {
   }
 };
  
+const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        status: 'error',
+        message: 'Access denied. Authentication required.',
+      });
+    }
+
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        status: 'error',
+        message: `Access denied. ${roles.join(' or ')} role required.`,
+      });
+    }
+
+    next();
+  };
+};
+
 const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === 'admin') {
     next();
@@ -115,6 +135,7 @@ const sensitiveOperationLimit = (req, res, next) => {
 
 module.exports = {
   protect,
+  authorize,
   adminOnly,
   optionalAuth,
   sensitiveOperationLimit,
